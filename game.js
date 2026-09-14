@@ -1,43 +1,16 @@
-// =====================================================
-// 🎮 GAMERPRO GAME — GAME.JS
-// =====================================================
+import { iniciarEscenaMenu } from "./3D/escenaMenu.js";
 
-import {
-    iniciarCinematica
-} from "./3D/cinematica.js";
+const game = document.getElementById("game");
+const playButton = document.getElementById("playButton");
 
+playButton.addEventListener("click", () => {
 
-// =====================================================
-// 🎮 CONTENEDOR PRINCIPAL
-// =====================================================
+    const inicio =
+        document.getElementById("inicio");
 
-const game =
-    document.getElementById("game");
-
-
-// =====================================================
-// ▶️ BOTÓN PLAY
-// =====================================================
-
-const playButton =
-    document.getElementById("playButton");
-
-
-playButton.addEventListener(
-    "click",
-    () => {
-
-        // Ocultar pantalla inicial
-        const inicio =
-            document.getElementById("inicio");
-
-        if (inicio) {
-            inicio.style.display = "none";
-        }
-
-
-        // Iniciar experiencia 3D
-        iniciarCinematica(game);
-
+    if (inicio) {
+        inicio.style.display = "none";
     }
-);
+
+    iniciarEscenaMenu(game);
+});
