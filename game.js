@@ -1,25 +1,32 @@
-// ============================================================
-// EGGARO
-// game.js
-// ============================================================
-
 import { iniciarEscenaMenu } from "./3D/escenaMenu.js";
 
+import {
+    iniciarCinematica,
+    cinematicaTerminada,
+    detenerCinematica
+} from "./3D/escenaCinematica.js";
+
+
 // ============================================================
-// CONTENEDOR
+// CONTENEDOR PRINCIPAL
 // ============================================================
 
-const game = document.getElementById("game");
+const game =
+    document.getElementById("game");
 
 if (!game) {
-    throw new Error("No se encontró #game");
+    throw new Error(
+        "No se encontró el elemento #game"
+    );
 }
 
+
 // ============================================================
-// CREAR CAPA DEL MENÚ
+// MENÚ PRINCIPAL
 // ============================================================
 
-const inicio = document.createElement("div");
+const inicio =
+    document.createElement("div");
 
 inicio.id = "inicio";
 
@@ -36,8 +43,9 @@ inicio.style.zIndex = "99999";
 
 inicio.style.pointerEvents = "none";
 
+
 // ============================================================
-// CREAR BOTÓN
+// BOTÓN PLAY
 // ============================================================
 
 const playButton =
@@ -45,9 +53,9 @@ const playButton =
 
 playButton.id = "playButton";
 
-playButton.textContent = "PLAY";
-
 playButton.type = "button";
+
+playButton.textContent = "PLAY";
 
 playButton.style.position = "relative";
 playButton.style.zIndex = "100000";
@@ -57,28 +65,51 @@ playButton.style.pointerEvents = "auto";
 playButton.style.width = "220px";
 playButton.style.height = "80px";
 
-playButton.style.border = "4px solid white";
-playButton.style.borderRadius = "16px";
+playButton.style.border =
+    "4px solid white";
+
+playButton.style.borderRadius =
+    "16px";
 
 playButton.style.background =
-    "rgba(0, 0, 0, 0.70)";
+    "rgba(0,0,0,0.70)";
 
-playButton.style.color = "white";
+playButton.style.color =
+    "white";
 
-playButton.style.fontSize = "32px";
-playButton.style.fontWeight = "bold";
+playButton.style.fontSize =
+    "32px";
 
-playButton.style.cursor = "pointer";
+playButton.style.fontWeight =
+    "bold";
 
-inicio.appendChild(playButton);
+playButton.style.cursor =
+    "pointer";
 
-game.appendChild(inicio);
+playButton.style.boxShadow =
+    "0 0 25px rgba(0,0,0,0.6)";
+
 
 // ============================================================
-// INICIAR ESCENA 3D
+// AGREGAR MENÚ
 // ============================================================
 
-iniciarEscenaMenu(game);
+inicio.appendChild(
+    playButton
+);
+
+game.appendChild(
+    inicio
+);
+
+
+// ============================================================
+// INICIAR ESCENA DEL MENÚ
+// ============================================================
+
+const menu =
+    iniciarEscenaMenu(game);
+
 
 // ============================================================
 // PLAY
@@ -88,10 +119,159 @@ playButton.addEventListener(
     "click",
     () => {
 
-        console.log("🎮 PLAY");
+        console.log(
+            "🎮 PLAY PRESIONADO"
+        );
 
+        // Evitar doble clic
+        playButton.disabled = true;
+
+        // Quitar botón
         inicio.remove();
 
-        // Aquí conectaremos la INTRO.
+
+        // ====================================================
+        // DETENER MENÚ
+        // ====================================================
+
+        if (
+            menu &&
+            menu.renderer &&
+            menu.renderer.domElement
+        ) {
+
+            menu.renderer.domElement.remove();
+        }
+
+
+        // ====================================================
+        // INICIAR CINEMÁTICA
+        // ====================================================
+
+        console.log(
+            "🎬 INICIANDO CINEMÁTICA"
+        );
+
+        iniciarCinematica(game);
+
+
+        // ====================================================
+        // COMPROBAR CUÁNDO TERMINA
+        // ====================================================
+
+        comprobarCinematica();
     }
 );
+
+
+// ============================================================
+// COMPROBAR CINEMÁTICA
+// ============================================================
+
+function comprobarCinematica() {
+
+    if (
+        cinematicaTerminada()
+    ) {
+
+        console.log(
+            "🌾 CINEMÁTICA TERMINADA"
+        );
+
+        detenerCinematica();
+
+        iniciarGranja();
+
+        return;
+    }
+
+    requestAnimationFrame(
+        comprobarCinematica
+    );
+}
+
+
+// ============================================================
+// INICIAR GRANJA
+// ============================================================
+
+function iniciarGranja() {
+
+    console.log(
+        "🌾 INICIANDO GRANJA"
+    );
+
+    // --------------------------------------------------------
+    // POR AHORA MOSTRAMOS UNA PANTALLA TEMPORAL
+    // --------------------------------------------------------
+
+    const pantalla =
+        document.createElement("div");
+
+    pantalla.id =
+        "pantallaGranja";
+
+    pantalla.style.position =
+        "fixed";
+
+    pantalla.style.inset =
+        "0";
+
+    pantalla.style.width =
+        "100vw";
+
+    pantalla.style.height =
+        "100dvh";
+
+    pantalla.style.background =
+        "linear-gradient(#87ceeb, #7bb35a)";
+
+    pantalla.style.display =
+        "flex";
+
+    pantalla.style.alignItems =
+        "center";
+
+    pantalla.style.justifyContent =
+        "center";
+
+    pantalla.style.zIndex =
+        "90000";
+
+
+    // --------------------------------------------------------
+    // TEXTO
+    // --------------------------------------------------------
+
+    const texto =
+        document.createElement("div");
+
+    texto.textContent =
+        "🌾 GRANJA";
+
+    texto.style.color =
+        "white";
+
+    texto.style.fontSize =
+        "48px";
+
+    texto.style.fontWeight =
+        "bold";
+
+    texto.style.textShadow =
+        "0 4px 10px rgba(0,0,0,0.6)";
+
+
+    pantalla.appendChild(
+        texto
+    );
+
+    game.appendChild(
+        pantalla
+    );
+
+
+    console.log(
+        "🐔 La granja está lista para conectar."
+    );
+    }
