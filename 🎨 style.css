@@ -1,0 +1,132 @@
+/* =====================================================
+   GAMERPRO GAME — ESTILOS PRINCIPALES
+   ===================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   DOCUMENTO
+   ===================================================== */
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    background: #000;
+}
+
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+
+/* =====================================================
+   CONTENEDOR PRINCIPAL
+   ===================================================== */
+
+#game {
+    position: fixed;
+
+    inset: 0;
+
+    width: 100vw;
+    height: 100dvh;
+
+    overflow: hidden;
+
+    background: #000;
+}
+
+
+/* =====================================================
+   PANTALLA DE INICIO
+   ===================================================== */
+
+#inicio {
+    position: fixed;
+
+    inset: 0;
+
+    width: 100vw;
+    height: 100dvh;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    z-index: 1000;
+}
+
+
+/* =====================================================
+   BOTÓN PLAY
+   ===================================================== */
+
+#playButton {
+    width: 220px;
+    height: 80px;
+
+    border: none;
+    border-radius: 12px;
+
+    font-size: 32px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   CANVAS THREE.JS
+   ===================================================== */
+
+#game canvas {
+    position: fixed;
+
+    inset: 0;
+
+    width: 100vw;
+    height: 100dvh;
+
+    display: block;
+
+    margin: 0;
+    padding: 0;
+
+    max-width: none;
+    max-height: none;
+}
+
+
+/* =====================================================
+   MÓVIL
+   ===================================================== */
+
+@media (orientation: portrait) {
+
+    #game,
+    #game canvas {
+        width: 100vw;
+        height: 100dvh;
+    }
+}
+
+
+@media (orientation: landscape) {
+
+    #game,
+    #game canvas {
+        width: 100vw;
+        height: 100dvh;
+    }
+}
