@@ -1,13 +1,4 @@
-// ============================================================
-// GAMERPRO GAME
-// game.js
-// ============================================================
-
 import { iniciarEscenaMenu } from "./3D/escenaMenu.js";
-
-// ============================================================
-// ELEMENTOS
-// ============================================================
 
 const game =
     document.getElementById("game");
@@ -15,32 +6,18 @@ const game =
 const playButton =
     document.getElementById("playButton");
 
-// ============================================================
-// INICIAR MENÚ 3D
-// ============================================================
-
+// Primero se crea la escena 3D.
 iniciarEscenaMenu(game);
 
-// ============================================================
-// BOTÓN PLAY
-// ============================================================
+// PLAY
+playButton.addEventListener("click", () => {
 
-playButton.addEventListener(
-    "click",
-    () => {
+    const inicio =
+        document.getElementById("inicio");
 
-        const inicio =
-            document.getElementById("inicio");
-
-        if (inicio) {
-            inicio.style.display = "none";
-        }
-
-        console.log(
-            "🎮 PLAY presionado"
-        );
-
-        // Aquí conectaremos después
-        // la INTRO del juego.
+    if (inicio) {
+        inicio.style.display = "none";
     }
-);
+
+    console.log("🎮 PLAY presionado");
+});
