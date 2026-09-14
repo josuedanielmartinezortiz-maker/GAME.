@@ -1,16 +1,46 @@
+// ============================================================
+// GAMERPRO GAME
+// game.js
+// ============================================================
+
 import { iniciarEscenaMenu } from "./3D/escenaMenu.js";
 
-const game = document.getElementById("game");
-const playButton = document.getElementById("playButton");
+// ============================================================
+// ELEMENTOS
+// ============================================================
 
-playButton.addEventListener("click", () => {
+const game =
+    document.getElementById("game");
 
-    const inicio =
-        document.getElementById("inicio");
+const playButton =
+    document.getElementById("playButton");
 
-    if (inicio) {
-        inicio.style.display = "none";
+// ============================================================
+// INICIAR MENÚ 3D
+// ============================================================
+
+iniciarEscenaMenu(game);
+
+// ============================================================
+// BOTÓN PLAY
+// ============================================================
+
+playButton.addEventListener(
+    "click",
+    () => {
+
+        const inicio =
+            document.getElementById("inicio");
+
+        if (inicio) {
+            inicio.style.display = "none";
+        }
+
+        console.log(
+            "🎮 PLAY presionado"
+        );
+
+        // Aquí conectaremos después
+        // la INTRO del juego.
     }
-
-    iniciarEscenaMenu(game);
-});
+);
