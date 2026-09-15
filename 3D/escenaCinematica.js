@@ -1,60 +1,75 @@
 // ============================================================
-// EGGARO
-// escenaCinematica.js
-// CINEMÁTICA INICIAL
+// ESCENA CINEMÁTICA — EGGARO
 // ============================================================
 
 import * as THREE from "three";
-import { GLTFLoader } from
-    "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js";
+
+import {
+    GLTFLoader
+} from "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js";
 
 // ============================================================
-// VARIABLES
+// VARIABLES PRINCIPALES
 // ============================================================
 
-let escena;
-let camara;
-let renderer;
-let reloj;
+let escena = null;
+let camara = null;
+let renderer = null;
 
 let mike = null;
 let micaela = null;
+
 let huevo = null;
 let polloResultado = null;
 
+let terminada = false;
+let cinematicaActiva = false;
+
 let fase = 0;
 let tiempoFase = 0;
-let terminada = false;
 
-let dialogoElemento = null;
-let nombreElemento = null;
+const reloj =
+    new THREE.Clock();
 
-const loader = new GLTFLoader();
+// ============================================================
+// ARRAYS DEL AMBIENTE
+// ============================================================
 
 const pastos = [];
 const hojas = [];
 const particulas = [];
 
 // ============================================================
-// INICIAR
+// INICIAR CINEMÁTICA
 // ============================================================
 
-export function iniciarCinematica(contenedor) {
+export function iniciarCinematica(game) {
 
     terminada = false;
+    cinematicaActiva = true;
+
     fase = 0;
     tiempoFase = 0;
 
-    escena = new THREE.Scene();
+    reloj.start();
+
+    // --------------------------------------------------------
+    // ESCENA
+    // --------------------------------------------------------
+
+    escena =
+        new THREE.Scene();
 
     escena.background =
-        new THREE.Color(0x8faea0);
+        new THREE.Color(
+            0x9eb8a1
+        );
 
     escena.fog =
         new THREE.Fog(
-            0x8faea0,
-            15,
-            65
+            0x9eb8a1,
+            12,
+            42
         );
 
     // --------------------------------------------------------
@@ -64,21 +79,22 @@ export function iniciarCinematica(contenedor) {
     camara =
         new THREE.PerspectiveCamera(
             55,
-            window.innerWidth / window.innerHeight,
+            window.innerWidth /
+            window.innerHeight,
             0.1,
-            150
+            100
         );
 
     camara.position.set(
         0,
-        4.2,
-        15
+        3.2,
+        13
     );
 
     camara.lookAt(
         0,
-        2,
-        -8
+        1.3,
+        -2
     );
 
     // --------------------------------------------------------
@@ -88,11 +104,14 @@ export function iniciarCinematica(contenedor) {
     renderer =
         new THREE.WebGLRenderer({
             antialias: true,
-            powerPreference: "high-performance"
+            alpha: false
         });
 
     renderer.setPixelRatio(
-        Math.min(window.devicePixelRatio, 2)
+        Math.min(
+            window.devicePixelRatio,
+            2
+        )
     );
 
     renderer.setSize(
@@ -100,33 +119,66 @@ export function iniciarCinematica(contenedor) {
         window.innerHeight
     );
 
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled =
+        true;
+
     renderer.shadowMap.type =
         THREE.PCFSoftShadowMap;
 
     renderer.outputColorSpace =
         THREE.SRGBColorSpace;
 
-    renderer.toneMapping =
-        THREE.ACESFilmicToneMapping;
-
-    renderer.toneMappingExposure = 1.15;
-
-    contenedor.appendChild(
+    document.body.appendChild(
         renderer.domElement
     );
 
-    reloj = new THREE.Clock();
+    renderer.domElement.style.position =
+        "fixed";
+
+    renderer.domElement.style.left =
+        "0";
+
+    renderer.domElement.style.top =
+        "0";
+
+    renderer.domElement.style.width =
+        "100vw";
+
+    renderer.domElement.style.height =
+        "100vh";
+
+    renderer.domElement.style.zIndex =
+        "1000";
 
     // --------------------------------------------------------
-    // MUNDO
+    // AMBIENTE
     // --------------------------------------------------------
 
+    crearIluminacion();
     crearSuelo();
     crearBosque();
     crearVegetacion();
+    crearRocas();
     crearParticulas();
-    crearIluminacion();
+
+    // --------------------------------------------------------
+    // HUEVO
+    // --------------------------------------------------------
+
+    huevo =
+        crearHuevoResultadoFiel();
+
+    huevo.position.set(
+        0,
+        1.1,
+        -2.2
+    );
+
+    huevo.visible = false;
+
+    escena.add(
+        huevo
+    );
 
     // --------------------------------------------------------
     // PERSONAJES
@@ -135,29 +187,90 @@ export function iniciarCinematica(contenedor) {
     cargarPersonajes();
 
     // --------------------------------------------------------
-    // HUEVO
+    // INTERFAZ
     // --------------------------------------------------------
 
-    crearHuevo();
+    crearDialogo();
 
     // --------------------------------------------------------
-    // DIÁLOGO
+    // RESIZE
     // --------------------------------------------------------
-
-    crearInterfazDialogo();
 
     window.addEventListener(
         "resize",
         ajustarPantalla
     );
 
-    animar();
+    // --------------------------------------------------------
+    // COMENZAR
+    // --------------------------------------------------------
 
-    return {
-        escena,
-        camara,
-        renderer
-    };
+    animar();
+}
+
+// ============================================================
+// ILUMINACIÓN
+// ============================================================
+
+function crearIluminacion() {
+
+    const ambiente =
+        new THREE.HemisphereLight(
+            0xcce4d0,
+            0x465340,
+            2.1
+        );
+
+    escena.add(
+        ambiente
+    );
+
+    const sol =
+        new THREE.DirectionalLight(
+            0xffe2a8,
+            3.2
+        );
+
+    sol.position.set(
+        -8,
+        14,
+        8
+    );
+
+    sol.castShadow =
+        true;
+
+    sol.shadow.mapSize.width =
+        1024;
+
+    sol.shadow.mapSize.height =
+        1024;
+
+    sol.shadow.camera.near =
+        0.5;
+
+    sol.shadow.camera.far =
+        40;
+
+    escena.add(
+        sol
+    );
+
+    const relleno =
+        new THREE.DirectionalLight(
+            0x9fc7ff,
+            0.65
+        );
+
+    relleno.position.set(
+        8,
+        6,
+        -6
+    );
+
+    escena.add(
+        relleno
+    );
 }
 
 // ============================================================
@@ -166,24 +279,64 @@ export function iniciarCinematica(contenedor) {
 
 function crearSuelo() {
 
+    const geometria =
+        new THREE.PlaneGeometry(
+            80,
+            80,
+            32,
+            32
+        );
+
+    const posiciones =
+        geometria.attributes.position;
+
+    for (
+        let i = 0;
+        i < posiciones.count;
+        i++
+    ) {
+
+        const x =
+            posiciones.getX(i);
+
+        const y =
+            posiciones.getY(i);
+
+        const z =
+            Math.sin(x * 0.18) *
+            0.08 +
+            Math.cos(y * 0.15) *
+            0.06;
+
+        posiciones.setZ(
+            i,
+            z
+        );
+    }
+
+    geometria.computeVertexNormals();
+
+    const material =
+        new THREE.MeshStandardMaterial({
+            color: 0x52734f,
+            roughness: 1
+        });
+
     const suelo =
         new THREE.Mesh(
-            new THREE.PlaneGeometry(
-                100,
-                100
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x315d36,
-                roughness: 1
-            })
+            geometria,
+            material
         );
 
     suelo.rotation.x =
         -Math.PI / 2;
 
-    suelo.receiveShadow = true;
+    suelo.receiveShadow =
+        true;
 
-    escena.add(suelo);
+    escena.add(
+        suelo
+    );
 }
 
 // ============================================================
@@ -192,50 +345,49 @@ function crearSuelo() {
 
 function crearBosque() {
 
-    for (let i = 0; i < 45; i++) {
+    for (
+        let i = 0;
+        i < 30;
+        i++
+    ) {
+
+        const lado =
+            i % 2 === 0
+                ? -1
+                : 1;
 
         const x =
-            -30 + Math.random() * 60;
+            lado *
+            (5 + Math.random() * 11);
 
         const z =
-            -8 - Math.random() * 52;
+            -4 -
+            Math.random() * 22;
 
         crearArbol(
             x,
             z,
-            0.8 + Math.random() * 1.4
+            0.75 +
+            Math.random() * 0.65
         );
     }
 
-    for (let i = 0; i < 28; i++) {
+    // Árboles del fondo
 
-        const arbusto =
-            new THREE.Mesh(
-                new THREE.SphereGeometry(
-                    0.8 + Math.random() * 0.7,
-                    8,
-                    6
-                ),
-                new THREE.MeshStandardMaterial({
-                    color:
-                        i % 2
-                            ? 0x315f35
-                            : 0x28522f,
-                    roughness: 1
-                })
-            );
+    for (
+        let i = 0;
+        i < 18;
+        i++
+    ) {
 
-        arbusto.position.set(
-            -28 + Math.random() * 56,
-            0.6,
-            -5 - Math.random() * 48
+        crearArbol(
+            -18 +
+            Math.random() * 36,
+            -18 -
+            Math.random() * 12,
+            0.9 +
+            Math.random() * 0.8
         );
-
-        arbusto.scale.y = 0.65;
-
-        arbusto.castShadow = true;
-
-        escena.add(arbusto);
     }
 }
 
@@ -243,63 +395,14 @@ function crearBosque() {
 // ÁRBOL
 // ============================================================
 
-function crearArbol(x, z, escala) {
+function crearArbol(
+    x,
+    z,
+    escala = 1
+) {
 
     const grupo =
         new THREE.Group();
-
-    const tronco =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.28,
-                0.48,
-                5,
-                8
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x513928,
-                roughness: 1
-            })
-        );
-
-    tronco.position.y = 2.5;
-    tronco.castShadow = true;
-
-    grupo.add(tronco);
-
-    for (let i = 0; i < 4; i++) {
-
-        const copa =
-            new THREE.Mesh(
-                new THREE.SphereGeometry(
-                    1.5 + Math.random() * 0.7,
-                    8,
-                    6
-                ),
-                new THREE.MeshStandardMaterial({
-                    color:
-                        i % 2
-                            ? 0x356b3b
-                            : 0x285c32,
-                    roughness: 1
-                })
-            );
-
-        copa.position.set(
-            (Math.random() - 0.5) * 2,
-            4.5 + Math.random() * 1.4,
-            (Math.random() - 0.5) * 2
-        );
-
-        copa.castShadow = true;
-
-        grupo.add(copa);
-
-        hojas.push({
-            objeto: copa,
-            fase: Math.random() * Math.PI * 2
-        });
-    }
 
     grupo.position.set(
         x,
@@ -311,255 +414,408 @@ function crearArbol(x, z, escala) {
         escala
     );
 
-    escena.add(grupo);
+    const tronco =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                0.28,
+                0.42,
+                3.2,
+                8
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x5a3c28,
+                roughness: 0.9
+            })
+        );
+
+    tronco.position.y =
+        1.6;
+
+    tronco.castShadow =
+        true;
+
+    grupo.add(
+        tronco
+    );
+
+    const copaMaterial =
+        new THREE.MeshStandardMaterial({
+            color: 0x365b3d,
+            roughness: 1
+        });
+
+    for (
+        let i = 0;
+        i < 4;
+        i++
+    ) {
+
+        const copa =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    1.25,
+                    10,
+                    8
+                ),
+                copaMaterial
+            );
+
+        copa.position.set(
+            (i % 2) *
+                1.15 -
+                0.55,
+            3.2 +
+                (i > 1
+                    ? 0.65
+                    : 0),
+            (i % 2 === 0
+                ? -0.25
+                : 0.3)
+        );
+
+        copa.scale.y =
+            0.9;
+
+        copa.castShadow =
+            true;
+
+        grupo.add(
+            copa
+        );
+
+        hojas.push({
+            objeto: copa,
+            fase:
+                Math.random() *
+                Math.PI * 2
+        });
+    }
+
+    escena.add(
+        grupo
+    );
 }
 
 // ============================================================
-// VEGETACIÓN CON MOVIMIENTO
+// VEGETACIÓN
 // ============================================================
 
 function crearVegetacion() {
 
-    const materialPasto =
-        new THREE.MeshStandardMaterial({
-            color: 0x477a3d,
-            roughness: 1
-        });
+    for (
+        let i = 0;
+        i < 180;
+        i++
+    ) {
 
-    for (let i = 0; i < 550; i++) {
+        const grupo =
+            new THREE.Group();
 
-        const pasto =
+        const altura =
+            0.12 +
+            Math.random() *
+            0.24;
+
+        const material =
+            new THREE.MeshStandardMaterial({
+                color:
+                    Math.random() >
+                    0.5
+                        ? 0x6e9656
+                        : 0x4e7b49,
+                roughness: 1
+            });
+
+        const hoja =
             new THREE.Mesh(
-                new THREE.ConeGeometry(
-                    0.045,
-                    0.3 + Math.random() * 0.25,
-                    3
+                new THREE.PlaneGeometry(
+                    0.08,
+                    altura
                 ),
-                materialPasto
+                material
             );
 
-        pasto.position.set(
-            -35 + Math.random() * 70,
-            0.15,
-            -2 - Math.random() * 62
+        hoja.position.y =
+            altura / 2;
+
+        hoja.rotation.y =
+            Math.random() *
+            Math.PI;
+
+        grupo.add(
+            hoja
         );
 
-        const escala =
-            0.5 + Math.random() * 1.5;
+        const x =
+            (Math.random() - 0.5) *
+            30;
 
-        pasto.scale.set(
-            escala,
-            escala,
-            escala
+        const z =
+            -2 -
+            Math.random() *
+            28;
+
+        grupo.position.set(
+            x,
+            0,
+            z
         );
 
-        pasto.rotation.y =
-            Math.random() * Math.PI;
-
-        escena.add(pasto);
+        escena.add(
+            grupo
+        );
 
         pastos.push({
-            objeto: pasto,
-            fase: Math.random() * Math.PI * 2,
-            fuerza: 0.03 + Math.random() * 0.05
+            objeto: hoja,
+            fase:
+                Math.random() *
+                Math.PI * 2,
+            fuerza:
+                0.04 +
+                Math.random() *
+                0.07
         });
     }
 }
 
 // ============================================================
-// PARTÍCULAS / POLVO / POLEN
+// ROCAS
+// ============================================================
+
+function crearRocas() {
+
+    for (
+        let i = 0;
+        i < 28;
+        i++
+    ) {
+
+        const roca =
+            new THREE.Mesh(
+                new THREE.DodecahedronGeometry(
+                    0.2 +
+                    Math.random() *
+                    0.4,
+                    0
+                ),
+                new THREE.MeshStandardMaterial({
+                    color:
+                        0x66665c,
+                    roughness:
+                        1
+                })
+            );
+
+        roca.position.set(
+            (Math.random() - 0.5) *
+                28,
+            0.18,
+            -3 -
+                Math.random() *
+                26
+        );
+
+        roca.rotation.set(
+            Math.random(),
+            Math.random(),
+            Math.random()
+        );
+
+        roca.scale.y =
+            0.5 +
+            Math.random() *
+            0.5;
+
+        roca.castShadow =
+            true;
+
+        roca.receiveShadow =
+            true;
+
+        escena.add(
+            roca
+        );
+    }
+}
+
+// ============================================================
+// PARTÍCULAS
 // ============================================================
 
 function crearParticulas() {
 
-    const geometria =
-        new THREE.SphereGeometry(
-            0.025,
-            6,
-            6
-        );
-
     const material =
         new THREE.MeshBasicMaterial({
-            color: 0xfff4c7,
+            color: 0xdce8c9,
             transparent: true,
             opacity: 0.55
         });
 
-    for (let i = 0; i < 70; i++) {
+    for (
+        let i = 0;
+        i < 35;
+        i++
+    ) {
 
         const p =
             new THREE.Mesh(
-                geometria,
+                new THREE.SphereGeometry(
+                    0.025,
+                    6,
+                    6
+                ),
                 material
             );
 
         p.position.set(
-            -20 + Math.random() * 40,
-            0.5 + Math.random() * 7,
-            -5 - Math.random() * 45
+            (Math.random() - 0.5) *
+                18,
+            0.5 +
+                Math.random() *
+                5,
+            -2 -
+                Math.random() *
+                25
         );
 
-        escena.add(p);
+        escena.add(
+            p
+        );
 
         particulas.push({
             objeto: p,
-            fase: Math.random() * 10,
             velocidad:
-                0.15 + Math.random() * 0.25
+                0.08 +
+                Math.random() *
+                0.18,
+            fase:
+                Math.random() *
+                Math.PI * 2
         });
     }
 }
 
 // ============================================================
-// ILUMINACIÓN
-// ============================================================
-
-function crearIluminacion() {
-
-    const ambiente =
-        new THREE.HemisphereLight(
-            0xb7d9e4,
-            0x263d29,
-            1.7
-        );
-
-    escena.add(ambiente);
-
-    const sol =
-        new THREE.DirectionalLight(
-            0xffd39a,
-            3.2
-        );
-
-    sol.position.set(
-        -15,
-        22,
-        10
-    );
-
-    sol.castShadow = true;
-
-    sol.shadow.mapSize.width = 1024;
-    sol.shadow.mapSize.height = 1024;
-
-    sol.shadow.camera.near = 1;
-    sol.shadow.camera.far = 70;
-
-    escena.add(sol);
-
-    // Luz suave frontal para que los personajes
-    // no queden completamente oscuros.
-
-    const frontal =
-        new THREE.DirectionalLight(
-            0xc7e6ff,
-            0.7
-        );
-
-    frontal.position.set(
-        8,
-        7,
-        15
-    );
-
-    escena.add(frontal);
-}
-
-// ============================================================
-// PERSONAJES
+// CARGAR PERSONAJES
 // ============================================================
 
 function cargarPersonajes() {
 
+    const loader =
+        new GLTFLoader();
+
     loader.load(
         "./3D/mike.glb",
+
         gltf => {
 
-            mike = gltf.scene;
-
-            prepararPersonaje(mike);
-
-            mike.scale.setScalar(1.4);
+            mike =
+                gltf.scene;
 
             mike.position.set(
-                -1.6,
+                -1.15,
                 0,
-                3
+                -1.7
             );
 
-            mike.rotation.y = 0.15;
+            mike.scale.setScalar(
+                1
+            );
 
-            escena.add(mike);
+            mike.traverse(
+                objeto => {
+
+                    if (
+                        objeto.isMesh
+                    ) {
+
+                        objeto.castShadow =
+                            true;
+
+                        objeto.receiveShadow =
+                            true;
+                    }
+                }
+            );
+
+            escena.add(
+                mike
+            );
         },
-        undefined,
-        error => {
 
-            console.warn(
-                "No se pudo cargar mike.glb",
-                error
-            );
+        undefined,
+
+        () => {
 
             mike =
                 crearPersonajeTemporal(
-                    0x5c8fbd
+                    false
                 );
 
             mike.position.set(
-                -1.6,
+                -1.15,
                 0,
-                3
+                -1.7
             );
 
-            escena.add(mike);
+            escena.add(
+                mike
+            );
         }
     );
 
     loader.load(
         "./3D/micaela.glb",
+
         gltf => {
 
             micaela =
                 gltf.scene;
 
-            prepararPersonaje(
-                micaela
+            micaela.position.set(
+                1.15,
+                0,
+                -1.7
             );
 
             micaela.scale.setScalar(
-                1.4
+                1
             );
 
-            micaela.position.set(
-                1.6,
-                0,
-                3
-            );
+            micaela.traverse(
+                objeto => {
 
-            micaela.rotation.y =
-                -0.15;
+                    if (
+                        objeto.isMesh
+                    ) {
+
+                        objeto.castShadow =
+                            true;
+
+                        objeto.receiveShadow =
+                            true;
+                    }
+                }
+            );
 
             escena.add(
                 micaela
             );
         },
-        undefined,
-        error => {
 
-            console.warn(
-                "No se pudo cargar micaela.glb",
-                error
-            );
+        undefined,
+
+        () => {
 
             micaela =
                 crearPersonajeTemporal(
-                    0xd58a9e
+                    true
                 );
 
             micaela.position.set(
-                1.6,
+                1.15,
                 0,
-                3
+                -1.7
             );
 
             escena.add(
@@ -570,28 +826,12 @@ function cargarPersonajes() {
 }
 
 // ============================================================
-// PREPARAR PERSONAJE
+// PERSONAJE TEMPORAL
 // ============================================================
 
-function prepararPersonaje(personaje) {
-
-    personaje.traverse(
-        objeto => {
-
-            if (objeto.isMesh) {
-
-                objeto.castShadow = true;
-                objeto.receiveShadow = true;
-            }
-        }
-    );
-}
-
-// ============================================================
-// FALLBACK
-// ============================================================
-
-function crearPersonajeTemporal(color) {
+function crearPersonajeTemporal(
+    mujer
+) {
 
     const grupo =
         new THREE.Group();
@@ -599,63 +839,55 @@ function crearPersonajeTemporal(color) {
     const cuerpo =
         new THREE.Mesh(
             new THREE.CapsuleGeometry(
-                0.55,
-                1.1,
+                0.38,
+                0.85,
                 6,
                 12
             ),
             new THREE.MeshStandardMaterial({
-                color
+                color:
+                    mujer
+                        ? 0xd68a9c
+                        : 0x5e86b7
             })
         );
 
-    cuerpo.position.y = 1.15;
+    cuerpo.position.y =
+        1;
+
+    cuerpo.castShadow =
+        true;
+
+    grupo.add(
+        cuerpo
+    );
 
     const cabeza =
         new THREE.Mesh(
             new THREE.SphereGeometry(
-                0.48,
+                0.4,
                 16,
                 12
             ),
             new THREE.MeshStandardMaterial({
-                color: 0xf3d1b5
+                color: 0xf2c6a8
             })
         );
 
-    cabeza.position.y = 2.1;
+    cabeza.position.y =
+        1.95;
+
+    cabeza.castShadow =
+        true;
 
     grupo.add(
-        cuerpo,
         cabeza
     );
 
     return grupo;
-}
-
+            }
 // ============================================================
-// HUEVO
-// ============================================================
-
-function crearHuevo() {
-
-    huevo =
-        crearHuevoResultadoFiel();
-
-    huevo.visible = false;
-
-    huevo.position.set(
-        0,
-        0.9,
-        -1
-    );
-
-    escena.add(huevo);
-}
-
-// ============================================================
-// HUEVO NOOB
-// AMARILLO / AZUL / VERDE
+// HUEVO NOOB — DISEÑO 3D
 // ============================================================
 
 function crearHuevoResultadoFiel() {
@@ -663,293 +895,195 @@ function crearHuevoResultadoFiel() {
     const grupo =
         new THREE.Group();
 
+    // --------------------------------------------------------
+    // MATERIAL DEL HUEVO
+    // --------------------------------------------------------
+
     const amarillo =
         new THREE.MeshStandardMaterial({
-            color: 0xffd21f,
-            roughness: 0.35
+            color: 0xf4d43c,
+            roughness: 0.65
         });
 
     const azul =
         new THREE.MeshStandardMaterial({
-            color: 0x168cf0,
-            roughness: 0.3
+            color: 0x2587d8,
+            roughness: 0.55
         });
 
     const verde =
         new THREE.MeshStandardMaterial({
-            color: 0x17b83a,
-            roughness: 0.35
+            color: 0x75a85b,
+            roughness: 0.7
         });
 
-    const borde =
+    const negro =
         new THREE.MeshStandardMaterial({
-            color: 0x18202a,
-            roughness: 0.35
+            color: 0x171717,
+            roughness: 0.55
         });
 
-    // Cada sección es una esfera recortada.
-    // Juntas forman un único huevo 3D.
+    // --------------------------------------------------------
+    // HUEVO BASE
+    // --------------------------------------------------------
 
-    crearSeccion(
-        0.48,
-        1.65,
-        amarillo
-    );
-
-    crearSeccion(
-        -0.48,
-        0.48,
-        azul
-    );
-
-    crearSeccion(
-        -1.65,
-        -0.48,
-        verde
-    );
-
-    function crearSeccion(
-        yMin,
-        yMax,
-        material
-    ) {
-
-        const vertices = [];
-        const indices = [];
-
-        const segmentos = 40;
-        const anillos = 12;
-
-        for (
-            let j = 0;
-            j <= anillos;
-            j++
-        ) {
-
-            const t =
-                j / anillos;
-
-            const y =
-                yMin +
-                (yMax - yMin) * t;
-
-            const normal =
-                y / 1.65;
-
-            let radio =
-                Math.sqrt(
-                    Math.max(
-                        0.08,
-                        1 - normal * normal
-                    )
-                );
-
-            radio *= 0.88;
-
-            for (
-                let i = 0;
-                i <= segmentos;
-                i++
-            ) {
-
-                const a =
-                    i /
-                    segmentos *
-                    Math.PI *
-                    2;
-
-                vertices.push(
-                    Math.cos(a) * radio,
-                    y,
-                    Math.sin(a) * radio
-                );
-            }
-        }
-
-        for (
-            let j = 0;
-            j < anillos;
-            j++
-        ) {
-
-            for (
-                let i = 0;
-                i < segmentos;
-                i++
-            ) {
-
-                const a =
-                    j *
-                    (segmentos + 1) +
-                    i;
-
-                const b = a + 1;
-                const c =
-                    a +
-                    segmentos +
-                    1;
-
-                const d = c + 1;
-
-                indices.push(
-                    a, c, b,
-                    b, c, d
-                );
-            }
-        }
-
-        const geometria =
-            new THREE.BufferGeometry();
-
-        geometria.setAttribute(
-            "position",
-            new THREE.Float32BufferAttribute(
-                vertices,
-                3
-            )
+    const geometria =
+        new THREE.SphereGeometry(
+            0.65,
+            32,
+            24
         );
 
-        geometria.setIndex(indices);
-        geometria.computeVertexNormals();
+    const huevoBase =
+        new THREE.Mesh(
+            geometria,
+            amarillo
+        );
 
-        const mesh =
-            new THREE.Mesh(
-                geometria,
-                material
-            );
+    huevoBase.scale.set(
+        0.9,
+        1.25,
+        0.9
+    );
 
-        mesh.castShadow = true;
+    huevoBase.position.y =
+        0.85;
 
-        grupo.add(mesh);
-    }
+    huevoBase.castShadow =
+        true;
 
-    crearAro(0.48);
-    crearAro(-0.48);
+    huevoBase.receiveShadow =
+        true;
 
-    function crearAro(y) {
+    grupo.add(
+        huevoBase
+    );
 
-        const aro =
-            new THREE.Mesh(
-                new THREE.TorusGeometry(
-                    0.79,
-                    0.04,
-                    8,
-                    40
-                ),
-                borde
-            );
+    // --------------------------------------------------------
+    // FRANJA AZUL
+    // --------------------------------------------------------
 
-        aro.rotation.x =
-            Math.PI / 2;
+    const franjaAzul =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.655,
+                32,
+                24,
+                0,
+                Math.PI * 2,
+                0.72,
+                0.58
+            ),
+            azul
+        );
 
-        aro.position.y = y;
+    franjaAzul.scale.set(
+        0.9,
+        1.25,
+        0.9
+    );
 
-        grupo.add(aro);
-    }
+    franjaAzul.position.y =
+        0.85;
+
+    franjaAzul.castShadow =
+        true;
+
+    grupo.add(
+        franjaAzul
+    );
+
+    // --------------------------------------------------------
+    // PARTE VERDE
+    // --------------------------------------------------------
+
+    const parteVerde =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.657,
+                32,
+                24,
+                0,
+                Math.PI * 2,
+                1.30,
+                0.55
+            ),
+            verde
+        );
+
+    parteVerde.scale.set(
+        0.9,
+        1.25,
+        0.9
+    );
+
+    parteVerde.position.y =
+        0.85;
+
+    parteVerde.castShadow =
+        true;
+
+    grupo.add(
+        parteVerde
+    );
+
+    // --------------------------------------------------------
+    // LÍNEAS OSCURAS ENTRE COLORES
+    // --------------------------------------------------------
+
+    const lineaSuperior =
+        new THREE.Mesh(
+            new THREE.TorusGeometry(
+                0.585,
+                0.025,
+                8,
+                32
+            ),
+            negro
+        );
+
+    lineaSuperior.rotation.x =
+        Math.PI / 2;
+
+    lineaSuperior.position.y =
+        1.15;
+
+    lineaSuperior.scale.x =
+        0.95;
+
+    grupo.add(
+        lineaSuperior
+    );
+
+    const lineaInferior =
+        new THREE.Mesh(
+            new THREE.TorusGeometry(
+                0.54,
+                0.025,
+                8,
+                32
+            ),
+            negro
+        );
+
+    lineaInferior.rotation.x =
+        Math.PI / 2;
+
+    lineaInferior.position.y =
+        0.55;
+
+    lineaInferior.scale.x =
+        0.95;
+
+    grupo.add(
+        lineaInferior
+    );
 
     return grupo;
 }
 
 // ============================================================
-// INTERFAZ
-// ============================================================
-
-function crearInterfazDialogo() {
-
-    const anterior =
-        document.getElementById(
-            "cinematicaUI"
-        );
-
-    if (anterior)
-        anterior.remove();
-
-    const capa =
-        document.createElement("div");
-
-    capa.id =
-        "cinematicaUI";
-
-    capa.style.cssText = `
-        position:fixed;
-        left:0;
-        right:0;
-        bottom:0;
-        z-index:50000;
-        padding:18px;
-        box-sizing:border-box;
-        pointer-events:none;
-        text-align:center;
-    `;
-
-    nombreElemento =
-        document.createElement("div");
-
-    nombreElemento.style.cssText = `
-        color:#ffe36b;
-        font-size:20px;
-        font-weight:bold;
-        margin-bottom:7px;
-        text-shadow:0 2px 5px #000;
-    `;
-
-    dialogoElemento =
-        document.createElement("div");
-
-    dialogoElemento.style.cssText = `
-        max-width:680px;
-        margin:auto;
-        padding:14px 20px;
-        border-radius:14px;
-        background:rgba(0,0,0,.68);
-        color:white;
-        font-size:19px;
-        font-family:Arial,sans-serif;
-        box-sizing:border-box;
-        text-shadow:0 1px 3px #000;
-    `;
-
-    capa.appendChild(
-        nombreElemento
-    );
-
-    capa.appendChild(
-        dialogoElemento
-    );
-
-    document.body.appendChild(capa);
-}
-
-// ============================================================
-// DIÁLOGO
-// ============================================================
-
-function mostrarDialogo(
-    nombre,
-    texto
-) {
-
-    if (!dialogoElemento)
-        return;
-
-    nombreElemento.textContent =
-        nombre;
-
-    dialogoElemento.textContent =
-        texto;
-}
-
-function ocultarDialogo() {
-
-    if (!dialogoElemento)
-        return;
-
-    nombreElemento.textContent = "";
-    dialogoElemento.textContent = "";
-}
-
-// ============================================================
-// RESULTADO
+// SORTEO 98 / 1 / 1
 // ============================================================
 
 function obtenerResultado() {
@@ -957,20 +1091,161 @@ function obtenerResultado() {
     const numero =
         Math.random() * 100;
 
-    if (numero < 98)
-        return "noob";
+    if (numero < 98) {
 
-    if (numero < 99)
+        return "noob";
+    }
+
+    if (numero < 99) {
+
         return "zombie";
+    }
 
     return "pollito";
 }
 
 // ============================================================
-// POLLO RESULTADO
+// DIÁLOGO
 // ============================================================
 
-function crearPolloResultado(tipo) {
+let dialogoUI = null;
+let dialogoNombre = null;
+let dialogoTexto = null;
+
+function crearDialogo() {
+
+    dialogoUI =
+        document.createElement(
+            "div"
+        );
+
+    dialogoUI.id =
+        "cinematicaUI";
+
+    dialogoUI.style.position =
+        "fixed";
+
+    dialogoUI.style.left =
+        "50%";
+
+    dialogoUI.style.bottom =
+        "5%";
+
+    dialogoUI.style.transform =
+        "translateX(-50%)";
+
+    dialogoUI.style.width =
+        "min(90%, 720px)";
+
+    dialogoUI.style.padding =
+        "18px 22px";
+
+    dialogoUI.style.boxSizing =
+        "border-box";
+
+    dialogoUI.style.borderRadius =
+        "18px";
+
+    dialogoUI.style.background =
+        "rgba(0,0,0,0.72)";
+
+    dialogoUI.style.border =
+        "2px solid rgba(255,255,255,0.18)";
+
+    dialogoUI.style.color =
+        "white";
+
+    dialogoUI.style.fontFamily =
+        "Arial, sans-serif";
+
+    dialogoUI.style.zIndex =
+        "2000";
+
+    dialogoUI.style.backdropFilter =
+        "blur(5px)";
+
+    dialogoNombre =
+        document.createElement(
+            "div"
+        );
+
+    dialogoNombre.style.fontSize =
+        "18px";
+
+    dialogoNombre.style.fontWeight =
+        "bold";
+
+    dialogoNombre.style.marginBottom =
+        "7px";
+
+    dialogoTexto =
+        document.createElement(
+            "div"
+        );
+
+    dialogoTexto.style.fontSize =
+        "22px";
+
+    dialogoTexto.style.lineHeight =
+        "1.35";
+
+    dialogoUI.appendChild(
+        dialogoNombre
+    );
+
+    dialogoUI.appendChild(
+        dialogoTexto
+    );
+
+    document.body.appendChild(
+        dialogoUI
+    );
+
+    ocultarDialogo();
+}
+
+// ============================================================
+// MOSTRAR DIÁLOGO
+// ============================================================
+
+function mostrarDialogo(
+    nombre,
+    texto
+) {
+
+    if (!dialogoUI)
+        return;
+
+    dialogoUI.style.display =
+        "block";
+
+    dialogoNombre.textContent =
+        nombre || "";
+
+    dialogoTexto.textContent =
+        texto || "";
+}
+
+// ============================================================
+// OCULTAR DIÁLOGO
+// ============================================================
+
+function ocultarDialogo() {
+
+    if (!dialogoUI)
+        return;
+
+    dialogoUI.style.display =
+        "none";
+}
+
+// ============================================================
+// CREAR POLLO RESULTADO
+// ============================================================
+
+function crearPolloResultado(
+    tipo
+) {
 
     const grupo =
         new THREE.Group();
@@ -978,94 +1253,712 @@ function crearPolloResultado(tipo) {
     const esZombie =
         tipo === "zombie";
 
-    const cuerpoColor =
+    const esPollito =
+        tipo === "pollito";
+
+    const colorCuerpo =
         esZombie
-            ? 0x70a35c
-            : 0xf5ca35;
+            ? 0x6fa05b
+            : 0xf4ca32;
 
-    const materialCuerpo =
+    const cuerpoMaterial =
         new THREE.MeshStandardMaterial({
-            color: cuerpoColor,
-            roughness: 0.7
+            color:
+                colorCuerpo,
+            roughness:
+                0.7
         });
 
-    const materialNaranja =
+    const picoMaterial =
         new THREE.MeshStandardMaterial({
-            color: 0xff921f
+            color:
+                0xff8b19,
+            roughness:
+                0.6
         });
 
+    const patasMaterial =
+        new THREE.MeshStandardMaterial({
+            color:
+                0xe18b20,
+            roughness:
+                0.65
+        });
+
+    const negroMaterial =
+        new THREE.MeshStandardMaterial({
+            color:
+                0x111111
+        });
+
+    const blancoMaterial =
+        new THREE.MeshStandardMaterial({
+            color:
+                0xffffff
+        });
+
+    const amarilloMaterial =
+        new THREE.MeshStandardMaterial({
+            color:
+                0xffd21f
+        });
+
+    const azulMaterial =
+        new THREE.MeshStandardMaterial({
+            color:
+                0x168cf0
+        });
+
+    // --------------------------------------------------------
+    // ESCALA
+    // --------------------------------------------------------
+
+    grupo.scale.setScalar(
+        esPollito
+            ? 0.72
+            : 1
+    );
+
+    // --------------------------------------------------------
+    // CUERPO
+    // --------------------------------------------------------
+
+    const cuerpo =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                esPollito
+                    ? 0.72
+                    : 0.9,
+                24,
+                18
+            ),
+            cuerpoMaterial
+        );
+
+    cuerpo.scale.set(
+        1,
+        esPollito
+            ? 0.9
+            : 1.05,
+        0.9
+    );
+
+    cuerpo.position.y =
+        esPollito
+            ? 0.95
+            : 1.05;
+
+    cuerpo.castShadow =
+        true;
+
+    grupo.add(
+        cuerpo
+    );
+
+    // --------------------------------------------------------
+    // CABEZA
+    // --------------------------------------------------------
+
+    const cabeza =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                esPollito
+                    ? 0.68
+                    : 0.78,
+                24,
+                18
+            ),
+            cuerpoMaterial
+        );
+
+    cabeza.position.set(
+        0,
+        esPollito
+            ? 1.72
+            : 1.9,
+        0
+    );
+
+    cabeza.castShadow =
+        true;
+
+    grupo.add(
+        cabeza
+    );
+
+    // --------------------------------------------------------
+    // OJOS
+    // --------------------------------------------------------
+
+    const tamañoOjo =
+        esPollito
+            ? 0.18
+            : 0.13;
+
+    function crearOjo(
+        x
+    ) {
+
+        const blanco =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    tamañoOjo * 1.35,
+                    16,
+                    12
+                ),
+                blancoMaterial
+            );
+
+        blanco.position.set(
+            x,
+            cabeza.position.y +
+                0.08,
+            -0.62
+        );
+
+        grupo.add(
+            blanco
+        );
+
+        const pupila =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    tamañoOjo * 0.65,
+                    12,
+                    10
+                ),
+                negroMaterial
+            );
+
+        pupila.position.set(
+            x,
+            cabeza.position.y +
+                0.08,
+            -0.75
+        );
+
+        grupo.add(
+            pupila
+        );
+    }
+
+    crearOjo(-0.25);
+    crearOjo(0.25);
+
+    // --------------------------------------------------------
+    // PICO
+    // --------------------------------------------------------
+
+    const pico =
+        new THREE.Mesh(
+            new THREE.ConeGeometry(
+                esPollito
+                    ? 0.18
+                    : 0.16,
+                esPollito
+                    ? 0.42
+                    : 0.34,
+                4
+            ),
+            picoMaterial
+        );
+
+    pico.rotation.x =
+        Math.PI / 2;
+
+    pico.position.set(
+        0,
+        cabeza.position.y -
+            0.12,
+        -0.82
+    );
+
+    grupo.add(
+        pico
+    );
+
+    // --------------------------------------------------------
+    // CRESTA
+    // --------------------------------------------------------
+
+    const crestaMaterial =
+        new THREE.MeshStandardMaterial({
+            color:
+                esZombie
+                    ? 0x913b3b
+                    : 0xe53e3e
+        });
+
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
+
+        const cresta =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.16,
+                    12,
+                    8
+                ),
+                crestaMaterial
+            );
+
+        cresta.position.set(
+            (i - 1) * 0.18,
+            cabeza.position.y +
+                0.65,
+            0
+        );
+
+        cresta.scale.y =
+            1.35;
+
+        grupo.add(
+            cresta
+        );
+    }
+
+    // --------------------------------------------------------
+    // ALAS
+    // --------------------------------------------------------
+
+    function crearAla(
+        x
+    ) {
+
+        const ala =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    esPollito
+                        ? 0.3
+                        : 0.38,
+                    16,
+                    12
+                ),
+                cuerpoMaterial
+            );
+
+        ala.scale.set(
+            0.55,
+            1,
+            0.35
+        );
+
+        ala.position.set(
+            x,
+            esPollito
+                ? 0.95
+                : 1.05,
+            -0.02
+        );
+
+        ala.rotation.z =
+            x < 0
+                ? 0.25
+                : -0.25;
+
+        ala.castShadow =
+            true;
+
+        grupo.add(
+            ala
+        );
+    }
+
+    crearAla(-0.78);
+    crearAla(0.78);
+
+    // --------------------------------------------------------
+    // PATAS
+    // --------------------------------------------------------
+
+    function crearPata(
+        x
+    ) {
+
+        const pata =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    0.055,
+                    0.075,
+                    esPollito
+                        ? 0.35
+                        : 0.48,
+                    8
+                ),
+                patasMaterial
+            );
+
+        pata.position.set(
+            x,
+            esPollito
+                ? 0.25
+                : 0.35,
+            -0.03
+        );
+
+        pata.castShadow =
+            true;
+
+        grupo.add(
+            pata
+        );
+
+        const pie =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.11,
+                    10,
+                    8
+                ),
+                patasMaterial
+            );
+
+        pie.scale.set(
+            1.25,
+            0.45,
+            1.8
+        );
+
+        pie.position.set(
+            x,
+            esPollito
+                ? 0.08
+                : 0.09,
+            -0.16
+        );
+
+        grupo.add(
+            pie
+        );
+    }
+
+    crearPata(-0.28);
+    crearPata(0.28);
+
+    // --------------------------------------------------------
+    // COLA
+    // --------------------------------------------------------
+
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
+
+        const pluma =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.25,
+                    12,
+                    8
+                ),
+                cuerpoMaterial
+            );
+
+        pluma.scale.set(
+            0.65,
+            1.25,
+            0.55
+        );
+
+        pluma.position.set(
+            (i - 1) * 0.22,
+            esPollito
+                ? 1
+                : 1.15,
+            0.78
+        );
+
+        pluma.rotation.x =
+            -0.45;
+
+        grupo.add(
+            pluma
+        );
+    }
+
+    // --------------------------------------------------------
+    // GORRA
+    // --------------------------------------------------------
+
+    const gorra =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                esPollito
+                    ? 0.72
+                    : 0.8,
+                esPollito
+                    ? 0.82
+                    : 0.9,
+                0.28,
+                24
+            ),
+            amarilloMaterial
+        );
+
+    gorra.position.set(
+        0,
+        cabeza.position.y +
+            0.65,
+        0
+    );
+
+    gorra.castShadow =
+        true;
+
+    grupo.add(
+        gorra
+    );
+
+    // --------------------------------------------------------
+    // VISERA
+    // --------------------------------------------------------
+
+    const visera =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.42,
+                16,
+                8
+            ),
+            amarilloMaterial
+        );
+
+    visera.scale.set(
+        1.35,
+        0.3,
+        0.7
+    );
+
+    visera.position.set(
+        0,
+        cabeza.position.y +
+            0.55,
+        -0.48
+    );
+
+    grupo.add(
+        visera
+    );
+
+    // --------------------------------------------------------
+    // N AZUL
+    // --------------------------------------------------------
+
+    const letraN =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                esPollito
+                    ? 0.25
+                    : 0.22,
+                esPollito
+                    ? 0.34
+                    : 0.3,
+                0.045
+            ),
+            azulMaterial
+        );
+
+    letraN.position.set(
+        0,
+        cabeza.position.y +
+            0.72,
+        -0.79
+    );
+
+    grupo.add(
+        letraN
+    );
+
+    // --------------------------------------------------------
+    // MANCHAS ZOMBIE
+    // --------------------------------------------------------
+
+    if (esZombie) {
+
+        const materialMancha =
+            new THREE.MeshStandardMaterial({
+                color:
+                    0x405a38
+            });
+
+        const manchas = [
+            [-0.42, 1.35, -0.78, 0.2],
+            [0.4, 1.05, -0.77, 0.16],
+            [-0.25, 2.1, -0.7, 0.13]
+        ];
+
+        for (
+            const m of manchas
+        ) {
+
+            const mancha =
+                new THREE.Mesh(
+                    new THREE.SphereGeometry(
+                        m[3],
+                        12,
+                        8
+                    ),
+                    materialMancha
+                );
+
+            mancha.position.set(
+                m[0],
+                m[1],
+                m[2]
+            );
+
+            mancha.scale.z =
+                0.25;
+
+            grupo.add(
+                mancha
+            );
+        }
+    }
+
+    // --------------------------------------------------------
+    // ESTRELLA DEL POLLITO
+    // --------------------------------------------------------
+
+    if (esPollito) {
+
+        const estrella =
+            new THREE.Mesh(
+                new THREE.CircleGeometry(
+                    0.16,
+                    5
+                ),
+                new THREE.MeshStandardMaterial({
+                    color:
+                        0xffe45c,
+                    side:
+                        THREE.DoubleSide
+                })
+            );
+
+        estrella.position.set(
+            0,
+            0.98,
+            -0.66
+        );
+
+        estrella.rotation.x =
+            -Math.PI / 2;
+
+        grupo.add(
+            estrella
+        );
+    }
+
+    return grupo;
+}
 // ============================================================
 // ANIMACIÓN PRINCIPAL
 // ============================================================
 
 function animar() {
 
-    requestAnimationFrame(animar);
-
-    const delta = reloj.getDelta();
-
-    actualizarAmbiente(delta);
-    actualizarCinematica(delta);
-
-    renderer.render(
-        escena,
-        camara
+    requestAnimationFrame(
+        animar
     );
+
+    const delta =
+        reloj.getDelta();
+
+    tiempoFase += delta;
+
+    actualizarAmbiente(
+        delta
+    );
+
+    actualizarCinematica(
+        delta
+    );
+
+    if (
+        renderer &&
+        escena &&
+        camara
+    ) {
+
+        renderer.render(
+            escena,
+            camara
+        );
+    }
 }
 
 // ============================================================
 // AMBIENTE VIVO
 // ============================================================
 
-function actualizarAmbiente(delta) {
+function actualizarAmbiente(
+    delta
+) {
 
     const t =
-        performance.now() * 0.001;
+        performance.now() *
+        0.001;
 
     // --------------------------------------------------------
-    // HIERBA CON VIENTO
+    // HIERBA
     // --------------------------------------------------------
 
-    for (const p of pastos) {
+    for (
+        const p of pastos
+    ) {
 
         p.objeto.rotation.z =
             Math.sin(
                 t * 1.3 +
                 p.fase
-            ) * p.fuerza;
+            ) *
+            p.fuerza;
     }
 
     // --------------------------------------------------------
-    // COPAS DE LOS ÁRBOLES
+    // COPAS DE ÁRBOLES
     // --------------------------------------------------------
 
-    for (const h of hojas) {
+    for (
+        const h of hojas
+    ) {
 
         h.objeto.rotation.z =
             Math.sin(
                 t * 0.45 +
                 h.fase
-            ) * 0.025;
+            ) *
+            0.025;
     }
 
     // --------------------------------------------------------
-    // PARTÍCULAS FLOTANDO
+    // PARTÍCULAS
     // --------------------------------------------------------
 
-    for (const p of particulas) {
+    for (
+        const p of particulas
+    ) {
 
         p.objeto.position.y +=
-            delta * p.velocidad;
+            delta *
+            p.velocidad;
 
         p.objeto.position.x +=
             Math.sin(
-                t + p.fase
+                t +
+                p.fase
             ) *
             delta *
             0.12;
 
         if (
-            p.objeto.position.y > 7
+            p.objeto.position.y >
+            7
         ) {
 
             p.objeto.position.y =
@@ -1074,33 +1967,42 @@ function actualizarAmbiente(delta) {
     }
 
     // --------------------------------------------------------
-    // PEQUEÑA RESPIRACIÓN
+    // MOVIMIENTO SUTIL DE PERSONAJES
     // --------------------------------------------------------
 
     if (mike) {
 
-        mike.position.y =
-            Math.sin(t * 1.5) *
+        mike.rotation.y =
+            0.15 +
+            Math.sin(
+                t * 0.7
+            ) *
             0.015;
     }
 
     if (micaela) {
 
-        micaela.position.y =
-            Math.sin(t * 1.5 + 1) *
+        micaela.rotation.y =
+            -0.15 +
+            Math.sin(
+                t * 0.7 +
+                1
+            ) *
             0.015;
     }
 }
 
 // ============================================================
-// CINEMÁTICA
+// ACTUALIZAR CINEMÁTICA
 // ============================================================
 
-function actualizarCinematica(delta) {
+function actualizarCinematica(
+    delta
+) {
 
-    // --------------------------------------------------------
-    // FASE 0 — DESPERTAR
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 0 — LLEGADA
+    // ========================================================
 
     if (fase === 0) {
 
@@ -1108,10 +2010,15 @@ function actualizarCinematica(delta) {
 
         camara.position.x =
             Math.sin(
-                tiempoFase * 0.2
-            ) * 0.4;
+                tiempoFase *
+                0.2
+            ) *
+            0.4;
 
-        if (tiempoFase > 1.8) {
+        if (
+            tiempoFase >
+            1.8
+        ) {
 
             fase = 1;
             tiempoFase = 0;
@@ -1120,9 +2027,9 @@ function actualizarCinematica(delta) {
         return;
     }
 
-    // --------------------------------------------------------
-    // FASE 1 — ¿DÓNDE ESTAMOS?
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 1 — MICAELA
+    // ========================================================
 
     if (fase === 1) {
 
@@ -1133,7 +2040,10 @@ function actualizarCinematica(delta) {
             "¿Dónde estamos?"
         );
 
-        if (tiempoFase > 3) {
+        if (
+            tiempoFase >
+            3
+        ) {
 
             fase = 2;
             tiempoFase = 0;
@@ -1142,9 +2052,9 @@ function actualizarCinematica(delta) {
         return;
     }
 
-    // --------------------------------------------------------
-    // FASE 2 — NO SÉ
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 2 — MIKE
+    // ========================================================
 
     if (fase === 2) {
 
@@ -1155,7 +2065,10 @@ function actualizarCinematica(delta) {
             "No sé... pero se ve algo a lo lejos."
         );
 
-        if (tiempoFase > 3.5) {
+        if (
+            tiempoFase >
+            3.5
+        ) {
 
             fase = 3;
             tiempoFase = 0;
@@ -1164,19 +2077,23 @@ function actualizarCinematica(delta) {
         return;
     }
 
-    // --------------------------------------------------------
-    // FASE 3 — SONIDO
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 3 — SE ESCUCHA ALGO
+    // ========================================================
 
     if (fase === 3) {
 
         ocultarDialogo();
 
         camara.position.z =
-            14 -
-            tiempoFase * 0.7;
+            13 -
+            tiempoFase *
+            0.7;
 
-        if (tiempoFase > 2.5) {
+        if (
+            tiempoFase >
+            2.5
+        ) {
 
             fase = 4;
             tiempoFase = 0;
@@ -1185,9 +2102,9 @@ function actualizarCinematica(delta) {
         return;
     }
 
-    // --------------------------------------------------------
-    // FASE 4 — ¿QUÉ ES ESE SONIDO?
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 4 — MICAELA PREGUNTA
+    // ========================================================
 
     if (fase === 4) {
 
@@ -1196,7 +2113,10 @@ function actualizarCinematica(delta) {
             "¿Qué es ese sonido?"
         );
 
-        if (tiempoFase > 3) {
+        if (
+            tiempoFase >
+            3
+        ) {
 
             fase = 5;
             tiempoFase = 0;
@@ -1205,9 +2125,9 @@ function actualizarCinematica(delta) {
         return;
     }
 
-    // --------------------------------------------------------
-    // FASE 5 — PARECE UN POLLO
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 5 — MIKE IDENTIFICA EL SONIDO
+    // ========================================================
 
     if (fase === 5) {
 
@@ -1216,7 +2136,10 @@ function actualizarCinematica(delta) {
             "Parece un pollo..."
         );
 
-        if (tiempoFase > 3) {
+        if (
+            tiempoFase >
+            3
+        ) {
 
             fase = 6;
             tiempoFase = 0;
@@ -1225,9 +2148,9 @@ function actualizarCinematica(delta) {
         return;
     }
 
-    // --------------------------------------------------------
-    // FASE 6 — EL HUEVO
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 6 — ENCUENTRAN EL HUEVO
+    // ========================================================
 
     if (fase === 6) {
 
@@ -1236,15 +2159,24 @@ function actualizarCinematica(delta) {
             "¡Mira! ¡Un huevo!"
         );
 
-        huevo.visible = true;
+        if (huevo) {
 
-        huevo.position.y =
-            1.1 +
-            Math.sin(
-                tiempoFase * 2
-            ) * 0.05;
+            huevo.visible =
+                true;
 
-        if (tiempoFase > 2.5) {
+            huevo.position.y =
+                1.1 +
+                Math.sin(
+                    tiempoFase *
+                    2
+                ) *
+                0.05;
+        }
+
+        if (
+            tiempoFase >
+            2.5
+        ) {
 
             fase = 7;
             tiempoFase = 0;
@@ -1253,52 +2185,68 @@ function actualizarCinematica(delta) {
         return;
     }
 
-    // --------------------------------------------------------
-    // FASE 7 — CAÍDA DEL HUEVO
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 7 — CAE EL HUEVO
+    // ========================================================
 
     if (fase === 7) {
 
         ocultarDialogo();
 
-        huevo.visible = true;
+        if (huevo) {
 
-        huevo.position.y =
-            3 -
-            tiempoFase * 1.3;
-
-        huevo.rotation.y +=
-            delta * 5;
-
-        if (
-            huevo.position.y <= 0.9
-        ) {
+            huevo.visible =
+                true;
 
             huevo.position.y =
-                0.9;
+                3 -
+                tiempoFase *
+                1.3;
 
-            fase = 8;
-            tiempoFase = 0;
+            huevo.rotation.y +=
+                delta *
+                5;
+
+            if (
+                huevo.position.y <=
+                0.9
+            ) {
+
+                huevo.position.y =
+                    0.9;
+
+                fase = 8;
+                tiempoFase = 0;
+            }
         }
 
         return;
     }
 
-    // --------------------------------------------------------
-    // FASE 8 — GIRO DEL HUEVO
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 8 — HUEVO GIRANDO
+    // ========================================================
 
     if (fase === 8) {
 
-        huevo.rotation.y +=
-            delta * 7;
+        if (huevo) {
 
-        huevo.rotation.z =
-            Math.sin(
-                tiempoFase * 8
-            ) * 0.12;
+            huevo.rotation.y +=
+                delta *
+                7;
 
-        if (tiempoFase > 2.2) {
+            huevo.rotation.z =
+                Math.sin(
+                    tiempoFase *
+                    8
+                ) *
+                0.12;
+        }
+
+        if (
+            tiempoFase >
+            2.2
+        ) {
 
             mostrarResultado();
 
@@ -1309,25 +2257,33 @@ function actualizarCinematica(delta) {
         return;
     }
 
-    // --------------------------------------------------------
-    // FASE 9 — APARECE EL POLLO
-    // --------------------------------------------------------
+    // ========================================================
+    // FASE 9 — POLLO RESULTADO
+    // ========================================================
 
     if (fase === 9) {
 
-        if (polloResultado) {
+        if (
+            polloResultado
+        ) {
 
             polloResultado.rotation.y +=
-                delta * 0.7;
+                delta *
+                0.7;
 
             polloResultado.position.y =
-                0.7 +
+                0.1 +
                 Math.sin(
-                    tiempoFase * 3
-                ) * 0.08;
+                    tiempoFase *
+                    3
+                ) *
+                0.08;
         }
 
-        if (tiempoFase > 4) {
+        if (
+            tiempoFase >
+            4
+        ) {
 
             fase = 10;
             tiempoFase = 0;
@@ -1336,20 +2292,28 @@ function actualizarCinematica(delta) {
         return;
     }
 
-    // --------------------------------------------------------
+    // ========================================================
     // FASE 10 — FINAL
-    // --------------------------------------------------------
+    // ========================================================
 
     if (fase === 10) {
 
-        mostrarDialogo(
-            "",
-            "..."
-        );
+        if (
+            polloResultado
+        ) {
 
-        if (tiempoFase > 1.5) {
+            polloResultado.rotation.y +=
+                delta *
+                0.3;
+        }
 
-            terminada = true;
+        if (
+            tiempoFase >
+            1.5
+        ) {
+
+            terminada =
+                true;
         }
     }
 }
@@ -1360,26 +2324,38 @@ function actualizarCinematica(delta) {
 
 function mostrarResultado() {
 
-    if (polloResultado) {
+    if (
+        polloResultado
+    ) {
 
         escena.remove(
             polloResultado
         );
 
-        polloResultado = null;
+        polloResultado =
+            null;
     }
+
+    // --------------------------------------------------------
+    // SORTEO REAL 98 / 1 / 1
+    // --------------------------------------------------------
 
     const resultado =
         obtenerResultado();
 
-    // Ocultar huevo
+    // --------------------------------------------------------
+    // OCULTAR HUEVO
+    // --------------------------------------------------------
 
     if (huevo) {
 
-        huevo.visible = false;
+        huevo.visible =
+            false;
     }
 
-// Crear pollo
+    // --------------------------------------------------------
+    // CREAR POLLO
+    // --------------------------------------------------------
 
     polloResultado =
         crearPolloResultado(
@@ -1395,21 +2371,21 @@ function mostrarResultado() {
     escena.add(
         polloResultado
     );
-
-    mostrarDialogo(
-        "",
-        "..."
-    );
 }
 
 // ============================================================
-// MIRAR HACIA EL CENTRO
+// MIRAR HACIA EL HUEVO
 // ============================================================
 
 function mirarPersonajes() {
 
-    if (!mike || !micaela)
+    if (
+        !mike ||
+        !micaela
+    ) {
+
         return;
+    }
 
     mike.lookAt(
         0,
@@ -1425,13 +2401,18 @@ function mirarPersonajes() {
 }
 
 // ============================================================
-// REDIMENSIONAR
+// AJUSTAR PANTALLA
 // ============================================================
 
 function ajustarPantalla() {
 
-    if (!camara || !renderer)
+    if (
+        !camara ||
+        !renderer
+    ) {
+
         return;
+    }
 
     camara.aspect =
         window.innerWidth /
@@ -1460,7 +2441,11 @@ export function cinematicaTerminada() {
 
 export function detenerCinematica() {
 
-    terminada = true;
+    terminada =
+        true;
+
+    cinematicaActiva =
+        false;
 
     window.removeEventListener(
         "resize",
@@ -1468,21 +2453,25 @@ export function detenerCinematica() {
     );
 
     // --------------------------------------------------------
-    // ELIMINAR INTERFAZ
+    // ELIMINAR DIÁLOGO
     // --------------------------------------------------------
 
-    const ui =
-        document.getElementById(
-            "cinematicaUI"
-        );
+    if (dialogoUI) {
 
-    if (ui) {
+        dialogoUI.remove();
 
-        ui.remove();
+        dialogoUI =
+            null;
+
+        dialogoNombre =
+            null;
+
+        dialogoTexto =
+            null;
     }
 
     // --------------------------------------------------------
-    // LIMPIAR RENDERER
+    // ELIMINAR RENDERER
     // --------------------------------------------------------
 
     if (renderer) {
@@ -1500,7 +2489,28 @@ export function detenerCinematica() {
         }
     }
 
-    renderer = null;
-    escena = null;
-    camara = null;
-}
+    // --------------------------------------------------------
+    // LIMPIAR REFERENCIAS
+    // --------------------------------------------------------
+
+    renderer =
+        null;
+
+    escena =
+        null;
+
+    camara =
+        null;
+
+    mike =
+        null;
+
+    micaela =
+        null;
+
+    huevo =
+        null;
+
+    polloResultado =
+        null;
+                                               }
