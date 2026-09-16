@@ -1,7 +1,7 @@
 // ============================================================
 // GAMERPRO GAME
 // escenaCinematica.js
-// CINEMÁTICA HUEVO NOOB
+// CINEMÁTICA HUEVO NOOB - VERSIÓN CORREGIDA
 // ============================================================
 
 import * as THREE from "three";
@@ -13,7 +13,6 @@ import {
 import {
     abrirHuevo
 } from "../probabilidades.js";
-
 
 // ============================================================
 // ESTADO
@@ -35,7 +34,6 @@ let fase = 0;
 let tiempoFase = 0;
 let tiempoTotal = 0;
 
-
 // ============================================================
 // PERSONAJES
 // ============================================================
@@ -46,7 +44,6 @@ let micaela = null;
 let mikeHuesos = {};
 let micaelaHuesos = {};
 
-
 // ============================================================
 // POLLOS
 // ============================================================
@@ -56,7 +53,7 @@ let polloZombie = null;
 let polloNoobEspecial = null;
 
 let resultadoReal = null;
-
+let resultadoMostrado = false;
 
 // ============================================================
 // HUEVO
@@ -64,7 +61,6 @@ let resultadoReal = null;
 
 let huevo = null;
 let huevoBrillo = null;
-
 
 // ============================================================
 // DIÁLOGO
@@ -76,15 +72,12 @@ let textoDialogo = null;
 
 let dialogoActual = -1;
 
-
 // ============================================================
 // CARGADORES
 // ============================================================
 
 const gltfLoader = new GLTFLoader();
-
 const textureLoader = new THREE.TextureLoader();
-
 
 // ============================================================
 // ARCHIVOS
@@ -109,16 +102,15 @@ const ARCHIVOS = {
 
 };
 
-
 // ============================================================
 // CONFIGURACIÓN
 // ============================================================
 
 const CONFIG = {
 
-    velocidadMike: 2.8,
+    velocidadMike: 3.8,
 
-    velocidadMicaela: 2.8,
+    velocidadMicaela: 3.8,
 
     velocidadPasos: 12,
 
@@ -130,23 +122,50 @@ const CONFIG = {
 
     duracionIntro: 2.5,
 
+    duracionHuevo: 3,
+
+    duracionApertura: 1.8,
+
     duracionSeleccion: 4.5,
 
     duracionResultado: 4
 
 };
 
+// ============================================================
+// ROTACIÓN DE PERSONAJES
+// ============================================================
+
+// Los personajes avanzan hacia -Z.
+// Si el modelo tiene el frente apuntando hacia +Z,
+// esta rotación hace que miren correctamente hacia el huevo.
+
+const ROTACION_PERSONAJES =
+    Math.PI;
 
 // ============================================================
 // RESULTADO
 // ============================================================
 
-export function establecerResultadoCinematica(resultado) {
+export function establecerResultadoCinematica(
+    resultado
+) {
 
-    resultadoReal = resultado;
+    if (
+        resultado === "noob" ||
+        resultado === "zombie" ||
+        resultado === "pollito_noob"
+    ) {
+
+        resultadoReal = resultado;
+
+    }
 
 }
 
+// ============================================================
+// ESTADO FINAL
+// ============================================================
 
 export function cinematicaTerminada() {
 
@@ -154,1299 +173,112 @@ export function cinematicaTerminada() {
 
 }
 // ============================================================
-// ESCENA
+// CONTINUACIÓN - DETALLES DE POLLOS
 // ============================================================
 
-function crearEscena() {
-
-    escena = new THREE.Scene();
-
-    escena.background = new THREE.Color(0x07140b);
-
-    escena.fog = new THREE.FogExp2(
-        0x07140b,
-        0.025
-    );
-
-
-    // --------------------------------------------------------
-    // CÁMARA
-    // --------------------------------------------------------
-
-    camara = new THREE.PerspectiveCamera(
-        55,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        100
-    );
-
-    camara.position.set(
-        0,
-        CONFIG.alturaCamara,
-        CONFIG.distanciaCamara
-    );
-
-    camara.lookAt(
-        0,
-        1.2,
-        0
-    );
-
-
-    // --------------------------------------------------------
-    // RENDER
-    // --------------------------------------------------------
-
-    renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: false
-    });
-
-    renderer.setPixelRatio(
-        Math.min(window.devicePixelRatio, 1.5)
-    );
-
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
-    );
-
-    renderer.outputColorSpace =
-        THREE.SRGBColorSpace;
-
-
-    contenedorJuego =
-        contenedorJuego || document.body;
-
-    contenedorJuego.appendChild(
-        renderer.domElement
-    );
-
-
-    // --------------------------------------------------------
-    // LUCES
-    // --------------------------------------------------------
-
-    const luzAmbiente =
-        new THREE.HemisphereLight(
-            0xb9d8ff,
-            0x19351c,
-            2.2
-        );
-
-    escena.add(luzAmbiente);
-
-
-    const luzSol =
-        new THREE.DirectionalLight(
-            0xffffff,
-            2.4
-        );
-
-    luzSol.position.set(
-        -5,
-        12,
-        7
-    );
-
-    escena.add(luzSol);
-
-
-    const luzBosque =
-        new THREE.PointLight(
-            0x6fbf72,
-            2,
-            25
-        );
-
-    luzBosque.position.set(
-        0,
-        3,
-        0
-    );
-
-    escena.add(luzBosque);
-
-
-    // --------------------------------------------------------
-    // SUELO
-    // --------------------------------------------------------
-
-    crearBosque();
-
-
-    // --------------------------------------------------------
-    // EVENTO REDIMENSIONAR
-    // --------------------------------------------------------
-
-    window.addEventListener(
-        "resize",
-        redimensionarCinematica
-    );
-}
-// ============================================================
-// BOSQUE
-// ============================================================
-
-function crearBosque() {
-
-    const sueloGeo =
-        new THREE.CircleGeometry(
-            35,
-            64
-        );
-
-    const sueloMat =
-        new THREE.MeshStandardMaterial({
-            color: 0x183b20,
-            roughness: 1
-        });
-
-    const suelo =
-        new THREE.Mesh(
-            sueloGeo,
-            sueloMat
-        );
-
-    suelo.rotation.x =
-        -Math.PI / 2;
-
-    suelo.position.y = -0.03;
-
-    escena.add(suelo);
-
-
-    // --------------------------------------------------------
-    // PINOS
-    // --------------------------------------------------------
-
-    for (let i = 0; i < 85; i++) {
-
-        const angulo =
-            Math.random() * Math.PI * 2;
-
-        const distancia =
-            7 + Math.random() * 22;
-
-        const x =
-            Math.cos(angulo) * distancia;
-
-        const z =
-            Math.sin(angulo) * distancia;
-
-
-        // dejamos libre el camino
-        if (
-            Math.abs(x) < 5 &&
-            z > -3 &&
-            z < 14
-        ) {
-            continue;
-        }
-
-
-        crearPino(
-            x,
-            z,
-            0.7 + Math.random() * 0.9
-        );
-    }
-
-
-    // --------------------------------------------------------
-    // HIERBA
-    // --------------------------------------------------------
-
-    for (let i = 0; i < 140; i++) {
-
-        const x =
-            (Math.random() - 0.5) * 55;
-
-        const z =
-            (Math.random() - 0.5) * 50;
-
-        crearHierba(x, z);
-    }
-
-
-    // --------------------------------------------------------
-    // ROCAS
-    // --------------------------------------------------------
-
-    for (let i = 0; i < 35; i++) {
-
-        const x =
-            (Math.random() - 0.5) * 45;
-
-        const z =
-            (Math.random() - 0.5) * 40;
-
-        crearRoca(x, z);
-    }
-}
-
-
-// ============================================================
-// PINO
-// ============================================================
-
-function crearPino(x, z, escala) {
-
-    const grupo =
-        new THREE.Group();
-
-
-    const tronco =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.18,
-                0.28,
-                2.2,
-                7
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x54351f
-            })
-        );
-
-    tronco.position.y = 1.1;
-
-    grupo.add(tronco);
-
-
-    const materialHojas =
-        new THREE.MeshStandardMaterial({
-            color: 0x174c2a
-        });
-
-
-    for (let i = 0; i < 3; i++) {
-
-        const hojas =
-            new THREE.Mesh(
-                new THREE.ConeGeometry(
-                    1.25 - i * 0.15,
-                    2.2,
-                    8
-                ),
-                materialHojas
-            );
-
-        hojas.position.y =
-            2.1 + i * 0.9;
-
-        grupo.add(hojas);
-    }
-
-
-    grupo.position.set(
-        x,
-        0,
-        z
-    );
-
-    grupo.scale.setScalar(
-        escala
-    );
-
-    escena.add(grupo);
-}
-
-
-// ============================================================
-// HIERBA
-// ============================================================
-
-function crearHierba(x, z) {
-
-    const geo =
-        new THREE.ConeGeometry(
-            0.035,
-            0.45 + Math.random() * 0.35,
-            4
-        );
-
-    const mat =
-        new THREE.MeshStandardMaterial({
-            color: 0x397343
-        });
-
-    const hierba =
-        new THREE.Mesh(
-            geo,
-            mat
-        );
-
-    hierba.position.set(
-        x,
-        0.2,
-        z
-    );
-
-    escena.add(hierba);
-}
-
-
-// ============================================================
-// ROCA
-// ============================================================
-
-function crearRoca(x, z) {
-
-    const roca =
-        new THREE.Mesh(
-            new THREE.DodecahedronGeometry(
-                0.25 + Math.random() * 0.35
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x4d594f
-            })
-        );
-
-    roca.position.set(
-        x,
-        0.25,
-        z
-    );
-
-    roca.scale.y =
-        0.5 + Math.random() * 0.4;
-
-    escena.add(roca);
-}
-// ============================================================
-// CARGAR PERSONAJES
-// ============================================================
-
-async function cargarPersonajes() {
-
-    try {
-
-        const [mikeGLTF, micaelaGLTF] =
-            await Promise.all([
-
-                cargarGLB(
-                    ARCHIVOS.mike
-                ),
-
-                cargarGLB(
-                    ARCHIVOS.micaela
-                )
-
-            ]);
-
-
-        mike =
-            mikeGLTF.scene;
-
-        micaela =
-            micaelaGLTF.scene;
-
-
-        prepararPersonaje(
-            mike,
-            0x88aa88
-        );
-
-        prepararPersonaje(
-            micaela,
-            0x88aa88
-        );
-
-
-        mike.position.set(
-            -0.9,
-            0,
+function crearPata(grupo, x) {
+
+    const pata = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            0.055,
+            0.07,
+            0.38,
             8
-        );
-
-        micaela.position.set(
-            0.9,
-            0,
-            8.35
-        );
-
-
-        // ----------------------------------------------------
-        // AJUSTE AUTOMÁTICO DE PIES
-        // ----------------------------------------------------
-
-        colocarPiesEnSuelo(
-            mike
-        );
-
-        colocarPiesEnSuelo(
-            micaela
-        );
-
-
-        // pequeño ajuste independiente
-        micaela.position.y -= 0.03;
-
-
-        escena.add(mike);
-        escena.add(micaela);
-
-
-        mikeHuesos =
-            encontrarHuesos(mike);
-
-        micaelaHuesos =
-            encontrarHuesos(micaela);
-
-
-    } catch (error) {
-
-        console.error(
-            "[GAMERPRO] Error cargando personajes:",
-            error
-        );
-
-    }
-}
-
-
-// ============================================================
-// GLB
-// ============================================================
-
-function cargarGLB(ruta) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            gltfLoader.load(
-                ruta,
-                resolve,
-                undefined,
-                reject
-            );
-
-        }
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0xffa62b
+        })
     );
-}
-
-
-// ============================================================
-// PREPARAR PERSONAJE
-// ============================================================
-
-function prepararPersonaje(
-    personaje,
-    color
-) {
-
-    personaje.traverse(
-        objeto => {
-
-            if (objeto.isMesh) {
-
-                objeto.castShadow = true;
-                objeto.receiveShadow = true;
-
-            }
-
-        }
-    );
-
-
-    personaje.userData.walkTime =
-        0;
-
-    personaje.userData.baseY =
-        personaje.position.y;
-
-}
-
-
-// ============================================================
-// PIES AL SUELO
-// ============================================================
-
-function colocarPiesEnSuelo(
-    personaje
-) {
-
-    personaje.updateMatrixWorld(
-        true
-    );
-
-    const caja =
-        new THREE.Box3()
-            .setFromObject(
-                personaje
-            );
-
-    personaje.position.y +=
-        -caja.min.y + 0.03;
-
-    personaje.userData.baseY =
-        personaje.position.y;
-}
-
-
-// ============================================================
-// BUSCAR HUESOS
-// ============================================================
-
-function encontrarHuesos(
-    personaje
-) {
-
-    const huesos = {};
-
-    if (!personaje) {
-        return huesos;
-    }
-
-
-    personaje.traverse(
-        objeto => {
-
-            if (!objeto.isBone) {
-                return;
-            }
-
-            const nombre =
-                objeto.name.toLowerCase();
-
-
-            if (
-                nombre.includes("left") &&
-                nombre.includes("leg")
-            ) {
-                huesos.piernaIzq =
-                    objeto;
-            }
-
-            if (
-                nombre.includes("right") &&
-                nombre.includes("leg")
-            ) {
-                huesos.piernaDer =
-                    objeto;
-            }
-
-            if (
-                nombre.includes("left") &&
-                nombre.includes("arm")
-            ) {
-                huesos.brazoIzq =
-                    objeto;
-            }
-
-            if (
-                nombre.includes("right") &&
-                nombre.includes("arm")
-            ) {
-                huesos.brazoDer =
-                    objeto;
-            }
-
-        }
-    );
-
-
-    return huesos;
-}
-// ============================================================
-// CAMINATA
-// ============================================================
-
-function actualizarCaminata(
-    personaje,
-    huesos,
-    velocidad,
-    delta
-) {
-
-    if (!personaje) {
-        return;
-    }
-
-
-    const distancia =
-        personaje.position.z -
-        CONFIG.distanciaFinal;
-
-
-    if (distancia <= 0) {
-
-        personaje.position.z =
-            CONFIG.distanciaFinal;
-
-        return;
-    }
-
-
-    personaje.position.z -=
-        velocidad * delta;
-
-
-    personaje.userData.walkTime +=
-        delta * CONFIG.velocidadPasos;
-
-
-    const t =
-        personaje.userData.walkTime;
-
-
-    const paso =
-        Math.sin(t);
-
-
-    const paso2 =
-        Math.sin(t + Math.PI);
-
-
-    // --------------------------------------------------------
-    // BALANCEO DEL CUERPO
-    // --------------------------------------------------------
-
-    personaje.position.y =
-        personaje.userData.baseY +
-        Math.abs(
-            Math.sin(t)
-        ) * 0.035;
-
-
-    personaje.rotation.z =
-        Math.sin(t * 0.5) * 0.025;
-
-
-    // --------------------------------------------------------
-    // PIERNAS
-    // --------------------------------------------------------
-
-    if (huesos.piernaIzq) {
-
-        huesos.piernaIzq.rotation.x =
-            paso * 0.45;
-    }
-
-    if (huesos.piernaDer) {
-
-        huesos.piernaDer.rotation.x =
-            paso2 * 0.45;
-    }
-
-
-    // --------------------------------------------------------
-    // BRAZOS
-    // --------------------------------------------------------
-
-    if (huesos.brazoIzq) {
-
-        huesos.brazoIzq.rotation.x =
-            paso2 * 0.28;
-    }
-
-    if (huesos.brazoDer) {
-
-        huesos.brazoDer.rotation.x =
-            paso * 0.28;
-    }
-}
-
-
-// ============================================================
-// DETENER CAMINATA
-// ============================================================
-
-function detenerPersonaje(
-    personaje
-) {
-
-    if (!personaje) {
-        return;
-    }
-
-    personaje.position.y =
-        personaje.userData.baseY;
-
-    personaje.rotation.z = 0;
-        }
-// ============================================================
-// CREAR HUEVO ORIGINAL
-// ============================================================
-
-async function crearHuevo() {
-
-    try {
-
-        const textura =
-            await cargarTextura(
-                ARCHIVOS.huevo
-            );
-
-
-        const material =
-            new THREE.MeshBasicMaterial({
-
-                map: textura,
-
-                transparent: true,
-
-                alphaTest: 0.03,
-
-                side: THREE.DoubleSide
-
-            });
-
-
-        const geometria =
-            new THREE.PlaneGeometry(
-                1,
-                1
-            );
-
-
-        huevo =
-            new THREE.Mesh(
-                geometria,
-                material
-            );
-
-
-        const ancho =
-            textura.image.width;
-
-        const alto =
-            textura.image.height;
-
-
-        const proporcion =
-            ancho / alto;
-
-
-        huevo.scale.set(
-            2.0 * proporcion,
-            2.0,
-            1
-        );
-
-
-        huevo.position.set(
-            0,
-            1.15,
-            0
-        );
-
-
-        huevo.visible = false;
-
-
-        escena.add(huevo);
-
-
-        // ----------------------------------------------------
-        // BRILLO
-        // ----------------------------------------------------
-
-        const luz =
-            new THREE.PointLight(
-                0xffee88,
-                0,
-                5
-            );
-
-        luz.position.set(
-            0,
-            1.1,
-            0
-        );
-
-        huevoBrillo =
-            luz;
-
-        escena.add(luz);
-
-
-    } catch (error) {
-
-        console.error(
-            "[GAMERPRO] No se pudo cargar el huevo:",
-            error
-        );
-
-    }
-}
-
-
-// ============================================================
-// TEXTURA
-// ============================================================
-
-function cargarTextura(ruta) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            textureLoader.load(
-                ruta,
-                textura => {
-
-                    textura.colorSpace =
-                        THREE.SRGBColorSpace;
-
-                    resolve(textura);
-
-                },
-                undefined,
-                reject
-            );
-
-        }
-    );
-}
-
-
-// ============================================================
-// BILLBOARD
-// ============================================================
-
-function mirarCamara(objeto) {
-
-    if (!objeto || !camara) {
-        return;
-    }
-
-    objeto.lookAt(
-        camara.position
-    );
-                }
-// ============================================================
-// CREAR POLLOS
-// ============================================================
-
-function crearPollos3D() {
-
-    polloNoob =
-        crearPollo3D(
-            "noob",
-            0x8fa68e
-        );
-
-
-    polloZombie =
-        crearPollo3D(
-            "zombie",
-            0x64735f
-        );
-
-
-    polloNoobEspecial =
-        crearPollo3D(
-            "pollito_noob",
-            0xf5d5b8
-        );
-
-
-    // --------------------------------------------------------
-    // POSICIONES
-    // --------------------------------------------------------
-
-    polloNoob.position.set(
-        -2.4,
-        0,
-        -0.3
-    );
-
-
-    polloZombie.position.set(
-        0,
-        0,
-        -0.3
-    );
-
-
-    polloNoobEspecial.position.set(
-        2.4,
-        0,
-        -0.3
-    );
-
-
-    // --------------------------------------------------------
-    // OCULTOS AL PRINCIPIO
-    // --------------------------------------------------------
-
-    polloNoob.visible = false;
-    polloZombie.visible = false;
-    polloNoobEspecial.visible = false;
-
-
-    escena.add(
-        polloNoob
-    );
-
-    escena.add(
-        polloZombie
-    );
-
-    escena.add(
-        polloNoobEspecial
-    );
-}
-
-
-// ============================================================
-// POLLO 3D PROCEDURAL
-// ============================================================
-
-function crearPollo3D(
-    tipo,
-    color
-) {
-
-    const grupo =
-        new THREE.Group();
-
-
-    // --------------------------------------------------------
-    // CUERPO
-    // --------------------------------------------------------
-
-    const cuerpo =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.65,
-                16,
-                12
-            ),
-            new THREE.MeshStandardMaterial({
-                color: color,
-                roughness: 0.8
-            })
-        );
-
-    cuerpo.scale.set(
-        1,
-        1.1,
-        0.9
-    );
-
-    cuerpo.position.y =
-        0.72;
-
-    grupo.add(cuerpo);
-
-
-    // --------------------------------------------------------
-    // CABEZA
-    // --------------------------------------------------------
-
-    const cabeza =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.48,
-                16,
-                12
-            ),
-            new THREE.MeshStandardMaterial({
-                color: color,
-                roughness: 0.8
-            })
-        );
-
-    cabeza.position.y =
-        1.55;
-
-    grupo.add(cabeza);
-
-
-    // --------------------------------------------------------
-    // OJOS
-    // --------------------------------------------------------
-
-    crearOjo(
-        grupo,
-        -0.18,
-        1.65,
-        0.40
-    );
-
-    crearOjo(
-        grupo,
-        0.18,
-        1.65,
-        0.40
-    );
-
-
-    // --------------------------------------------------------
-    // PICO
-    // --------------------------------------------------------
-
-    const pico =
-        new THREE.Mesh(
-            new THREE.ConeGeometry(
-                0.16,
-                0.38,
-                4
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0xffa62b
-            })
-        );
-
-    pico.rotation.x =
-        Math.PI / 2;
-
-    pico.position.set(
-        0,
-        1.48,
-        -0.48
-    );
-
-    grupo.add(pico);
-
-
-    // --------------------------------------------------------
-    // ALAS
-    // --------------------------------------------------------
-
-    crearAla(
-        grupo,
-        -0.62
-    );
-
-    crearAla(
-        grupo,
-        0.62
-    );
-
-
-    // --------------------------------------------------------
-    // PATAS
-    // --------------------------------------------------------
-
-    crearPata(
-        grupo,
-        -0.22
-    );
-
-    crearPata(
-        grupo,
-        0.22
-    );
-
-
-    // --------------------------------------------------------
-    // CARACTERÍSTICAS
-    // --------------------------------------------------------
-
-    if (
-        tipo === "noob" ||
-        tipo === "zombie" ||
-        tipo === "pollito_noob"
-    ) {
-
-        crearGorra(
-            grupo,
-            tipo
-        );
-
-        crearLetraN(
-            grupo
-        );
-    }
-
-
-    if (tipo === "zombie") {
-
-        crearOjosZombie(
-            grupo
-        );
-    }
-
-
-    if (
-        tipo === "pollito_noob"
-    ) {
-
-        crearDecoracionRainbow(
-            grupo
-        );
-    }
-
-
-    grupo.userData.tipo =
-        tipo;
-
-    grupo.userData.animTime =
-        Math.random() * 10;
-
-
-    return grupo;
-}
-
-
-// ============================================================
-// OJO
-// ============================================================
-
-function crearOjo(
-    grupo,
-    x,
-    y,
-    z
-) {
-
-    const ojo =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.075,
-                8,
-                8
-            ),
-            new THREE.MeshBasicMaterial({
-                color: 0x111111
-            })
-        );
-
-    ojo.position.set(
-        x,
-        y,
-        z
-    );
-
-    grupo.add(ojo);
-}
-
-
-// ============================================================
-// ALA
-// ============================================================
-
-function crearAla(
-    grupo,
-    x
-) {
-
-    const ala =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.34,
-                12,
-                8
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x738b72
-            })
-        );
-
-    ala.scale.set(
-        0.55,
-        1,
-        0.35
-    );
-
-    ala.position.set(
-        x,
-        0.8,
-        0
-    );
-
-    grupo.add(ala);
-}
-
-
-// ============================================================
-// PATA
-// ============================================================
-
-function crearPata(
-    grupo,
-    x
-) {
-
-    const pata =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.045,
-                0.065,
-                0.35,
-                6
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0xe9a62c
-            })
-        );
 
     pata.position.set(
         x,
-        0.15,
+        0.28,
         0
     );
 
     grupo.add(pata);
+
+    const pie = new THREE.Mesh(
+        new THREE.SphereGeometry(
+            0.10,
+            8,
+            8
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0xffa62b
+        })
+    );
+
+    pie.scale.z = 1.5;
+
+    pie.position.set(
+        x,
+        0.08,
+        -0.10
+    );
+
+    grupo.add(pie);
 }
+
+
 // ============================================================
 // GORRA
 // ============================================================
 
-function crearGorra(
-    grupo,
-    tipo
-) {
+function crearGorra(grupo, tipo) {
 
-    const color =
-        tipo === "zombie"
-            ? 0x394a3d
-            : 0xe8c36a;
+    let color = 0xe8c36a;
 
+    if (tipo === "zombie") {
+        color = 0x596b62;
+    }
 
-    const gorra =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.5,
-                16,
-                8,
-                0,
-                Math.PI * 2,
-                0,
-                Math.PI / 2
-            ),
-            new THREE.MeshStandardMaterial({
-                color: color
-            })
-        );
+    if (tipo === "pollito_noob") {
+        color = 0xe8c36a;
+    }
 
+    const gorra = new THREE.Mesh(
+        new THREE.SphereGeometry(
+            0.43,
+            12,
+            8
+        ),
+        new THREE.MeshStandardMaterial({
+            color
+        })
+    );
 
     gorra.scale.set(
         1.05,
-        0.45,
-        1.05
+        0.32,
+        0.90
     );
 
-
-    gorra.position.y =
-        1.88;
-
+    gorra.position.set(
+        0,
+        1.95,
+        0
+    );
 
     grupo.add(gorra);
 
 
-    const visera =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                0.7,
-                0.08,
-                0.35
-            ),
-            new THREE.MeshStandardMaterial({
-                color: color
-            })
-        );
-
+    const visera = new THREE.Mesh(
+        new THREE.BoxGeometry(
+            0.65,
+            0.08,
+            0.28
+        ),
+        new THREE.MeshStandardMaterial({
+            color
+        })
+    );
 
     visera.position.set(
         0,
-        1.78,
-        -0.4
+        1.88,
+        -0.32
     );
-
 
     grupo.add(visera);
 }
@@ -1456,15 +288,12 @@ function crearGorra(
 // LETRA N
 // ============================================================
 
-function crearLetraN(
-    grupo
-) {
+function crearLetraN(grupo) {
 
     const material =
         new THREE.MeshBasicMaterial({
             color: 0x222222
         });
-
 
     const barra1 =
         new THREE.Mesh(
@@ -1476,7 +305,6 @@ function crearLetraN(
             material
         );
 
-
     const barra2 =
         new THREE.Mesh(
             new THREE.BoxGeometry(
@@ -1486,7 +314,6 @@ function crearLetraN(
             ),
             material
         );
-
 
     const diagonal =
         new THREE.Mesh(
@@ -1498,13 +325,11 @@ function crearLetraN(
             material
         );
 
-
     barra1.position.set(
         -0.11,
         1.89,
         -0.52
     );
-
 
     barra2.position.set(
         0.11,
@@ -1512,17 +337,14 @@ function crearLetraN(
         -0.52
     );
 
-
     diagonal.position.set(
         0,
         1.89,
         -0.53
     );
 
-
     diagonal.rotation.z =
         -0.6;
-
 
     grupo.add(barra1);
     grupo.add(barra2);
@@ -1531,18 +353,15 @@ function crearLetraN(
 
 
 // ============================================================
-// ZOMBIE
+// OJOS ZOMBIE
 // ============================================================
 
-function crearOjosZombie(
-    grupo
-) {
+function crearOjosZombie(grupo) {
 
-    const rojo =
+    const material =
         new THREE.MeshBasicMaterial({
             color: 0xff2020
         });
-
 
     const ojo1 =
         new THREE.Mesh(
@@ -1551,40 +370,32 @@ function crearOjosZombie(
                 8,
                 8
             ),
-            rojo
+            material
         );
-
 
     const ojo2 =
         ojo1.clone();
 
-
     ojo1.position.set(
         -0.18,
         1.65,
-        0.42
+        -0.50
     );
-
 
     ojo2.position.set(
         0.18,
         1.65,
-        0.42
+        -0.50
     );
-
 
     grupo.add(ojo1);
     grupo.add(ojo2);
 }
-
-
 // ============================================================
-// DECORACIÓN RAINBOW
+// DECORACIÓN POLLITO NOOB
 // ============================================================
 
-function crearDecoracionRainbow(
-    grupo
-) {
+function crearDecoracionRainbow(grupo) {
 
     const colores = [
         0xff3b30,
@@ -1594,7 +405,6 @@ function crearDecoracionRainbow(
         0x007aff,
         0xaf52de
     ];
-
 
     for (
         let i = 0;
@@ -1616,10 +426,8 @@ function crearDecoracionRainbow(
                 })
             );
 
-
         aro.rotation.x =
             Math.PI / 2;
-
 
         aro.position.set(
             0,
@@ -1627,124 +435,138 @@ function crearDecoracionRainbow(
             -0.05
         );
 
-
         grupo.add(aro);
     }
 }
+
+
 // ============================================================
-// DIÁLOGOS
+// DIÁLOGOS SINCRONIZADOS POR FASE
 // ============================================================
 
 const DIALOGOS = [
 
     {
-        tiempo: 0.8,
+        fase: 0,
+        tiempo: 0.5,
         nombre: "Micaela",
         texto: "Mike... ¿dónde estamos?"
     },
 
     {
-        tiempo: 2.2,
+        fase: 0,
+        tiempo: 1.7,
         nombre: "Mike",
         texto: "No lo sé... pero este lugar está enorme."
     },
 
     {
-        tiempo: 3.8,
+        fase: 1,
+        tiempo: 0.8,
         nombre: "Micaela",
         texto: "Espera... ¿ves eso allá?"
     },
 
     {
-        tiempo: 5.0,
+        fase: 1,
+        tiempo: 2.0,
         nombre: "Mike",
         texto: "Sí... se ve algo entre los árboles."
     },
 
     {
-        tiempo: 6.3,
+        fase: 1,
+        tiempo: 3.3,
         nombre: "Micaela",
         texto: "Pío... pío... ¿qué fue eso?"
     },
 
     {
-        tiempo: 7.4,
+        fase: 1,
+        tiempo: 4.4,
         nombre: "Mike",
         texto: "¿Un pollo?"
     },
 
     {
-        tiempo: 8.7,
+        fase: 1,
+        tiempo: 5.7,
         nombre: "Micaela",
         texto: "Vamos a ver qué es."
     },
 
     {
-        tiempo: 10.0,
+        fase: 1,
+        tiempo: 7.0,
         nombre: "Mike",
         texto: "Mira... hay algo junto a ese huevo."
     },
 
     {
-        tiempo: 11.3,
+        fase: 2,
+        tiempo: 0.5,
         nombre: "Micaela",
         texto: "¿Un huevo? ¿De dónde salió?"
     },
 
     {
-        tiempo: 12.7,
+        fase: 2,
+        tiempo: 1.7,
         nombre: "Mike",
         texto: "No parece un huevo normal... está brillando."
     },
 
     {
-        tiempo: 14.3,
+        fase: 2,
+        tiempo: 2.6,
         nombre: "Micaela",
         texto: "¡Mike, está moviéndose!"
     },
 
     {
-        tiempo: 15.4,
+        fase: 3,
+        tiempo: 0.5,
         nombre: "Mike",
         texto: "¡Se está abriendo!"
     },
 
     {
-        tiempo: 17.5,
+        fase: 3,
+        tiempo: 1.3,
         nombre: "Micaela",
         texto: "¡¿Son pollos?!"
     },
 
     {
-        tiempo: 18.7,
+        fase: 4,
+        tiempo: 0.6,
         nombre: "Mike",
         texto: "¡Hay varios! ¿Cuál va a salir?"
     },
 
     {
-        tiempo: 22.0,
+        fase: 4,
+        tiempo: 3.2,
         nombre: "Micaela",
         texto: "¡Ya se decidió!"
     },
 
     {
-        tiempo: 23.2,
+        fase: 5,
+        tiempo: 0.5,
         nombre: "Mike",
         texto: "¡Ese fue el que salió!"
     }
 
 ];
-
-
 // ============================================================
-// CREAR CAJA
+// INTERFAZ DE DIÁLOGO
 // ============================================================
 
-function crearDialogo() {
+function crearInterfazDialogo() {
 
     cajaDialogo =
         document.createElement("div");
-
 
     cajaDialogo.style.position =
         "fixed";
@@ -1753,22 +575,25 @@ function crearDialogo() {
         "50%";
 
     cajaDialogo.style.bottom =
-        "7%";
+        "5%";
 
     cajaDialogo.style.transform =
         "translateX(-50%)";
 
     cajaDialogo.style.width =
-        "min(90%, 700px)";
+        "min(90%, 720px)";
 
     cajaDialogo.style.padding =
-        "14px 18px";
-
-    cajaDialogo.style.borderRadius =
-        "18px";
+        "18px 22px";
 
     cajaDialogo.style.background =
         "rgba(0,0,0,0.78)";
+
+    cajaDialogo.style.border =
+        "2px solid rgba(255,255,255,0.25)";
+
+    cajaDialogo.style.borderRadius =
+        "18px";
 
     cajaDialogo.style.color =
         "white";
@@ -1779,8 +604,11 @@ function crearDialogo() {
     cajaDialogo.style.zIndex =
         "9999";
 
-    cajaDialogo.style.textAlign =
-        "center";
+    cajaDialogo.style.boxSizing =
+        "border-box";
+
+    cajaDialogo.style.display =
+        "none";
 
 
     nombreDialogo =
@@ -1792,6 +620,9 @@ function crearDialogo() {
     nombreDialogo.style.fontSize =
         "18px";
 
+    nombreDialogo.style.marginBottom =
+        "7px";
+
 
     textoDialogo =
         document.createElement("div");
@@ -1799,8 +630,8 @@ function crearDialogo() {
     textoDialogo.style.fontSize =
         "17px";
 
-    textoDialogo.style.marginTop =
-        "5px";
+    textoDialogo.style.lineHeight =
+        "1.4";
 
 
     cajaDialogo.appendChild(
@@ -1810,7 +641,6 @@ function crearDialogo() {
     cajaDialogo.appendChild(
         textoDialogo
     );
-
 
     document.body.appendChild(
         cajaDialogo
@@ -1824,8 +654,11 @@ function crearDialogo() {
 
 function actualizarDialogo() {
 
-    let indice = -1;
+    if (!cajaDialogo) {
+        return;
+    }
 
+    let encontrado = -1;
 
     for (
         let i = 0;
@@ -1833,46 +666,50 @@ function actualizarDialogo() {
         i++
     ) {
 
+        const dialogo =
+            DIALOGOS[i];
+
         if (
-            tiempoTotal >=
-            DIALOGOS[i].tiempo
+            dialogo.fase === fase &&
+            tiempoFase >= dialogo.tiempo
         ) {
-
-            indice = i;
-
+            encontrado = i;
         }
-
     }
 
 
     if (
-        indice === dialogoActual
+        encontrado !== -1 &&
+        encontrado !== dialogoActual
     ) {
-        return;
+
+        dialogoActual =
+            encontrado;
+
+        const dialogo =
+            DIALOGOS[encontrado];
+
+        nombreDialogo.textContent =
+            dialogo.nombre;
+
+        textoDialogo.textContent =
+            dialogo.texto;
+
+        cajaDialogo.style.display =
+            "block";
     }
 
 
-    dialogoActual =
-        indice;
+    if (
+        encontrado === -1 &&
+        fase === 0 &&
+        tiempoFase < 0.4
+    ) {
 
-
-    if (indice < 0) {
-        return;
+        cajaDialogo.style.display =
+            "none";
     }
-
-
-    const dialogo =
-        DIALOGOS[indice];
-
-
-    nombreDialogo.textContent =
-        dialogo.nombre;
-
-    textoDialogo.textContent =
-        dialogo.texto;
 }
-
-
 // ============================================================
 // RESULTADO REAL
 // ============================================================
@@ -1883,68 +720,68 @@ function obtenerResultadoReal() {
         return resultadoReal;
     }
 
+    // IMPORTANTE:
+    // ESTA ES LA ÚNICA TIRADA DE LA CINEMÁTICA.
 
-    // UNA SOLA TIRADA
     resultadoReal =
         abrirHuevo(
             "huevo_noob"
         );
-
 
     console.log(
         "[GAMERPRO] Resultado huevo:",
         resultadoReal
     );
 
-
     return resultadoReal;
-        }
-// ============================================================
-// MOSTRAR POLLOS
-// ============================================================
-
-function mostrarPollos() {
-
-    polloNoob.visible =
-        true;
-
-    polloZombie.visible =
-        true;
-
-    polloNoobEspecial.visible =
-        true;
-
-
-    polloNoob.scale.setScalar(
-        0.01
-    );
-
-    polloZombie.scale.setScalar(
-        0.01
-    );
-
-    polloNoobEspecial.scale.setScalar(
-        0.01
-    );
 }
 
 
 // ============================================================
-// ANIMAR POLLOS
+// MOSTRAR LOS 3 CANDIDATOS
 // ============================================================
 
-function animarPollos(delta) {
+function mostrarPollos() {
 
     const pollos = [
-
         polloNoob,
-
         polloZombie,
-
         polloNoobEspecial
-
     ];
 
+    for (const pollo of pollos) {
+
+        if (!pollo) {
+            continue;
+        }
+
+        pollo.visible =
+            true;
+
+        pollo.scale.setScalar(
+            0.05
+        );
+
+        pollo.userData.animTime =
+            Math.random() * 5;
+    }
+
+    resultadoMostrado =
+        false;
+}
+
+
+// ============================================================
+// ENTRADA DE LOS POLLOS
+// ============================================================
+
+function animarEntradaPollos(delta) {
+
+    const pollos = [
+        polloNoob,
+        polloZombie,
+        polloNoobEspecial
+    ];
 
     for (const pollo of pollos) {
 
@@ -1955,36 +792,12 @@ function animarPollos(delta) {
             continue;
         }
 
-
-        pollo.userData.animTime +=
-            delta * 5;
-
-
-        const t =
-            pollo.userData.animTime;
-
-
-        const salto =
-            Math.abs(
-                Math.sin(t)
-            ) * 0.15;
-
-
-        pollo.position.y =
-            salto;
-
-
-        pollo.rotation.y +=
-            delta * 0.7;
-
-
         const escala =
             Math.min(
                 1,
                 pollo.scale.x +
-                delta * 3
+                delta * 4
             );
-
 
         pollo.scale.setScalar(
             escala
@@ -1994,19 +807,50 @@ function animarPollos(delta) {
 
 
 // ============================================================
-// SELECCIÓN
+// ANIMACIÓN DE POLLOS
 // ============================================================
 
-function actualizarSeleccion() {
+function animarPollos(delta) {
 
-    if (
-        !polloNoob ||
-        !polloZombie ||
-        !polloNoobEspecial
-    ) {
+    const pollos = [
+        polloNoob,
+        polloZombie,
+        polloNoobEspecial
+    ];
+
+    for (const pollo of pollos) {
+
+        if (
+            !pollo ||
+            !pollo.visible
+        ) {
+            continue;
+        }
+
+        pollo.userData.animTime +=
+            delta * 5;
+
+        const t =
+            pollo.userData.animTime;
+
+        pollo.position.y =
+            Math.abs(
+                Math.sin(t)
+            ) * 0.15;
+
+        pollo.rotation.y =
+            Math.sin(t * 0.8) * 0.15;
+    }
+}
+// ============================================================
+// FINALIZAR SELECCIÓN
+// ============================================================
+
+function finalizarSeleccion() {
+
+    if (resultadoMostrado) {
         return;
     }
-
 
     const pollos = {
 
@@ -2029,46 +873,124 @@ function actualizarSeleccion() {
 
 
     if (!ganador) {
+
+        console.warn(
+            "[GAMERPRO] Resultado inválido:",
+            resultadoReal
+        );
+
         return;
     }
 
 
-    const todos = Object.values(
-        pollos
-    );
+    // --------------------------------------------------------
+    // OCULTAR TODOS LOS PERDEDORES
+    // --------------------------------------------------------
 
+    for (
+        const [nombre, pollo]
+        of Object.entries(pollos)
+    ) {
 
-    for (const pollo of todos) {
+        if (!pollo) {
+            continue;
+        }
 
-        pollo.scale.multiplyScalar(
-            0.96
-        );
+        pollo.visible =
+            nombre === resultadoReal;
     }
 
+
+    // --------------------------------------------------------
+    // GANADOR
+    // --------------------------------------------------------
+
+    ganador.visible =
+        true;
 
     ganador.scale.setScalar(
         1.25
     );
 
+    ganador.position.y =
+        0.18;
 
-    ganador.rotation.y =
+    ganador.userData.ganador =
+        true;
+
+
+    resultadoMostrado =
+        true;
+
+    console.log(
+        "[GAMERPRO] Ganador final:",
+        resultadoReal
+    );
+}
+
+
+// ============================================================
+// ANIMAR GANADOR
+// ============================================================
+
+function animarGanador() {
+
+    if (
+        !resultadoMostrado ||
+        !resultadoReal
+    ) {
+        return;
+    }
+
+    const pollos = {
+
+        noob:
+            polloNoob,
+
+        zombie:
+            polloZombie,
+
+        pollito_noob:
+            polloNoobEspecial
+
+    };
+
+    const ganador =
+        pollos[
+            resultadoReal
+        ];
+
+    if (!ganador) {
+        return;
+    }
+
+    ganador.visible =
+        true;
+
+    ganador.scale.setScalar(
+        1.22 +
         Math.sin(
-            tiempoTotal * 8
-        ) * 0.25;
-
+            tiempoTotal * 5
+        ) * 0.06
+    );
 
     ganador.position.y =
         0.18 +
         Math.abs(
             Math.sin(
-                tiempoTotal * 8
+                tiempoTotal * 5
             )
-        ) * 0.15;
+        ) * 0.10;
+
+    ganador.rotation.y =
+        Math.sin(
+            tiempoTotal * 4
+        ) * 0.12;
 }
 
 
 // ============================================================
-// ANIMAR HUEVO
+// HUEVO
 // ============================================================
 
 function actualizarHuevo() {
@@ -2077,26 +999,21 @@ function actualizarHuevo() {
         return;
     }
 
-
     mirarCamara(
         huevo
     );
 
 
-    if (
-        fase === 2
-    ) {
+    if (fase === 2) {
 
         huevo.visible =
             true;
-
 
         const pulso =
             1 +
             Math.sin(
                 tiempoFase * 8
             ) * 0.08;
-
 
         huevo.scale.x =
             huevo.userData.escalaX *
@@ -2106,12 +1023,10 @@ function actualizarHuevo() {
             huevo.userData.escalaY *
             pulso;
 
-
         huevo.rotation.z =
             Math.sin(
                 tiempoFase * 5
             ) * 0.04;
-
 
         if (huevoBrillo) {
 
@@ -2121,52 +1036,66 @@ function actualizarHuevo() {
                     tiempoFase * 10
                 ) * 0.8;
         }
+}
+        // --------------------------------------------------------
+    // APERTURA
+    // --------------------------------------------------------
 
-    }
+    if (fase === 3) {
 
-
-    if (
-        fase === 3
-    ) {
+        huevo.visible =
+            true;
 
         const progreso =
             Math.min(
-                tiempoFase / 1.8,
+                tiempoFase /
+                CONFIG.duracionApertura,
                 1
             );
 
+        const escalaX =
+            huevo.userData.escalaX;
 
-        huevo.scale.y =
-            huevo.userData.escalaY *
-            (1 - progreso * 0.65);
-
+        const escalaY =
+            huevo.userData.escalaY;
 
         huevo.scale.x =
-            huevo.userData.escalaX *
-            (1 + progreso * 0.12);
+            escalaX *
+            (1 + progreso * 0.15);
 
+        huevo.scale.y =
+            escalaY *
+            Math.max(
+                0.05,
+                1 - progreso * 0.90
+            );
 
         huevo.rotation.z =
-            progreso * 0.18;
+            Math.sin(
+                tiempoFase * 15
+            ) * 0.12;
+
+        if (huevoBrillo) {
+
+            huevoBrillo.intensity =
+                2 +
+                progreso * 4;
+        }
+    }
 
 
-        huevo.material.opacity =
-            1 - progreso;
+    // --------------------------------------------------------
+    // DESAPARECE DESPUÉS DE ABRIR
+    // --------------------------------------------------------
 
+    if (fase >= 4) {
 
-        if (
-            progreso >= 1
-        ) {
+        huevo.visible =
+            false;
 
-            huevo.visible =
-                false;
-
-            huevo.material.opacity =
-                1;
-
-            if (huevoBrillo) {
-                huevoBrillo.intensity = 0;
-            }
+        if (huevoBrillo) {
+            huevoBrillo.intensity =
+                0;
         }
     }
 }
@@ -2186,22 +1115,70 @@ function cambiarFase(
     tiempoFase =
         0;
 
+    dialogoActual =
+        -1;
 
-    if (
-        fase === 2 &&
-        huevo
-    ) {
 
-        huevo.visible =
-            true;
+    // --------------------------------------------------------
+    // FASE 2
+    // --------------------------------------------------------
+
+    if (fase === 2) {
+
+        if (huevo) {
+
+            huevo.visible =
+                true;
+
+            huevo.scale.set(
+                huevo.userData.escalaX,
+                huevo.userData.escalaY,
+                1
+            );
+        }
     }
 
 
-    if (
-        fase === 4
-    ) {
+    // --------------------------------------------------------
+    // FASE 3
+    // --------------------------------------------------------
+
+    if (fase === 3) {
+
+        if (huevo) {
+            huevo.visible =
+                true;
+        }
+
+        // Se decide AQUÍ.
+        // Nunca se vuelve a tirar.
+
+        obtenerResultadoReal();
+    }
+
+
+    // --------------------------------------------------------
+    // FASE 4
+    // --------------------------------------------------------
+
+    if (fase === 4) {
+
+        if (huevo) {
+            huevo.visible =
+                false;
+        }
 
         mostrarPollos();
+    }
+
+
+    // --------------------------------------------------------
+    // FASE 5
+    // --------------------------------------------------------
+
+    if (fase === 5) {
+
+        finalizarSeleccion();
     }
 }
 
@@ -2231,28 +1208,35 @@ function actualizarFases(delta) {
 
 
     // --------------------------------------------------------
-    // 1 = CAMINAR
+    // 1 = CAMINATA
     // --------------------------------------------------------
 
-    if (
-        fase === 1
-    ) {
+    if (fase === 1) {
 
-        const mikeLlegó =
-            !mike ||
-            mike.position.z <=
-            CONFIG.distanciaFinal;
+        const distanciaMike =
+            mike
+                ? mike.position.z
+                : 999;
 
-        const micaelaLlegó =
-            !micaela ||
-            micaela.position.z <=
-            CONFIG.distanciaFinal;
-
+        const distanciaMicaela =
+            micaela
+                ? micaela.position.z
+                : 999;
 
         if (
-            mikeLlegó &&
-            micaelaLlegó
+            distanciaMike <=
+                CONFIG.distanciaFinal + 0.05 &&
+            distanciaMicaela <=
+                CONFIG.distanciaFinal + 0.05
         ) {
+
+            detenerPersonaje(
+                mike
+            );
+
+            detenerPersonaje(
+                micaela
+            );
 
             cambiarFase(2);
         }
@@ -2260,12 +1244,13 @@ function actualizarFases(delta) {
 
 
     // --------------------------------------------------------
-    // 2 = HUEVO BRILLANDO
+    // 2 = HUEVO
     // --------------------------------------------------------
 
     if (
         fase === 2 &&
-        tiempoFase >= 3
+        tiempoFase >=
+        CONFIG.duracionHuevo
     ) {
 
         cambiarFase(3);
@@ -2273,22 +1258,21 @@ function actualizarFases(delta) {
 
 
     // --------------------------------------------------------
-    // 3 = HUEVO ABRIÉNDOSE
+    // 3 = APERTURA
     // --------------------------------------------------------
 
     if (
         fase === 3 &&
-        tiempoFase >= 1.8
+        tiempoFase >=
+        CONFIG.duracionApertura
     ) {
-
-        obtenerResultadoReal();
 
         cambiarFase(4);
     }
 
 
     // --------------------------------------------------------
-    // 4 = MOSTRAR LOS TRES
+    // 4 = SELECCIÓN
     // --------------------------------------------------------
 
     if (
@@ -2314,10 +1298,8 @@ function actualizarFases(delta) {
         terminarCinematica();
     }
 }
-
-
 // ============================================================
-// LOOP
+// LOOP PRINCIPAL
 // ============================================================
 
 function actualizar() {
@@ -2346,7 +1328,7 @@ function actualizar() {
 
 
     // --------------------------------------------------------
-    // CAMINAR
+    // CAMINATA
     // --------------------------------------------------------
 
     if (fase === 1) {
@@ -2357,7 +1339,6 @@ function actualizar() {
             CONFIG.velocidadMike,
             delta
         );
-
 
         actualizarCaminata(
             micaela,
@@ -2389,9 +1370,11 @@ function actualizar() {
     // POLLOS
     // --------------------------------------------------------
 
-    if (
-        fase >= 4
-    ) {
+    if (fase === 4) {
+
+        animarEntradaPollos(
+            delta
+        );
 
         animarPollos(
             delta
@@ -2399,11 +1382,13 @@ function actualizar() {
     }
 
 
-    if (
-        fase === 5
-    ) {
+    if (fase === 5) {
 
-        actualizarSeleccion();
+        // IMPORTANTE:
+        // No volvemos a hacer visibles
+        // los perdedores.
+
+        animarGanador();
     }
 
 
@@ -2438,18 +1423,16 @@ function actualizarCamara() {
     }
 
 
-    let objetivoZ = 0;
+    let objetivoZ =
+        4.5;
 
 
     if (
-        fase === 0 ||
-        fase === 1
+        fase === 2 ||
+        fase === 3 ||
+        fase === 4 ||
+        fase === 5
     ) {
-
-        objetivoZ =
-            4.5;
-
-    } else {
 
         objetivoZ =
             -1.5;
@@ -2465,18 +1448,24 @@ function actualizarCamara() {
 
 
     camara.position.x +=
-        (0 - camara.position.x)
-        * 0.025;
+        (
+            0 -
+            camara.position.x
+        ) * 0.025;
 
 
     camara.position.y +=
-        (3.1 - camara.position.y)
-        * 0.025;
+        (
+            CONFIG.alturaCamara -
+            camara.position.y
+        ) * 0.025;
 
 
     camara.position.z +=
-        (8 - camara.position.z)
-        * 0.025;
+        (
+            CONFIG.distanciaCamara -
+            camara.position.z
+        ) * 0.025;
 
 
     camara.lookAt(
@@ -2485,6 +1474,32 @@ function actualizarCamara() {
 }
 
 
+// ============================================================
+// REDIMENSIONAR
+// ============================================================
+
+function redimensionarCinematica() {
+
+    if (
+        !camara ||
+        !renderer
+    ) {
+        return;
+    }
+
+
+    camara.aspect =
+        window.innerWidth /
+        window.innerHeight;
+
+    camara.updateProjectionMatrix();
+
+
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
+        }
 // ============================================================
 // INICIAR CINEMÁTICA
 // ============================================================
@@ -2499,7 +1514,8 @@ export async function iniciarCinematica(
 
 
     contenedorJuego =
-        contenedor || document.body;
+        contenedor ||
+        document.body;
 
 
     cinematicaActiva =
@@ -2508,31 +1524,80 @@ export async function iniciarCinematica(
     cinematicaFinalizada =
         false;
 
+
     fase = 0;
 
-    tiempoFase = 0;
+    tiempoFase =
+        0;
 
-    tiempoTotal = 0;
+    tiempoTotal =
+        0;
 
-    dialogoActual = -1;
+    dialogoActual =
+        -1;
 
-    resultadoReal = null;
+    resultadoReal =
+        null;
 
+    resultadoMostrado =
+        false;
+
+
+    // --------------------------------------------------------
+    // ESCENA
+    // --------------------------------------------------------
 
     crearEscena();
 
 
-    crearDialogo();
+    // --------------------------------------------------------
+    // INTERFAZ
+    // --------------------------------------------------------
 
+    crearInterfazDialogo();
+
+
+    // --------------------------------------------------------
+    // PERSONAJES
+    // --------------------------------------------------------
 
     await cargarPersonajes();
 
 
+    // --------------------------------------------------------
+    // ORIENTACIÓN
+    // --------------------------------------------------------
+
+    if (mike) {
+
+        mike.rotation.y =
+            ROTACION_PERSONAJES;
+    }
+
+    if (micaela) {
+
+        micaela.rotation.y =
+            ROTACION_PERSONAJES;
+    }
+
+
+    // --------------------------------------------------------
+    // HUEVO
+    // --------------------------------------------------------
+
     await crearHuevo();
 
 
+    // --------------------------------------------------------
+    // POLLOS
+    // --------------------------------------------------------
+
     crearPollos3D();
 
+
+    // --------------------------------------------------------
+    // ESCALA DEL HUEVO
+    // --------------------------------------------------------
 
     if (huevo) {
 
@@ -2544,47 +1609,27 @@ export async function iniciarCinematica(
     }
 
 
+    // --------------------------------------------------------
+    // RELOJ
+    // --------------------------------------------------------
+
     reloj =
         new THREE.Clock();
 
 
-    actualizar();
-}
+    // --------------------------------------------------------
+    // EMPEZAR
+    // --------------------------------------------------------
 
-
-// ============================================================
-// TERMINAR
-// ============================================================
-
-function terminarCinematica() {
-
-    cinematicaActiva =
-        false;
-
-    cinematicaFinalizada =
-        true;
-
-
-    if (animacionID) {
-
-        cancelAnimationFrame(
-            animacionID
+    animacionID =
+        requestAnimationFrame(
+            actualizar
         );
-
-        animacionID =
-            null;
-    }
-
-
-    console.log(
-        "[GAMERPRO] Cinemática terminada. Resultado:",
-        resultadoReal
-    );
 }
 
 
 // ============================================================
-// DETENER
+// DETENER CINEMÁTICA
 // ============================================================
 
 export function detenerCinematica() {
@@ -2604,13 +1649,16 @@ export function detenerCinematica() {
     }
 
 
-    if (
-        renderer &&
-        renderer.domElement
-    ) {
+    if (reloj) {
 
-        renderer.domElement.remove();
+        reloj.stop();
     }
+
+
+    window.removeEventListener(
+        "resize",
+        redimensionarCinematica
+    );
 
 
     if (cajaDialogo) {
@@ -2619,40 +1667,186 @@ export function detenerCinematica() {
 
         cajaDialogo =
             null;
+
+        nombreDialogo =
+            null;
+
+        textoDialogo =
+            null;
     }
 
 
-    window.removeEventListener(
-        "resize",
-        redimensionarCinematica
-    );
+    if (renderer) {
+
+        renderer.dispose();
+
+        if (
+            renderer.domElement &&
+            renderer.domElement.parentNode
+        ) {
+
+            renderer.domElement.parentNode
+                .removeChild(
+                    renderer.domElement
+                );
+        }
+    }
+
+
+    escena =
+        null;
+
+    camara =
+        null;
+
+    renderer =
+        null;
+
+    mike =
+        null;
+
+    micaela =
+        null;
+
+    mikeHuesos =
+        {};
+
+    micaelaHuesos =
+        {};
+
+    huevo =
+        null;
+
+    huevoBrillo =
+        null;
+
+    polloNoob =
+        null;
+
+    polloZombie =
+        null;
+
+    polloNoobEspecial =
+        null;
+
+    resultadoReal =
+        null;
+
+    resultadoMostrado =
+        false;
+
+    cinematicaActiva =
+        false;
 }
 
 
 // ============================================================
-// REDIMENSIONAR
+// TERMINAR
 // ============================================================
 
-function redimensionarCinematica() {
+function terminarCinematica() {
 
-    if (
-        !renderer ||
-        !camara
-    ) {
+    cinematicaActiva =
+        false;
+
+    cinematicaFinalizada =
+        true;
+
+
+    // El ganador permanece visible
+    // hasta que game.js continúe.
+
+    if (cajaDialogo) {
+
+        cajaDialogo.style.display =
+            "none";
+    }
+
+
+    if (animacionID) {
+
+        cancelAnimationFrame(
+            animacionID
+        );
+
+        animacionID =
+            null;
+    }
+        }
+// ============================================================
+// SEGURIDAD FINAL DEL RESULTADO
+// ============================================================
+
+// Esta función NO tira otra probabilidad.
+// Solo devuelve el resultado que ya decidió
+// probabilidades.js.
+
+export function obtenerResultadoCinematica() {
+
+    return resultadoReal;
+}
+
+
+// ============================================================
+// FORZAR SOLO GANADOR
+// ============================================================
+
+export function mostrarResultadoFinal() {
+
+    if (!resultadoReal) {
         return;
     }
 
+    const pollos = {
 
-    camara.aspect =
-        window.innerWidth /
-        window.innerHeight;
+        noob:
+            polloNoob,
+
+        zombie:
+            polloZombie,
+
+        pollito_noob:
+            polloNoobEspecial
+
+    };
 
 
-    camara.updateProjectionMatrix();
+    for (
+        const [nombre, pollo]
+        of Object.entries(pollos)
+    ) {
+
+        if (!pollo) {
+            continue;
+        }
+
+        pollo.visible =
+            nombre === resultadoReal;
+    }
 
 
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
-    );
+    const ganador =
+        pollos[
+            resultadoReal
+        ];
+
+
+    if (ganador) {
+
+        ganador.visible =
+            true;
+
+        ganador.scale.setScalar(
+            1.25
+        );
+    }
+
+
+    resultadoMostrado =
+        true;
 }
+
+
+// ============================================================
+// FIN DE escenaCinematica.js
+// ============================================================
