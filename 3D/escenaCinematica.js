@@ -27,7 +27,7 @@ let resultadoCinematica = "noob";
 
 let animando = false;
 let resizeActivo = false;
-
+let cinematicaFinalizada = false;
 const POSICION_INICIAL_MIKE = {
     x: -1.35,
     y: 0,
