@@ -104,7 +104,7 @@ game.appendChild(
 
 
 // ============================================================
-// INICIAR ESCENA DEL MENÚ
+// ESCENA DEL MENÚ
 // ============================================================
 
 const menu =
@@ -117,16 +117,14 @@ const menu =
 
 playButton.addEventListener(
     "click",
-    () => {
+    async () => {
 
         console.log(
             "🎮 PLAY PRESIONADO"
         );
 
-        // Evitar doble clic
         playButton.disabled = true;
 
-        // Quitar botón
         inicio.remove();
 
 
@@ -152,14 +150,32 @@ playButton.addEventListener(
             "🎬 INICIANDO CINEMÁTICA"
         );
 
-        iniciarCinematica(game);
 
+        try {
 
-        // ====================================================
-        // COMPROBAR CUÁNDO TERMINA
-        // ====================================================
+            await iniciarCinematica(
+                game
+            );
 
-        comprobarCinematica();
+            console.log(
+                "🎬 CINEMÁTICA INICIALIZADA"
+            );
+
+            comprobarCinematica();
+
+        } catch (error) {
+
+            console.error(
+                "❌ ERROR AL INICIAR CINEMÁTICA:",
+                error
+            );
+
+            mostrarErrorCinematica(
+                error
+            );
+
+        }
+
     }
 );
 
@@ -185,8 +201,100 @@ function comprobarCinematica() {
         return;
     }
 
+
     requestAnimationFrame(
         comprobarCinematica
+    );
+}
+
+
+// ============================================================
+// ERROR DE CINEMÁTICA
+// ============================================================
+
+function mostrarErrorCinematica(
+    error
+) {
+
+    const pantalla =
+        document.createElement("div");
+
+    pantalla.style.position =
+        "fixed";
+
+    pantalla.style.inset =
+        "0";
+
+    pantalla.style.zIndex =
+        "999999";
+
+    pantalla.style.background =
+        "#111";
+
+    pantalla.style.color =
+        "white";
+
+    pantalla.style.display =
+        "flex";
+
+    pantalla.style.flexDirection =
+        "column";
+
+    pantalla.style.alignItems =
+        "center";
+
+    pantalla.style.justifyContent =
+        "center";
+
+    pantalla.style.padding =
+        "25px";
+
+    pantalla.style.textAlign =
+        "center";
+
+    const titulo =
+        document.createElement("div");
+
+    titulo.textContent =
+        "❌ Error al cargar la cinemática";
+
+    titulo.style.fontSize =
+        "26px";
+
+    titulo.style.fontWeight =
+        "bold";
+
+    titulo.style.marginBottom =
+        "15px";
+
+
+    const detalle =
+        document.createElement("div");
+
+    detalle.textContent =
+        error?.message ||
+        String(error);
+
+    detalle.style.fontSize =
+        "15px";
+
+    detalle.style.maxWidth =
+        "700px";
+
+    detalle.style.wordBreak =
+        "break-word";
+
+
+    pantalla.appendChild(
+        titulo
+    );
+
+    pantalla.appendChild(
+        detalle
+    );
+
+    game.appendChild(
+        pantalla
     );
 }
 
@@ -201,9 +309,6 @@ function iniciarGranja() {
         "🌾 INICIANDO GRANJA"
     );
 
-    // --------------------------------------------------------
-    // POR AHORA MOSTRAMOS UNA PANTALLA TEMPORAL
-    // --------------------------------------------------------
 
     const pantalla =
         document.createElement("div");
@@ -239,10 +344,6 @@ function iniciarGranja() {
         "90000";
 
 
-    // --------------------------------------------------------
-    // TEXTO
-    // --------------------------------------------------------
-
     const texto =
         document.createElement("div");
 
@@ -274,4 +375,4 @@ function iniciarGranja() {
     console.log(
         "🐔 La granja está lista para conectar."
     );
-    }
+}
