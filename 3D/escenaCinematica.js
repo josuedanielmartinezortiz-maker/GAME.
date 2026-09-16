@@ -1,7 +1,7 @@
 // ============================================================
 // GAMERPRO GAME
 // escenaCinematica.js
-// CINEMÁTICA HUEVO NOOB
+// CINEMÁTICA HUEVO NOOB - BOSQUE CERRADO + POLLOS 3D
 // ============================================================
 
 import * as THREE from "three";
@@ -15,13 +15,14 @@ import {
 } from "../probabilidades.js";
 
 // ============================================================
-// ESTADO PRINCIPAL
+// ESTADO
 // ============================================================
 
 let escena = null;
 let camara = null;
 let renderer = null;
 let contenedorJuego = null;
+
 let reloj = null;
 let animacionID = null;
 
@@ -51,7 +52,6 @@ let micaelaHuesos = {};
 
 let huevo = null;
 let huevoBrillo = null;
-let sombraHuevo = null;
 
 // ============================================================
 // POLLOS
@@ -64,15 +64,9 @@ let polloNoobEspecial = null;
 let resultadoReal = null;
 let resultadoMostrado = false;
 
-// ============================================================
-// RULETA
-// ============================================================
-
 let ruletaIndice = 0;
 let ruletaVueltas = 0;
-let ruletaTerminada = false;
-let ruletaUltimoCambio = 0;
-let ruletaIntervalo = 0.10;
+let ultimoCambioRuleta = 0;
 
 // ============================================================
 // DIÁLOGO
@@ -87,17 +81,27 @@ let dialogoActual = -1;
 // CARGADORES
 // ============================================================
 
-const gltfLoader = new GLTFLoader();
-const textureLoader = new THREE.TextureLoader();
+const gltfLoader =
+    new GLTFLoader();
+
+const textureLoader =
+    new THREE.TextureLoader();
 
 // ============================================================
 // ARCHIVOS
 // ============================================================
 
 const ARCHIVOS = {
-    mike: "./3D/mike.glb",
-    micaela: "./3D/micaela.glb",
-    huevo: "./3D/huevo%20noob.png"
+
+    mike:
+        "./3D/mike.glb",
+
+    micaela:
+        "./3D/micaela.glb",
+
+    huevo:
+        "./3D/huevo%20noob.png"
+
 };
 
 // ============================================================
@@ -105,52 +109,57 @@ const ARCHIVOS = {
 // ============================================================
 
 const CONFIG = {
-    velocidadMike: 1.15,
-    velocidadMicaela: 1.15,
 
-    inicioZ: 7.5,
-    llegadaZ: 0.8,
+    velocidadMike: 2.1,
+    velocidadMicaela: 2.1,
+
+    distanciaFinal: 0.7,
 
     alturaMike: 0,
     alturaMicaela: 0,
 
-    alturaCamara: 1.75,
+    // CÁMARA NUEVA: MUCHO MÁS CERCANA
+    alturaCamara: 2.35,
     distanciaCamara: 5.2,
 
+    velocidadPasos: 7,
+
     duracionIntro: 2.0,
-    duracionCaminata: 8.5,
-    duracionHuevo: 3.2,
-    duracionApertura: 2.0,
-    duracionRuleta: 6.5,
+    duracionHuevo: 3.0,
+    duracionApertura: 1.8,
+    duracionSeleccion: 5.5,
     duracionResultado: 4.0
+
 };
 
-// ============================================================
-// ORIENTACIÓN DE PERSONAJES
-// ============================================================
-
-const ROTACION_PERSONAJES = Math.PI;
+const ROTACION_PERSONAJES =
+    Math.PI;
 
 // ============================================================
 // EXPORTS
 // ============================================================
 
 export function cinematicaTerminada() {
+
     return cinematicaFinalizada;
+
 }
 
-export function establecerResultadoCinematica(resultado) {
+export function establecerResultadoCinematica(
+    resultado
+) {
+
     if (
         resultado === "noob" ||
         resultado === "zombie" ||
         resultado === "pollito_noob"
     ) {
-        resultadoReal = resultado;
-    }
-}
 
-export function obtenerResultadoCinematica() {
-    return resultadoReal;
+        resultadoReal =
+            resultado;
+
+    }
+
 }
 // ============================================================
 // CREAR ESCENA
@@ -158,39 +167,42 @@ export function obtenerResultadoCinematica() {
 
 function crearEscena() {
 
-    escena = new THREE.Scene();
+    escena =
+        new THREE.Scene();
 
     escena.background =
-        new THREE.Color(0x8eaa78);
+        new THREE.Color(
+            0x789765
+        );
 
     escena.fog =
         new THREE.Fog(
-            0x8eaa78,
-            14,
-            42
+            0x789765,
+            10,
+            30
         );
 
     // --------------------------------------------------------
-    // CÁMARA
+    // CÁMARA CERCANA
     // --------------------------------------------------------
 
     camara =
         new THREE.PerspectiveCamera(
-            58,
+            48,
             window.innerWidth /
             window.innerHeight,
             0.1,
-            100
+            80
         );
 
     camara.position.set(
         0,
-        CONFIG.alturaCamara,
-        CONFIG.distanciaCamara
+        2.35,
+        5.2
     );
 
     // --------------------------------------------------------
-    // RENDERER
+    // RENDER
     // --------------------------------------------------------
 
     renderer =
@@ -202,7 +214,7 @@ function crearEscena() {
     renderer.setPixelRatio(
         Math.min(
             window.devicePixelRatio || 1,
-            1.35
+            1.5
         )
     );
 
@@ -214,40 +226,46 @@ function crearEscena() {
     renderer.outputColorSpace =
         THREE.SRGBColorSpace;
 
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled =
+        true;
 
     contenedorJuego.appendChild(
         renderer.domElement
     );
 
     // --------------------------------------------------------
-    // LUZ
+    // LUCES
     // --------------------------------------------------------
 
-    const luzAmbiente =
+    const ambiente =
         new THREE.HemisphereLight(
-            0xdff5ff,
-            0x304025,
-            2.2
+            0xe5f6d7,
+            0x304525,
+            2.6
         );
 
-    escena.add(luzAmbiente);
-
-    const luzSol =
-        new THREE.DirectionalLight(
-            0xffffff,
-            2.8
-        );
-
-    luzSol.position.set(
-        5,
-        12,
-        5
+    escena.add(
+        ambiente
     );
 
-    luzSol.castShadow = true;
+    const sol =
+        new THREE.DirectionalLight(
+            0xfff4d6,
+            3.2
+        );
 
-    escena.add(luzSol);
+    sol.position.set(
+        -5,
+        12,
+        6
+    );
+
+    sol.castShadow =
+        true;
+
+    escena.add(
+        sol
+    );
 
     // --------------------------------------------------------
     // SUELO
@@ -256,11 +274,11 @@ function crearEscena() {
     const suelo =
         new THREE.Mesh(
             new THREE.PlaneGeometry(
-                80,
-                80
+                70,
+                70
             ),
             new THREE.MeshStandardMaterial({
-                color: 0x527545,
+                color: 0x527a43,
                 roughness: 1
             })
         );
@@ -268,19 +286,12 @@ function crearEscena() {
     suelo.rotation.x =
         -Math.PI / 2;
 
-    suelo.receiveShadow = true;
+    suelo.receiveShadow =
+        true;
 
-    escena.add(suelo);
-
-    // --------------------------------------------------------
-    // CAMINO
-    // --------------------------------------------------------
-
-    crearCamino();
-
-    // --------------------------------------------------------
-    // PINOS
-    // --------------------------------------------------------
+    escena.add(
+        suelo
+    );
 
     crearBosqueCerrado();
 
@@ -288,152 +299,168 @@ function crearEscena() {
         "resize",
         redimensionarCinematica
     );
+
 }
 
 // ============================================================
-// CAMINO
+// TRONCO
 // ============================================================
 
-function crearCamino() {
+function crearTronco(
+    altura = 3
+) {
 
-    const camino =
+    const material =
+        new THREE.MeshStandardMaterial({
+            color: 0x55351f,
+            roughness: 1
+        });
+
+    const tronco =
         new THREE.Mesh(
-            new THREE.PlaneGeometry(
-                4.2,
-                55
+            new THREE.CylinderGeometry(
+                0.16,
+                0.27,
+                altura,
+                7
             ),
-            new THREE.MeshStandardMaterial({
-                color: 0x8b704d,
-                roughness: 1
-            })
+            material
         );
 
-    camino.rotation.x =
-        -Math.PI / 2;
+    tronco.position.y =
+        altura / 2;
 
-    camino.position.set(
-        0,
-        0.012,
-        -18
-    );
+    tronco.castShadow =
+        true;
 
-    camino.receiveShadow = true;
+    return tronco;
 
-    escena.add(camino);
 }
 // ============================================================
-// PINOS
+// PINO
 // ============================================================
 
 function crearPino(
-    x,
-    z,
-    escala,
-    detallado = true
+    escala = 1
 ) {
 
     const grupo =
         new THREE.Group();
 
     const tronco =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.18,
-                0.28,
-                2.4,
-                detallado ? 8 : 6
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x54351f,
-                roughness: 1
-            })
+        crearTronco(
+            2.8
         );
 
-    tronco.position.y = 1.2;
-    tronco.castShadow = true;
-
-    grupo.add(tronco);
+    grupo.add(
+        tronco
+    );
 
     const materialPino =
         new THREE.MeshStandardMaterial({
-            color: 0x24552f,
-            roughness: 0.95
+            color: 0x245934,
+            roughness: 1
         });
 
-    if (detallado) {
+    // Tres niveles para que parezca más a un pino
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
 
-        const copa1 =
+        const copa =
             new THREE.Mesh(
                 new THREE.ConeGeometry(
-                    1.15,
-                    2.4,
-                    9
-                ),
-                materialPino
-            );
-
-        copa1.position.y = 2.6;
-        copa1.castShadow = true;
-
-        const copa2 =
-            new THREE.Mesh(
-                new THREE.ConeGeometry(
-                    0.92,
-                    2.0,
-                    9
-                ),
-                materialPino
-            );
-
-        copa2.position.y = 3.7;
-        copa2.castShadow = true;
-
-        const copa3 =
-            new THREE.Mesh(
-                new THREE.ConeGeometry(
-                    0.65,
-                    1.5,
+                    1.25 -
+                    i * 0.22,
+                    1.9,
                     8
                 ),
                 materialPino
             );
 
-        copa3.position.y = 4.55;
-        copa3.castShadow = true;
+        copa.position.y =
+            2.0 +
+            i * 0.72;
 
-        grupo.add(copa1);
-        grupo.add(copa2);
-        grupo.add(copa3);
+        copa.castShadow =
+            true;
 
-    } else {
+        grupo.add(
+            copa
+        );
 
-        const copa =
-            new THREE.Mesh(
-                new THREE.ConeGeometry(
-                    0.9,
-                    2.8,
-                    7
-                ),
-                materialPino
-            );
-
-        copa.position.y = 2.9;
-        copa.castShadow = true;
-
-        grupo.add(copa);
     }
-
-    grupo.position.set(
-        x,
-        0,
-        z
-    );
 
     grupo.scale.setScalar(
         escala
     );
 
-    escena.add(grupo);
+    return grupo;
+
+}
+
+// ============================================================
+// ARBUSTO
+// ============================================================
+
+function crearArbusto(
+    escala = 1
+) {
+
+    const grupo =
+        new THREE.Group();
+
+    const material =
+        new THREE.MeshStandardMaterial({
+            color: 0x3e713e,
+            roughness: 1
+        });
+
+    for (
+        let i = 0;
+        i < 5;
+        i++
+    ) {
+
+        const bola =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.45 +
+                    Math.random() * 0.22,
+                    8,
+                    6
+                ),
+                material
+            );
+
+        bola.position.set(
+            (Math.random() - 0.5) *
+            1.0,
+
+            0.35 +
+            Math.random() * 0.3,
+
+            (Math.random() - 0.5) *
+            0.8
+        );
+
+        bola.castShadow =
+            true;
+
+        grupo.add(
+            bola
+        );
+
+    }
+
+    grupo.scale.setScalar(
+        escala
+    );
+
+    return grupo;
+
 }
 
 // ============================================================
@@ -442,38 +469,10 @@ function crearPino(
 
 function crearBosqueCerrado() {
 
-    // Pinos grandes junto al camino
-    for (
-        let z = 4;
-        z > -28;
-        z -= 2.6
-    ) {
-
-        const variacion =
-            0.85 +
-            Math.random() * 0.35;
-
-        crearPino(
-            -3.0 -
-            Math.random() * 0.7,
-            z,
-            variacion,
-            true
-        );
-
-        crearPino(
-            3.0 +
-            Math.random() * 0.7,
-            z - 0.8,
-            variacion,
-            true
-        );
-    }
-
-    // Fondo simplificado
+    // Árboles de los lados
     for (
         let i = 0;
-        i < 26;
+        i < 28;
         i++
     ) {
 
@@ -482,17 +481,110 @@ function crearBosqueCerrado() {
                 ? -1
                 : 1;
 
-        crearPino(
+        const arbol =
+            crearPino(
+                0.9 +
+                Math.random() * 0.55
+            );
+
+        arbol.position.set(
             lado *
-            (5.2 +
-            Math.random() * 3),
-            -5 -
-            Math.random() * 28,
-            0.65 +
-            Math.random() * 0.45,
-            false
+            (
+                4.2 +
+                Math.random() * 1.8
+            ),
+            0,
+            7 -
+            i * 1.05
         );
+
+        escena.add(
+            arbol
+        );
+
+        // Arbustos debajo
+        const arbusto =
+            crearArbusto(
+                0.8 +
+                Math.random() * 0.6
+            );
+
+        arbusto.position.set(
+            arbol.position.x +
+            (Math.random() - 0.5),
+            0,
+            arbol.position.z +
+            0.35
+        );
+
+        escena.add(
+            arbusto
+        );
+
     }
+
+    // Pared de árboles del fondo
+    for (
+        let i = 0;
+        i < 16;
+        i++
+    ) {
+
+        const arbol =
+            crearPino(
+                1.0 +
+                Math.random() * 0.5
+            );
+
+        arbol.position.set(
+            -7 +
+            i * 0.9,
+            0,
+            -11 +
+            Math.random() * 1.5
+        );
+
+        escena.add(
+            arbol
+        );
+
+    }
+
+    // Vegetación adicional para cerrar huecos
+    for (
+        let i = 0;
+        i < 32;
+        i++
+    ) {
+
+        const lado =
+            i % 2 === 0
+                ? -1
+                : 1;
+
+        const arbusto =
+            crearArbusto(
+                0.8 +
+                Math.random() * 0.8
+            );
+
+        arbusto.position.set(
+            lado *
+            (
+                3.8 +
+                Math.random() * 3.0
+            ),
+            0,
+            5 -
+            i * 0.55
+        );
+
+        escena.add(
+            arbusto
+        );
+
+    }
+
 }
 // ============================================================
 // CARGAR PERSONAJES
@@ -510,68 +602,77 @@ async function cargarPersonajes() {
             ARCHIVOS.micaela
         );
 
-    // --------------------------------------------------------
-    // MIKE
-    // --------------------------------------------------------
-
     if (mike) {
 
         mike.position.set(
-            -0.75,
-            CONFIG.alturaMike,
-            CONFIG.inicioZ
+            -1.15,
+            0,
+            5.4
         );
 
         mike.rotation.y =
             ROTACION_PERSONAJES;
 
-        mike.scale.setScalar(1);
+        escena.add(
+            mike
+        );
 
-        escena.add(mike);
+        ajustarAlSuelo(
+            mike
+        );
 
         mikeHuesos =
-            buscarHuesos(mike);
+            buscarHuesos(
+                mike
+            );
 
         iniciarAnimacionGLB(
             mike,
             "mike"
         );
-    }
 
-    // --------------------------------------------------------
-    // MICAELA
-    // --------------------------------------------------------
+    }
 
     if (micaela) {
 
         micaela.position.set(
-            0.75,
-            CONFIG.alturaMicaela,
-            CONFIG.inicioZ + 0.45
+            1.15,
+            0,
+            5.7
         );
 
         micaela.rotation.y =
             ROTACION_PERSONAJES;
 
-        micaela.scale.setScalar(1);
+        escena.add(
+            micaela
+        );
 
-        escena.add(micaela);
+        ajustarAlSuelo(
+            micaela
+        );
 
         micaelaHuesos =
-            buscarHuesos(micaela);
+            buscarHuesos(
+                micaela
+            );
 
         iniciarAnimacionGLB(
             micaela,
             "micaela"
         );
+
     }
+
 }
 
 // ============================================================
 // CARGAR GLB
 // ============================================================
 
-async function cargarGLB(ruta) {
+async function cargarGLB(
+    ruta
+) {
 
     try {
 
@@ -584,15 +685,20 @@ async function cargarGLB(ruta) {
             gltf.scene;
 
         objeto.traverse(
-            (child) => {
+            child => {
 
                 if (
                     child.isMesh
                 ) {
 
-                    child.castShadow = true;
-                    child.receiveShadow = true;
+                    child.castShadow =
+                        true;
+
+                    child.receiveShadow =
+                        true;
+
                 }
+
             }
         );
 
@@ -601,7 +707,9 @@ async function cargarGLB(ruta) {
 
         return objeto;
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "[GAMERPRO] Error GLB:",
@@ -610,7 +718,36 @@ async function cargarGLB(ruta) {
         );
 
         return null;
+
     }
+
+}
+
+// ============================================================
+// EVITAR QUE MIKE/MICAELA QUEDEN ENTERRADOS
+// ============================================================
+
+function ajustarAlSuelo(
+    objeto
+) {
+
+    const caja =
+        new THREE.Box3()
+            .setFromObject(
+                objeto
+            );
+
+    if (
+        Number.isFinite(
+            caja.min.y
+        )
+    ) {
+
+        objeto.position.y -=
+            caja.min.y;
+
+    }
+
 }
 
 // ============================================================
@@ -629,7 +766,9 @@ function iniciarAnimacionGLB(
         !clips ||
         clips.length === 0
     ) {
+
         return;
+
     }
 
     const mixer =
@@ -646,7 +785,9 @@ function iniciarAnimacionGLB(
         clips[0];
 
     const accion =
-        mixer.clipAction(clip);
+        mixer.clipAction(
+            clip
+        );
 
     accion.reset();
     accion.play();
@@ -660,13 +801,20 @@ function iniciarAnimacionGLB(
     if (
         nombre === "mike"
     ) {
-        mikeMixer = mixer;
+
+        mikeMixer =
+            mixer;
+
     } else {
-        micaelaMixer = mixer;
+
+        micaelaMixer =
+            mixer;
+
     }
+
             }
 // ============================================================
-// BUSCAR HUESOS
+// HUESOS
 // ============================================================
 
 function buscarHuesos(
@@ -676,9 +824,11 @@ function buscarHuesos(
     const huesos = {};
 
     personaje.traverse(
-        (obj) => {
+        obj => {
 
-            if (!obj.isBone) {
+            if (
+                !obj.isBone
+            ) {
                 return;
             }
 
@@ -686,54 +836,70 @@ function buscarHuesos(
                 obj.name.toLowerCase();
 
             if (
-                /hip|pelvis|cadera/.test(n)
+                /hip|pelvis|cadera/
+                    .test(n)
             ) {
-                huesos.cadera = obj;
+                huesos.cadera =
+                    obj;
             }
 
             if (
-                /spine|chest|torso|columna|pecho/.test(n)
+                /spine|chest|torso|columna|pecho/
+                    .test(n)
             ) {
-                huesos.torso = obj;
+                huesos.torso =
+                    obj;
             }
 
             if (
-                /head|cabeza/.test(n)
+                /head|cabeza/
+                    .test(n)
             ) {
-                huesos.cabeza = obj;
+                huesos.cabeza =
+                    obj;
             }
 
             if (
-                /left.*upper.*arm|upper.*arm.*left|brazo.*izq/.test(n)
+                /left.*upper.*arm|upper.*arm.*left|brazo.*izq/
+                    .test(n)
             ) {
-                huesos.brazoIzq = obj;
+                huesos.brazoIzq =
+                    obj;
             }
 
             if (
-                /right.*upper.*arm|upper.*arm.*right|brazo.*der/.test(n)
+                /right.*upper.*arm|upper.*arm.*right|brazo.*der/
+                    .test(n)
             ) {
-                huesos.brazoDer = obj;
+                huesos.brazoDer =
+                    obj;
             }
 
             if (
-                /left.*thigh|thigh.*left|upper.*leg.*left|pierna.*izq/.test(n)
+                /left.*thigh|thigh.*left|left.*leg|pierna.*izq/
+                    .test(n)
             ) {
-                huesos.piernaIzq = obj;
+                huesos.piernaIzq =
+                    obj;
             }
 
             if (
-                /right.*thigh|thigh.*right|upper.*leg.*right|pierna.*der/.test(n)
+                /right.*thigh|thigh.*right|right.*leg|pierna.*der/
+                    .test(n)
             ) {
-                huesos.piernaDer = obj;
+                huesos.piernaDer =
+                    obj;
             }
+
         }
     );
 
     return huesos;
+
 }
 
 // ============================================================
-// CAMINATA
+// CAMINATA PROCEDURAL
 // ============================================================
 
 function actualizarCaminata(
@@ -743,84 +909,109 @@ function actualizarCaminata(
     delta
 ) {
 
-    if (!personaje) {
+    if (
+        !personaje
+    ) {
         return;
     }
 
     personaje.position.z -=
         velocidad * delta;
 
-    // Nunca permitir que bajen debajo del suelo
-    if (
-        personaje.position.y < 0
-    ) {
-        personaje.position.y = 0;
-    }
+    const tiempo =
+        tiempoTotal *
+        CONFIG.velocidadPasos;
 
-    const t =
-        tiempoTotal * 7;
-
-    // Solo usar movimiento manual
-    // cuando el modelo no tenga una animación.
     if (
-        !personaje.userData.accion
+        huesos.brazoIzq
     ) {
 
-        if (huesos.brazoIzq) {
-            huesos.brazoIzq.rotation.x =
-                Math.sin(t) * 0.35;
-        }
+        huesos.brazoIzq.rotation.x =
+            Math.sin(
+                tiempo
+            ) * 0.45;
 
-        if (huesos.brazoDer) {
-            huesos.brazoDer.rotation.x =
-                Math.sin(t + Math.PI) * 0.35;
-        }
-
-        if (huesos.piernaIzq) {
-            huesos.piernaIzq.rotation.x =
-                Math.sin(t + Math.PI) * 0.28;
-        }
-
-        if (huesos.piernaDer) {
-            huesos.piernaDer.rotation.x =
-                Math.sin(t) * 0.28;
-        }
     }
+
+    if (
+        huesos.brazoDer
+    ) {
+
+        huesos.brazoDer.rotation.x =
+            Math.sin(
+                tiempo +
+                Math.PI
+            ) * 0.45;
+
+    }
+
+    if (
+        huesos.piernaIzq
+    ) {
+
+        huesos.piernaIzq.rotation.x =
+            Math.sin(
+                tiempo +
+                Math.PI
+            ) * 0.35;
+
+    }
+
+    if (
+        huesos.piernaDer
+    ) {
+
+        huesos.piernaDer.rotation.x =
+            Math.sin(
+                tiempo
+            ) * 0.35;
+
+    }
+
 }
 
 // ============================================================
-// DETENER PERSONAJE
+// DETENER
 // ============================================================
 
 function detenerPersonaje(
     personaje
 ) {
 
-    if (!personaje) {
+    if (
+        !personaje
+    ) {
         return;
     }
 
     const accion =
         personaje.userData.accion;
 
-    if (accion) {
-        accion.paused = true;
+    if (
+        accion
+    ) {
+
+        accion.paused =
+            true;
+
     }
+
 }
 
 // ============================================================
-// CREAR HUEVO
+// HUEVO
 // ============================================================
 
 async function crearHuevo() {
 
     return new Promise(
-        (resolve) => {
+        resolve => {
 
             textureLoader.load(
-                ARCHIVOS.huevo,
 
-                (textura) => {
+                "./3D/huevo%20noob.png",
+
+                textura => {
 
                     textura.colorSpace =
                         THREE.SRGBColorSpace;
@@ -829,49 +1020,51 @@ async function crearHuevo() {
                         new THREE.MeshBasicMaterial({
                             map: textura,
                             transparent: true,
-                            side: THREE.DoubleSide
+                            side:
+                                THREE.DoubleSide
                         });
 
                     huevo =
                         new THREE.Mesh(
                             new THREE.PlaneGeometry(
-                                1.55,
-                                1.75
+                                1.8,
+                                1.8
                             ),
                             material
                         );
 
                     huevo.position.set(
                         0,
-                        0.88,
+                        0.95,
                         0
                     );
 
-                    huevo.rotation.y =
-                        Math.PI;
+                    huevo.scale.y =
+                        1.15;
 
-                    huevo.visible = false;
-
-                    huevo.userData.baseX =
+                    huevo.userData.escalaX =
                         huevo.scale.x;
 
-                    huevo.userData.baseY =
+                    huevo.userData.escalaY =
                         huevo.scale.y;
 
-                    escena.add(huevo);
+                    huevo.visible =
+                        false;
 
-                    crearSombraHuevo();
+                    escena.add(
+                        huevo
+                    );
 
                     huevoBrillo =
                         new THREE.PointLight(
                             0xffe89a,
                             0,
-                            4
+                            5
                         );
 
                     huevoBrillo.position.set(
                         0,
-                        0.9,
+                        1.2,
                         0
                     );
 
@@ -889,111 +1082,68 @@ async function crearHuevo() {
 
                     crearHuevoRespaldo();
                     resolve();
+
                 }
+
             );
+
         }
     );
+
 }
 
-// ============================================================
-// SOMBRA DEL HUEVO
-// ============================================================
-
-function crearSombraHuevo() {
-
-    sombraHuevo =
-        new THREE.Mesh(
-            new THREE.CircleGeometry(
-                0.65,
-                32
-            ),
-            new THREE.MeshBasicMaterial({
-                color: 0x222222,
-                transparent: true,
-                opacity: 0.28
-            })
-        );
-
-    sombraHuevo.rotation.x =
-        -Math.PI / 2;
-
-    sombraHuevo.position.set(
-        0,
-        0.025,
-        0
-    );
-
-    escena.add(
-        sombraHuevo
-    );
-            }
-// ============================================================
-// HUEVO DE RESPALDO
-// ============================================================
-
 function crearHuevoRespaldo() {
+
+    const material =
+        new THREE.MeshStandardMaterial({
+            color: 0xe8c36a
+        });
 
     huevo =
         new THREE.Mesh(
             new THREE.SphereGeometry(
-                0.65,
+                0.7,
                 20,
                 16
             ),
-            new THREE.MeshStandardMaterial({
-                color: 0xe8c36a
-            })
+            material
         );
 
-    huevo.scale.y = 1.3;
+    huevo.scale.y =
+        1.25;
 
-    huevo.position.set(
-        0,
-        0.72,
-        0
-    );
+    huevo.position.y =
+        0.8;
 
-    huevo.visible = false;
+    huevo.visible =
+        false;
 
-    huevo.userData.baseX =
+    huevo.userData.escalaX =
         huevo.scale.x;
 
-    huevo.userData.baseY =
+    huevo.userData.escalaY =
         huevo.scale.y;
 
-    escena.add(huevo);
-
-    crearSombraHuevo();
-
-    huevoBrillo =
-        new THREE.PointLight(
-            0xffe89a,
-            0,
-            4
-        );
-
-    huevoBrillo.position.set(
-        0,
-        0.9,
-        0
-    );
-
     escena.add(
-        huevoBrillo
+        huevo
     );
-}
 
+                    }
 // ============================================================
-// CREAR POLLOS
+// CREAR LOS 3 POLLOS
 // ============================================================
 
 function crearPollos3D() {
 
     polloNoob =
-        crearPollo3D("noob");
+        crearPollo3D(
+            "noob"
+        );
 
     polloZombie =
-        crearPollo3D("zombie");
+        crearPollo3D(
+            "zombie"
+        );
 
     polloNoobEspecial =
         crearPollo3D(
@@ -1001,7 +1151,7 @@ function crearPollos3D() {
         );
 
     polloNoob.position.set(
-        -1.8,
+        -2.0,
         0,
         -1.0
     );
@@ -1009,153 +1159,220 @@ function crearPollos3D() {
     polloZombie.position.set(
         0,
         0,
-        -1.25
+        -1.35
     );
 
     polloNoobEspecial.position.set(
-        1.8,
+        2.0,
         0,
         -1.0
     );
 
-    polloNoob.visible = false;
-    polloZombie.visible = false;
-    polloNoobEspecial.visible = false;
+    polloNoob.visible =
+        false;
 
-    escena.add(polloNoob);
-    escena.add(polloZombie);
-    escena.add(polloNoobEspecial);
+    polloZombie.visible =
+        false;
+
+    polloNoobEspecial.visible =
+        false;
+
+    escena.add(
+        polloNoob
+    );
+
+    escena.add(
+        polloZombie
+    );
+
+    escena.add(
+        polloNoobEspecial
+    );
+
 }
 
 // ============================================================
-// POLLO 3D
+// POLLO BASE
 // ============================================================
 
-function crearPollo3D(tipo) {
+function crearPollo3D(
+    tipo
+) {
 
     const grupo =
         new THREE.Group();
 
-    let cuerpoColor = 0x8fa68e;
-    let gorraColor = 0xe8c36a;
-
-    if (tipo === "zombie") {
-
-        cuerpoColor = 0x64735f;
-        gorraColor = 0x596b62;
-
-    }
-
-    if (tipo === "pollito_noob") {
-
-        cuerpoColor = 0xf5d5b8;
-        gorraColor = 0xe8c36a;
-    }
-
-    const matCuerpo =
+    const amarillo =
         new THREE.MeshStandardMaterial({
-            color: cuerpoColor,
+            color: 0xf4c94f,
             roughness: 0.9
         });
 
-    const matPico =
+    const amarilloClaro =
         new THREE.MeshStandardMaterial({
-            color: 0xffa62b
+            color: 0xffdf70,
+            roughness: 0.9
         });
 
-    const matPatas =
+    const naranja =
         new THREE.MeshStandardMaterial({
-            color: 0xd58b28
+            color: 0xff8b20
         });
 
-    // CUERPO
+    const negro =
+        new THREE.MeshStandardMaterial({
+            color: 0x202020
+        });
+
+    let cuerpoMat =
+        amarillo;
+
+    if (
+        tipo === "zombie"
+    ) {
+
+        cuerpoMat =
+            new THREE.MeshStandardMaterial({
+                color: 0xc9e69a,
+                roughness: 1
+            });
+
+    }
+
+    // --------------------------------------------------------
+    // CUERPO REDONDO
+    // --------------------------------------------------------
+
     const cuerpo =
         new THREE.Mesh(
             new THREE.SphereGeometry(
-                0.55,
-                14,
-                10
+                0.72,
+                18,
+                14
             ),
-            matCuerpo
+            cuerpoMat
         );
 
     cuerpo.scale.set(
         1,
-        1.12,
-        0.9
+        1.08,
+        0.88
     );
 
     cuerpo.position.y =
-        0.72;
+        0.82;
 
-    cuerpo.castShadow = true;
+    grupo.add(
+        cuerpo
+    );
 
-    grupo.add(cuerpo);
-
+    // --------------------------------------------------------
     // CABEZA
+    // --------------------------------------------------------
+
     const cabeza =
         new THREE.Mesh(
             new THREE.SphereGeometry(
-                0.43,
-                14,
-                10
+                0.57,
+                18,
+                14
             ),
-            matCuerpo
+            cuerpoMat
         );
 
     cabeza.position.y =
-        1.48;
+        1.65;
 
-    cabeza.castShadow = true;
-
-    grupo.add(cabeza);
-
-    // OJOS
-    const ojoMat =
-        new THREE.MeshBasicMaterial({
-            color:
-                tipo === "zombie"
-                    ? 0xff2020
-                    : 0x111111
-        });
-
-    const ojo1 =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.075,
-                8,
-                8
-            ),
-            ojoMat
-        );
-
-    ojo1.position.set(
-        -0.16,
-        1.55,
-        -0.38
+    grupo.add(
+        cabeza
     );
 
-    const ojo2 =
-        ojo1.clone();
+    // --------------------------------------------------------
+    // MECHÓN
+    // --------------------------------------------------------
 
-    ojo2.position.x =
-        0.16;
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
 
-    grupo.add(ojo1);
-    grupo.add(ojo2);
-    // ============================================================
-// PARTES DEL POLLO
-// ============================================================
+        const mechon =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.13,
+                    8,
+                    6
+                ),
+                amarilloClaro
+            );
 
+        mechon.scale.y =
+            1.35;
+
+        mechon.position.set(
+            (i - 1) *
+            0.13,
+            2.08 +
+            Math.abs(i - 1) *
+            0.03,
+            -0.03
+        );
+
+        grupo.add(
+            mechon
+        );
+
+    }
+
+    // --------------------------------------------------------
+    // OJOS
+    // --------------------------------------------------------
+
+    if (
+        tipo !== "zombie"
+    ) {
+
+        crearOjoGrande(
+            grupo,
+            -0.22,
+            1.68
+        );
+
+        crearOjoGrande(
+            grupo,
+            0.22,
+            1.68
+        );
+
+    } else {
+
+        crearOjoCerrado(
+            grupo,
+            -0.21,
+            1.69
+        );
+
+        crearOjoCerrado(
+            grupo,
+            0.21,
+            1.69
+        );
+
+    }
+
+    // --------------------------------------------------------
     // PICO
+    // --------------------------------------------------------
+
     const pico =
         new THREE.Mesh(
             new THREE.ConeGeometry(
-                0.12,
-                0.28,
+                0.16,
+                0.30,
                 4
             ),
-            matPico
+            naranja
         );
 
     pico.rotation.x =
@@ -1163,243 +1380,488 @@ function crearPollo3D(tipo) {
 
     pico.position.set(
         0,
-        1.43,
-        -0.53
+        1.48,
+        -0.54
     );
 
-    grupo.add(pico);
-
-    // ALA IZQUIERDA
-    const ala1 =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.28,
-                10,
-                8
-            ),
-            matCuerpo
-        );
-
-    ala1.scale.set(
-        0.55,
-        1,
-        0.25
+    grupo.add(
+        pico
     );
 
-    ala1.position.set(
-        -0.52,
-        0.78,
-        0
-    );
+    // --------------------------------------------------------
+    // MEJILLAS
+    // --------------------------------------------------------
 
-    ala1.rotation.z =
-        -0.25;
-
-    grupo.add(ala1);
-
-    // ALA DERECHA
-    const ala2 =
-        ala1.clone();
-
-    ala2.position.x =
-        0.52;
-
-    ala2.rotation.z =
-        0.25;
-
-    grupo.add(ala2);
-
-    // COLA
-    const cola =
-        new THREE.Mesh(
-            new THREE.ConeGeometry(
-                0.25,
-                0.55,
-                7
-            ),
-            matCuerpo
-        );
-
-    cola.rotation.x =
-        Math.PI / 2;
-
-    cola.position.set(
-        0,
-        0.95,
-        0.48
-    );
-
-    grupo.add(cola);
-
-    // PATAS
-    crearPata(
-        grupo,
-        -0.18,
-        matPatas
-    );
-
-    crearPata(
-        grupo,
-        0.18,
-        matPatas
-    );
-
-    // GORRA
-    crearGorraPollo(
-        grupo,
-        gorraColor
-    );
-
-    // N DEL NOOB
     if (
-        tipo === "noob" ||
+        tipo !== "zombie"
+    ) {
+
+        crearMejilla(
+            grupo,
+            -0.40,
+            1.48
+        );
+
+        crearMejilla(
+            grupo,
+            0.40,
+            1.48
+        );
+
+    }
+
+    crearAlas(
+        grupo,
+        cuerpoMat
+    );
+
+    crearCola(
+        grupo,
+        cuerpoMat
+    );
+
+    crearPatas(
+        grupo,
+        naranja
+    );
+
+    crearGorra(
+        grupo,
+        tipo
+    );
+
+    crearLetraN(
+        grupo
+    );
+
+    if (
+        tipo === "zombie"
+    ) {
+
+        crearParchesZombie(
+            grupo
+        );
+
+    }
+
+    if (
         tipo === "pollito_noob"
     ) {
-        crearLetraNPollo(
+
+        crearEstrella(
             grupo
         );
-    }
 
-    // DETALLE ZOMBIE
-    if (tipo === "zombie") {
-        crearDetallesZombie(
+        crearArcoiris(
             grupo
         );
+
     }
 
-    grupo.userData.tipo =
-        tipo;
-
-    grupo.userData.animTime =
-        Math.random() * 10;
-
-    grupo.userData.baseScale =
-        1;
-
-    return grupo;
-}
-
-// ============================================================
-// PATA
-// ============================================================
-
-function crearPata(
-    grupo,
-    x,
-    material
-) {
-
-    const pierna =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.045,
-                0.055,
-                0.32,
-                7
-            ),
-            material
-        );
-
-    pierna.position.set(
-        x,
-        0.25,
-        0
+    grupo.scale.setScalar(
+        0.82
     );
 
-    grupo.add(pierna);
+    return grupo;
 
-    const pie =
+        }
+// ============================================================
+// OJO GRANDE
+// ============================================================
+
+function crearOjoGrande(
+    grupo,
+    x,
+    y
+) {
+
+    const ojo =
         new THREE.Mesh(
             new THREE.SphereGeometry(
-                0.10,
+                0.115,
+                12,
+                10
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x19120e
+            })
+        );
+
+    ojo.position.set(
+        x,
+        y,
+        -0.52
+    );
+
+    grupo.add(
+        ojo
+    );
+
+    const brillo =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.035,
                 8,
                 8
             ),
-            material
+            new THREE.MeshBasicMaterial({
+                color: 0xffffff
+            })
         );
 
-    pie.scale.z = 1.5;
-
-    pie.position.set(
-        x,
-        0.08,
-        -0.10
+    brillo.position.set(
+        x - 0.035,
+        y + 0.04,
+        -0.625
     );
 
-    grupo.add(pie);
+    grupo.add(
+        brillo
+    );
+
 }
 
 // ============================================================
-// GORRA
+// OJO CERRADO ZOMBIE
 // ============================================================
 
-function crearGorraPollo(
+function crearOjoCerrado(
     grupo,
-    color
+    x,
+    y
+) {
+
+    const ojo =
+        new THREE.Mesh(
+            new THREE.TorusGeometry(
+                0.10,
+                0.018,
+                6,
+                12,
+                Math.PI
+            ),
+            new THREE.MeshBasicMaterial({
+                color: 0x38251f
+            })
+        );
+
+    ojo.rotation.x =
+        Math.PI / 2;
+
+    ojo.position.set(
+        x,
+        y,
+        -0.53
+    );
+
+    grupo.add(
+        ojo
+    );
+
+}
+
+// ============================================================
+// MEJILLA
+// ============================================================
+
+function crearMejilla(
+    grupo,
+    x,
+    y
+) {
+
+    const mejilla =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.075,
+                8,
+                6
+            ),
+            new THREE.MeshBasicMaterial({
+                color: 0xf29b91,
+                transparent: true,
+                opacity: 0.85
+            })
+        );
+
+    mejilla.scale.x =
+        1.4;
+
+    mejilla.position.set(
+        x,
+        y,
+        -0.51
+    );
+
+    grupo.add(
+        mejilla
+    );
+
+}
+
+// ============================================================
+// ALAS CON PLUMAS
+// ============================================================
+
+function crearAlas(
+    grupo,
+    material
+) {
+
+    for (
+        const lado of [-1, 1]
+    ) {
+
+        const ala =
+            new THREE.Group();
+
+        for (
+            let i = 0;
+            i < 4;
+            i++
+        ) {
+
+            const pluma =
+                new THREE.Mesh(
+                    new THREE.SphereGeometry(
+                        0.25,
+                        10,
+                        8
+                    ),
+                    material
+                );
+
+            pluma.scale.set(
+                0.75,
+                1.35,
+                0.45
+            );
+
+            pluma.position.set(
+                lado *
+                (
+                    0.67 +
+                    i * 0.06
+                ),
+                0.75 -
+                i * 0.13,
+                -0.02 -
+                i * 0.03
+            );
+
+            pluma.rotation.z =
+                lado *
+                -0.35;
+
+            ala.add(
+                pluma
+            );
+
+        }
+
+        grupo.add(
+            ala
+        );
+
+    }
+
+}
+
+// ============================================================
+// COLA
+// ============================================================
+
+function crearCola(
+    grupo,
+    material
+) {
+
+    for (
+        let i = 0;
+        i < 4;
+        i++
+    ) {
+
+        const pluma =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.25,
+                    9,
+                    7
+                ),
+                material
+            );
+
+        pluma.scale.set(
+            0.65,
+            1.35,
+            0.45
+        );
+
+        pluma.position.set(
+            (i - 1.5) *
+            0.16,
+            0.78 +
+            Math.abs(i - 1.5) *
+            0.08,
+            0.70
+        );
+
+        pluma.rotation.x =
+            0.45;
+
+        grupo.add(
+            pluma
+        );
+
+    }
+
+}
+
+// ============================================================
+// PATAS
+// ============================================================
+
+function crearPatas(
+    grupo,
+    material
+) {
+
+    for (
+        const x of [-0.22, 0.22]
+    ) {
+
+        const pata =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    0.055,
+                    0.075,
+                    0.42,
+                    8
+                ),
+                material
+            );
+
+        pata.position.set(
+            x,
+            0.18,
+            0
+        );
+
+        grupo.add(
+            pata
+        );
+
+        const pie =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.13,
+                    8,
+                    6
+                ),
+                material
+            );
+
+        pie.scale.z =
+            1.8;
+
+        pie.position.set(
+            x,
+            0.04,
+            -0.08
+        );
+
+        grupo.add(
+            pie
+        );
+
+    }
+
+}
+// ============================================================
+// GORRA AMARILLA
+// ============================================================
+
+function crearGorra(
+    grupo,
+    tipo
 ) {
 
     const material =
         new THREE.MeshStandardMaterial({
-            color
+            color: 0xe8b52f,
+            roughness: 0.8
         });
 
     const gorra =
         new THREE.Mesh(
             new THREE.SphereGeometry(
-                0.43,
-                12,
-                8
+                0.60,
+                16,
+                10
             ),
             material
         );
 
     gorra.scale.set(
         1.05,
-        0.30,
-        0.90
+        0.42,
+        0.95
     );
 
     gorra.position.y =
-        1.82;
+        2.05;
 
-    grupo.add(gorra);
+    grupo.add(
+        gorra
+    );
 
     const visera =
         new THREE.Mesh(
-            new THREE.BoxGeometry(
-                0.62,
-                0.08,
-                0.28
+            new THREE.SphereGeometry(
+                0.38,
+                12,
+                8
             ),
             material
         );
 
-    visera.position.set(
-        0,
-        1.75,
-        -0.30
+    visera.scale.set(
+        1.25,
+        0.16,
+        0.55
     );
 
-    grupo.add(visera);
-        }
+    visera.position.set(
+        0,
+        1.91,
+        -0.43
+    );
+
+    grupo.add(
+        visera
+    );
+
+}
+
 // ============================================================
 // LETRA N
 // ============================================================
 
-function crearLetraNPollo(
+function crearLetraN(
     grupo
 ) {
 
     const material =
         new THREE.MeshBasicMaterial({
-            color: 0x222222
+            color: 0x20243b
         });
 
     const barra1 =
         new THREE.Mesh(
             new THREE.BoxGeometry(
-                0.06,
-                0.25,
+                0.075,
+                0.30,
                 0.035
             ),
             material
@@ -1409,189 +1871,387 @@ function crearLetraNPollo(
         barra1.clone();
 
     const diagonal =
-        barra1.clone();
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                0.075,
+                0.34,
+                0.035
+            ),
+            material
+        );
 
     barra1.position.set(
-        -0.10,
-        1.76,
-        -0.47
+        -0.14,
+        2.08,
+        -0.56
     );
 
     barra2.position.set(
-        0.10,
-        1.76,
-        -0.47
+        0.14,
+        2.08,
+        -0.56
     );
 
     diagonal.position.set(
         0,
-        1.76,
-        -0.48
+        2.08,
+        -0.565
     );
 
     diagonal.rotation.z =
-        -0.6;
+        -0.55;
 
-    grupo.add(barra1);
-    grupo.add(barra2);
-    grupo.add(diagonal);
+    grupo.add(
+        barra1,
+        barra2,
+        diagonal
+    );
+
 }
 
 // ============================================================
-// DETALLES ZOMBIE
+// PARCHES ZOMBIE
 // ============================================================
 
-function crearDetallesZombie(
+function crearParchesZombie(
+    grupo
+) {
+
+    const rosa =
+        new THREE.MeshStandardMaterial({
+            color: 0xf08da0
+        });
+
+    const parche1 =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.19,
+                10,
+                8
+            ),
+            rosa
+        );
+
+    parche1.scale.x =
+        1.35;
+
+    parche1.position.set(
+        -0.43,
+        0.78,
+        -0.58
+    );
+
+    grupo.add(
+        parche1
+    );
+
+    const parche2 =
+        parche1.clone();
+
+    parche2.scale.set(
+        1.2,
+        0.8,
+        0.5
+    );
+
+    parche2.position.set(
+        0.30,
+        0.53,
+        -0.64
+    );
+
+    grupo.add(
+        parche2
+    );
+
+    const parche3 =
+        parche1.clone();
+
+    parche3.scale.set(
+        0.75,
+        1.25,
+        0.5
+    );
+
+    parche3.position.set(
+        0.50,
+        1.0,
+        -0.48
+    );
+
+    grupo.add(
+        parche3
+    );
+
+    // Costuras
+    const costura =
+        new THREE.MeshBasicMaterial({
+            color: 0x9e4560
+        });
+
+    for (
+        let i = 0;
+        i < 5;
+        i++
+    ) {
+
+        const puntada =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    0.025,
+                    0.16,
+                    0.025
+                ),
+                costura
+            );
+
+        puntada.rotation.z =
+            0.6;
+
+        puntada.position.set(
+            -0.53 +
+            i * 0.07,
+            0.78 +
+            i * 0.015,
+            -0.73
+        );
+
+        grupo.add(
+            puntada
+        );
+
+    }
+
+}
+
+// ============================================================
+// ESTRELLA DEL POLLITO ESPECIAL
+// ============================================================
+
+function crearEstrella(
     grupo
 ) {
 
     const material =
         new THREE.MeshBasicMaterial({
-            color: 0x2f432d
+            color: 0xffd43b
         });
 
-    const mancha1 =
+    const estrella =
         new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.10,
-                7,
-                7
+            new THREE.CircleGeometry(
+                0.18,
+                5
             ),
             material
         );
 
-    mancha1.scale.set(
-        1.4,
-        0.7,
-        0.25
+    estrella.position.set(
+        0,
+        0.78,
+        -0.76
     );
 
-    mancha1.position.set(
-        -0.25,
-        0.85,
-        -0.47
+    grupo.add(
+        estrella
     );
 
-    const mancha2 =
-        mancha1.clone();
-
-    mancha2.position.set(
-        0.25,
-        0.62,
-        -0.46
-    );
-
-    grupo.add(mancha1);
-    grupo.add(mancha2);
 }
 
 // ============================================================
-// INTERFAZ DE DIÁLOGO
+// ARCOIRIS DEL POLLITO ESPECIAL
+// ============================================================
+
+function crearArcoiris(
+    grupo
+) {
+
+    const colores = [
+        0xff3030,
+        0xff941f,
+        0xffd52f,
+        0x42c95b,
+        0x2697e8,
+        0x8c55d9
+    ];
+
+    for (
+        let i = 0;
+        i < colores.length;
+        i++
+    ) {
+
+        const arco =
+            new THREE.Mesh(
+                new THREE.TorusGeometry(
+                    0.55 +
+                    i * 0.10,
+                    0.025,
+                    6,
+                    24,
+                    Math.PI
+                ),
+                new THREE.MeshBasicMaterial({
+                    color:
+                        colores[i]
+                })
+            );
+
+        arco.rotation.x =
+            Math.PI / 2;
+
+        arco.rotation.z =
+            Math.PI;
+
+        arco.position.set(
+            0,
+            1.15,
+            0.50
+        );
+
+        grupo.add(
+            arco
+        );
+
+    }
+
+}
+// ============================================================
+// DIÁLOGOS
 // ============================================================
 
 const DIALOGOS = [
 
-    [1, 0.3, "Micaela",
-        "Mike... ¿dónde estamos?"],
+    [0, 0.5,
+        "Micaela",
+        "Mike... ¿dónde estamos?"
+    ],
 
-    [1, 1.5, "Mike",
-        "No lo sé... pero este lugar está enorme."],
+    [0, 1.7,
+        "Mike",
+        "No lo sé... pero este lugar está enorme."
+    ],
 
-    [1, 2.8, "Micaela",
-        "Espera... ¿ves eso allá?"],
+    [1, 0.8,
+        "Micaela",
+        "Espera... ¿ves eso allá?"
+    ],
 
-    [1, 4.0, "Mike",
-        "Sí... se ve algo entre los árboles."],
+    [1, 2.0,
+        "Mike",
+        "Sí... se ve algo entre los árboles."
+    ],
 
-    [1, 5.2, "Micaela",
-        "Pío... pío... ¿qué fue eso?"],
+    [1, 3.3,
+        "Micaela",
+        "Pío... pío... ¿qué fue eso?"
+    ],
 
-    [1, 6.0, "Mike",
-        "¿Un pollo?"],
+    [1, 4.4,
+        "Mike",
+        "¿Un pollo?"
+    ],
 
-    [1, 7.0, "Micaela",
-        "Vamos a ver qué es."],
+    [1, 5.7,
+        "Micaela",
+        "Vamos a ver qué es."
+    ],
 
-    [2, 0.5, "Mike",
-        "Mira... hay algo junto a ese huevo."],
+    [1, 7.0,
+        "Mike",
+        "Mira... hay algo junto a ese huevo."
+    ],
 
-    [2, 1.7, "Micaela",
-        "¿Un huevo? ¿De dónde salió?"],
+    [2, 0.5,
+        "Micaela",
+        "¿Un huevo? ¿De dónde salió?"
+    ],
 
-    [2, 2.7, "Mike",
-        "No parece un huevo normal... está brillando."],
+    [2, 1.7,
+        "Mike",
+        "No parece un huevo normal... está brillando."
+    ],
 
-    [3, 0.2, "Micaela",
-        "¡Mike, está moviéndose!"],
+    [2, 2.6,
+        "Micaela",
+        "¡Mike, está moviéndose!"
+    ],
 
-    [3, 0.9, "Mike",
-        "¡Se está abriendo!"],
+    [3, 0.5,
+        "Mike",
+        "¡Se está abriendo!"
+    ],
 
-    [4, 0.2, "Micaela",
-        "¡¿Son pollos?!"],
+    [3, 1.3,
+        "Micaela",
+        "¡¿Son pollos?!"
+    ],
 
-    [4, 1.2, "Mike",
-        "¡Hay varios! ¿Cuál va a salir?"],
+    [4, 0.6,
+        "Mike",
+        "¡Hay varios! ¿Cuál va a salir?"
+    ],
 
-    [4, 5.5, "Micaela",
-        "¡Ya se decidió!"],
+    [4, 3.2,
+        "Micaela",
+        "¡Ya se decidió!"
+    ],
 
-    [5, 0.2, "Mike",
-        "¡Ese fue el que salió!"]
+    [5, 0.5,
+        "Mike",
+        "¡Ese fue el que salió!"
+    ]
+
 ];
+
+// ============================================================
+// INTERFAZ
+// ============================================================
 
 function crearInterfazDialogo() {
 
     cajaDialogo =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    cajaDialogo.style.position =
-        "fixed";
-
-    cajaDialogo.style.left =
-        "5%";
-
-    cajaDialogo.style.right =
-        "5%";
-
-    cajaDialogo.style.bottom =
-        "5%";
-
-    cajaDialogo.style.padding =
-        "14px 18px";
-
-    cajaDialogo.style.borderRadius =
-        "16px";
-
-    cajaDialogo.style.background =
-        "rgba(0,0,0,0.78)";
-
-    cajaDialogo.style.color =
-        "white";
-
-    cajaDialogo.style.zIndex =
-        "100000";
-
-    cajaDialogo.style.fontFamily =
-        "sans-serif";
+    cajaDialogo.style.cssText = `
+        position:fixed;
+        left:50%;
+        bottom:5%;
+        transform:translateX(-50%);
+        width:min(92%,720px);
+        padding:16px 20px;
+        background:rgba(0,0,0,.78);
+        border:2px solid rgba(255,255,255,.3);
+        border-radius:18px;
+        color:white;
+        font-family:Arial,sans-serif;
+        z-index:9999;
+        display:none;
+        box-sizing:border-box;
+    `;
 
     nombreDialogo =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    nombreDialogo.style.fontWeight =
-        "bold";
-
-    nombreDialogo.style.fontSize =
-        "20px";
+    nombreDialogo.style.cssText = `
+        font-weight:bold;
+        font-size:18px;
+        margin-bottom:7px;
+    `;
 
     textoDialogo =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    textoDialogo.style.fontSize =
-        "17px";
-
-    textoDialogo.style.marginTop =
-        "5px";
+    textoDialogo.style.cssText = `
+        font-size:17px;
+        line-height:1.4;
+    `;
 
     cajaDialogo.appendChild(
         nombreDialogo
@@ -1601,21 +2261,20 @@ function crearInterfazDialogo() {
         textoDialogo
     );
 
-    contenedorJuego.appendChild(
+    document.body.appendChild(
         cajaDialogo
     );
-        }
+
+}
+
 // ============================================================
 // ACTUALIZAR DIÁLOGO
 // ============================================================
 
 function actualizarDialogo() {
 
-    if (!cajaDialogo) {
-        return;
-    }
-
-    let encontrado = -1;
+    let encontrado =
+        -1;
 
     for (
         let i = 0;
@@ -1630,54 +2289,87 @@ function actualizarDialogo() {
             d[0] === fase &&
             tiempoFase >= d[1]
         ) {
-            encontrado = i;
+
+            encontrado =
+                i;
+
         }
+
     }
 
     if (
-        encontrado !== -1 &&
-        encontrado !== dialogoActual
+        encontrado !==
+        dialogoActual
     ) {
 
         dialogoActual =
             encontrado;
 
-        const d =
-            DIALOGOS[encontrado];
+        if (
+            encontrado >= 0
+        ) {
 
-        nombreDialogo.textContent =
-            d[2];
+            const d =
+                DIALOGOS[
+                    encontrado
+                ];
 
-        textoDialogo.textContent =
-            d[3];
+            cajaDialogo.style.display =
+                "block";
 
-        cajaDialogo.style.display =
-            "block";
+            nombreDialogo.textContent =
+                d[2];
+
+            textoDialogo.textContent =
+                d[3];
+
+        } else {
+
+            cajaDialogo.style.display =
+                "none";
+
+        }
+
     }
+
 }
 
 // ============================================================
 // RESULTADO REAL
+// SOLO SE TIRA UNA VEZ
 // ============================================================
 
 function obtenerResultadoReal() {
 
-    if (resultadoReal) {
+    if (
+        resultadoReal
+    ) {
         return resultadoReal;
     }
 
-    // UNA SOLA TIRADA
     resultadoReal =
         abrirHuevo(
             "huevo_noob"
         );
 
+    if (
+        resultadoReal !== "noob" &&
+        resultadoReal !== "zombie" &&
+        resultadoReal !== "pollito_noob"
+    ) {
+
+        resultadoReal =
+            "noob";
+
+    }
+
     console.log(
-        "[GAMERPRO] Resultado:",
+        "[GAMERPRO] Resultado real:",
         resultadoReal
     );
 
     return resultadoReal;
+
 }
 
 // ============================================================
@@ -1700,27 +2392,34 @@ function mostrarPollos() {
             continue;
         }
 
-        pollo.visible = true;
+        pollo.visible =
+            true;
 
         pollo.scale.setScalar(
-            1
+            0.05
         );
 
         pollo.userData.animTime =
-            Math.random() * 5;
+            Math.random() * 3;
+
     }
 
-    ruletaIndice = 0;
-    ruletaVueltas = 0;
-    ruletaTerminada = false;
-    ruletaUltimoCambio = 0;
-    ruletaIntervalo = 0.08;
+    ruletaIndice =
+        0;
 
-    resultadoMostrado = false;
+    ruletaVueltas =
+        0;
+
+    ultimoCambioRuleta =
+        0;
+
+    resultadoMostrado =
+        false;
+
 }
 
 // ============================================================
-// ANIMACIÓN DE POLLOS
+// RULETA VISUAL
 // ============================================================
 
 function animarPollos(
@@ -1744,8 +2443,25 @@ function animarPollos(
             continue;
         }
 
+        if (
+            pollo.scale.x < 1
+        ) {
+
+            const escala =
+                Math.min(
+                    1,
+                    pollo.scale.x +
+                    delta * 4
+                );
+
+            pollo.scale.setScalar(
+                escala
+            );
+
+        }
+
         pollo.userData.animTime +=
-            delta * 5;
+            delta * 4;
 
         const t =
             pollo.userData.animTime;
@@ -1753,126 +2469,51 @@ function animarPollos(
         pollo.position.y =
             Math.abs(
                 Math.sin(t)
-            ) * 0.08;
+            ) * 0.10;
 
-        pollo.rotation.z =
-            Math.sin(t * 0.8) *
-            0.04;
     }
 
-    actualizarRuleta(delta);
-}
-
-// ============================================================
-// RULETA
-// ============================================================
-
-function actualizarRuleta(
-    delta
-) {
-
-    if (ruletaTerminada) {
-        return;
-    }
-
-    ruletaUltimoCambio +=
+    // Cambio de selección
+    ultimoCambioRuleta +=
         delta;
 
-    const progreso =
+    const intervalo =
         Math.min(
-            tiempoFase /
-            CONFIG.duracionRuleta,
-            1
+            0.55,
+            0.12 +
+            ruletaVueltas *
+            0.025
         );
 
-    // Comienza rápida y termina lenta
-    ruletaIntervalo =
-        0.055 +
-        Math.pow(
-            progreso,
-            2.4
-        ) * 0.55;
-
     if (
-        ruletaUltimoCambio <
-        ruletaIntervalo
+        ultimoCambioRuleta >=
+        intervalo
     ) {
+
+        ultimoCambioRuleta =
+            0;
+
+        ruletaIndice =
+            (
+                ruletaIndice +
+                1
+            ) % 3;
+
+        if (
+            ruletaIndice === 0
+        ) {
+
+            ruletaVueltas++;
+
+        }
+
         resaltarPollo(
             ruletaIndice
         );
-        return;
+
     }
 
-    ruletaUltimoCambio = 0;
-
-    ruletaIndice =
-        (ruletaIndice + 1) % 3;
-
-    if (
-        ruletaIndice === 0
-    ) {
-        ruletaVueltas++;
-    }
-
-    resaltarPollo(
-        ruletaIndice
-    );
-
-    // Después de suficientes vueltas,
-    // empieza a detenerse en el resultado real.
-    if (
-        progreso > 0.72
-    ) {
-
-        const ganadorIndice =
-            indiceResultado(
-                resultadoReal
-            );
-
-        if (
-            ruletaVueltas >= 7 &&
-            ruletaIndice ===
-                ganadorIndice &&
-            ruletaIntervalo > 0.35
-        ) {
-
-            ruletaTerminada =
-                true;
-
-            ruletaIndice =
-                ganadorIndice;
-
-            resaltarPollo(
-                ganadorIndice
-            );
         }
-    }
-}
-
-// ============================================================
-// ÍNDICE DEL RESULTADO
-// ============================================================
-
-function indiceResultado(
-    resultado
-) {
-
-    if (
-        resultado === "zombie"
-    ) {
-        return 1;
-    }
-
-    if (
-        resultado ===
-        "pollito_noob"
-    ) {
-        return 2;
-    }
-
-    return 0;
-}
-
 // ============================================================
 // RESALTAR POLLO
 // ============================================================
@@ -1900,21 +2541,14 @@ function resaltarPollo(
             continue;
         }
 
-        const activo =
-            i === indice;
-
-        const escala =
-            activo
-                ? 1.18
-                : 0.92;
-
         pollo.scale.setScalar(
-            escala
+            i === indice
+                ? 1.12
+                : 0.82
         );
 
-        pollo.userData.ruletaActivo =
-            activo;
     }
+
 }
 
 // ============================================================
@@ -1929,6 +2563,8 @@ function finalizarSeleccion() {
         return;
     }
 
+    obtenerResultadoReal();
+
     const pollos = {
 
         noob:
@@ -1939,6 +2575,7 @@ function finalizarSeleccion() {
 
         pollito_noob:
             polloNoobEspecial
+
     };
 
     const ganador =
@@ -1947,12 +2584,6 @@ function finalizarSeleccion() {
         ];
 
     if (!ganador) {
-
-        resultadoReal =
-            "noob";
-
-        finalizarSeleccion();
-
         return;
     }
 
@@ -1973,16 +2604,18 @@ function finalizarSeleccion() {
         pollo.visible =
             nombre ===
             resultadoReal;
+
     }
 
-    ganador.visible = true;
+    ganador.visible =
+        true;
 
     ganador.scale.setScalar(
-        1.25
+        1.22
     );
 
     ganador.position.y =
-        0.15;
+        0.12;
 
     ganador.userData.ganador =
         true;
@@ -1990,11 +2623,8 @@ function finalizarSeleccion() {
     resultadoMostrado =
         true;
 
-    console.log(
-        "[GAMERPRO] Ganador:",
-        resultadoReal
-    );
-            }
+}
+
 // ============================================================
 // ANIMAR GANADOR
 // ============================================================
@@ -2002,8 +2632,7 @@ function finalizarSeleccion() {
 function animarGanador() {
 
     if (
-        !resultadoMostrado ||
-        !resultadoReal
+        !resultadoMostrado
     ) {
         return;
     }
@@ -2018,6 +2647,7 @@ function animarGanador() {
 
         pollito_noob:
             polloNoobEspecial
+
     };
 
     const ganador =
@@ -2030,19 +2660,20 @@ function animarGanador() {
     }
 
     ganador.scale.setScalar(
-        1.22 +
+        1.20 +
         Math.sin(
             tiempoTotal * 5
         ) * 0.05
     );
 
     ganador.position.y =
-        0.15 +
+        0.12 +
         Math.abs(
             Math.sin(
                 tiempoTotal * 5
             )
-        ) * 0.08;
+        ) * 0.10;
+
 }
 
 // ============================================================
@@ -2059,37 +2690,48 @@ function actualizarHuevo() {
         fase === 2
     ) {
 
-        huevo.visible = true;
+        huevo.visible =
+            true;
 
         const pulso =
             1 +
             Math.sin(
                 tiempoFase * 8
-            ) * 0.06;
+            ) * 0.08;
 
         huevo.scale.x =
-            huevo.userData.baseX *
+            huevo.userData.escalaX *
             pulso;
 
         huevo.scale.y =
-            huevo.userData.baseY *
+            huevo.userData.escalaY *
             pulso;
 
-        if (huevoBrillo) {
+        huevo.rotation.z =
+            Math.sin(
+                tiempoFase * 5
+            ) * 0.05;
+
+        if (
+            huevoBrillo
+        ) {
 
             huevoBrillo.intensity =
-                1.4 +
+                1.5 +
                 Math.sin(
                     tiempoFase * 10
-                ) * 0.7;
+                ) * 0.8;
+
         }
+
     }
 
     if (
         fase === 3
     ) {
 
-        huevo.visible = true;
+        huevo.visible =
+            true;
 
         const progreso =
             Math.min(
@@ -2099,47 +2741,46 @@ function actualizarHuevo() {
             );
 
         huevo.scale.y =
-            huevo.userData.baseY *
+            huevo.userData.escalaY *
             Math.max(
                 0.05,
                 1 -
-                progreso * 0.92
+                progreso * 0.9
             );
 
         huevo.rotation.z =
             Math.sin(
-                tiempoFase * 18
-            ) * 0.10;
+                tiempoFase * 15
+            ) * 0.12;
 
-        if (huevoBrillo) {
+        if (
+            huevoBrillo
+        ) {
 
             huevoBrillo.intensity =
                 2 +
                 progreso * 4;
+
         }
+
     }
 
     if (
         fase >= 4
     ) {
 
-        huevo.visible = false;
+        huevo.visible =
+            false;
 
-        if (huevoBrillo) {
-            huevoBrillo.intensity = 0;
+        if (
+            huevoBrillo
+        ) {
+            huevoBrillo.intensity =
+                0;
         }
 
-        if (sombraHuevo) {
-            sombraHuevo.visible = false;
-        }
-
-    } else {
-
-        if (sombraHuevo) {
-            sombraHuevo.visible =
-                fase >= 2;
-        }
     }
+
 }
 
 // ============================================================
@@ -2152,84 +2793,85 @@ function actualizarCamara() {
         return;
     }
 
+    let x = 0;
+    let y = 1.25;
+    let z = 3.0;
+
     let objetivoX = 0;
     let objetivoY = 1.15;
-    let objetivoZ = 2;
+    let objetivoZ = 1.0;
 
     if (
+        fase === 0 ||
         fase === 1
     ) {
 
-        const zMike =
-            mike
-                ? mike.position.z
-                : CONFIG.inicioZ;
-
-        const zMicaela =
-            micaela
-                ? micaela.position.z
-                : CONFIG.inicioZ;
-
-        const centroZ =
-            (
-                zMike +
-                zMicaela
-            ) / 2;
-
-        // La cámara acompaña el camino
-        camara.position.z =
-            centroZ + 4.5;
-
-        camara.position.y =
-            1.65;
+        // CERCA DE MIKE Y MICAELA
+        x = 0;
+        y = 2.15;
+        z = 5.0;
 
         objetivoZ =
-            centroZ - 1.8;
+            fase === 1
+                ? 2.7
+                : 3.7;
 
-    } else if (
+    }
+
+    if (
         fase === 2 ||
         fase === 3
     ) {
 
-        camara.position.z =
-            4.0;
+        // ACERCAMIENTO AL HUEVO
+        x = 0;
+        y = 1.85;
+        z = 3.6;
 
-        camara.position.y =
-            1.45;
+        objetivoY =
+            1.0;
 
-        objetivoZ = 0;
+        objetivoZ =
+            0;
 
-    } else if (
-        fase >= 4
+    }
+
+    if (
+        fase === 4 ||
+        fase === 5
     ) {
 
-        camara.position.z =
-            4.8;
+        // POLLOS GRANDES EN PANTALLA
+        x = 0;
+        y = 1.75;
+        z = 4.0;
 
-        camara.position.y =
-            1.65;
+        objetivoY =
+            0.95;
 
         objetivoZ =
             -1.0;
+
     }
 
     camara.position.x +=
-        (
-            objetivoX -
-            camara.position.x
-        ) * 0.08;
+        (x - camara.position.x) *
+        0.06;
 
     camara.position.y +=
-        (
-            objetivoY -
-            camara.position.y
-        ) * 0.08;
+        (y - camara.position.y) *
+        0.06;
+
+    camara.position.z +=
+        (z - camara.position.z) *
+        0.06;
 
     camara.lookAt(
         objetivoX,
         objetivoY,
         objetivoZ
     );
+
 }
 
 // ============================================================
@@ -2243,67 +2885,101 @@ function cambiarFase(
     fase =
         nuevaFase;
 
-    tiempoFase = 0;
+    tiempoFase =
+        0;
 
-    dialogoActual = -1;
+    dialogoActual =
+        -1;
 
     if (
         fase === 3
     ) {
+
         obtenerResultadoReal();
+
     }
 
     if (
         fase === 4
     ) {
+
         mostrarPollos();
+
     }
 
     if (
         fase === 5
     ) {
+
         finalizarSeleccion();
+
     }
+
 }
 
 // ============================================================
-// ACTUALIZAR FASES
+// FASES
 // ============================================================
 
 function actualizarFases(
     delta
 ) {
 
-    tiempoFase += delta;
+    tiempoFase +=
+        delta;
 
     if (
         fase === 0 &&
         tiempoFase >=
         CONFIG.duracionIntro
     ) {
+
         cambiarFase(1);
+
     }
 
     if (
-        fase === 1 &&
-        tiempoFase >=
-        CONFIG.duracionCaminata
+        fase === 1
     ) {
 
-        if (mike) {
-            mike.position.z =
-                CONFIG.llegadaZ;
+        if (
+            mike &&
+            micaela &&
+            mike.position.z <=
+                CONFIG.distanciaFinal &&
+            micaela.position.z <=
+                CONFIG.distanciaFinal
+        ) {
+
+            detenerPersonaje(
+                mike
+            );
+
+            detenerPersonaje(
+                micaela
+            );
+
+            cambiarFase(2);
+
         }
 
-        if (micaela) {
-            micaela.position.z =
-                CONFIG.llegadaZ;
+        // Seguridad por si algún GLB no avanza
+        if (
+            tiempoFase >= 8.5
+        ) {
+
+            detenerPersonaje(
+                mike
+            );
+
+            detenerPersonaje(
+                micaela
+            );
+
+            cambiarFase(2);
+
         }
 
-        detenerPersonaje(mike);
-        detenerPersonaje(micaela);
-
-        cambiarFase(2);
     }
 
     if (
@@ -2311,7 +2987,9 @@ function actualizarFases(
         tiempoFase >=
         CONFIG.duracionHuevo
     ) {
+
         cambiarFase(3);
+
     }
 
     if (
@@ -2319,15 +2997,19 @@ function actualizarFases(
         tiempoFase >=
         CONFIG.duracionApertura
     ) {
+
         cambiarFase(4);
+
     }
 
     if (
         fase === 4 &&
         tiempoFase >=
-        CONFIG.duracionRuleta
+        CONFIG.duracionSeleccion
     ) {
+
         cambiarFase(5);
+
     }
 
     if (
@@ -2335,8 +3017,11 @@ function actualizarFases(
         tiempoFase >=
         CONFIG.duracionResultado
     ) {
+
         terminarCinematica();
+
     }
+
 }
 
 // ============================================================
@@ -2345,7 +3030,9 @@ function actualizarFases(
 
 function actualizar() {
 
-    if (!cinematicaActiva) {
+    if (
+        !cinematicaActiva
+    ) {
         return;
     }
 
@@ -2355,12 +3042,18 @@ function actualizar() {
             0.05
         );
 
-    tiempoTotal += delta;
+    tiempoTotal +=
+        delta;
 
-    actualizarFases(delta);
+    actualizarFases(
+        delta
+    );
+
     actualizarDialogo();
 
-    if (fase === 1) {
+    if (
+        fase === 1
+    ) {
 
         actualizarCaminata(
             mike,
@@ -2375,24 +3068,43 @@ function actualizar() {
             CONFIG.velocidadMicaela,
             delta
         );
+
     }
 
-    if (mikeMixer) {
-        mikeMixer.update(delta);
+    if (
+        mikeMixer
+    ) {
+        mikeMixer.update(
+            delta
+        );
     }
 
-    if (micaelaMixer) {
-        micaelaMixer.update(delta);
+    if (
+        micaelaMixer
+    ) {
+        micaelaMixer.update(
+            delta
+        );
     }
 
     actualizarHuevo();
 
-    if (fase === 4) {
-        animarPollos(delta);
+    if (
+        fase === 4
+    ) {
+
+        animarPollos(
+            delta
+        );
+
     }
 
-    if (fase === 5) {
+    if (
+        fase === 5
+    ) {
+
         animarGanador();
+
     }
 
     actualizarCamara();
@@ -2406,6 +3118,7 @@ function actualizar() {
         requestAnimationFrame(
             actualizar
         );
+
 }
 
 // ============================================================
@@ -2431,6 +3144,7 @@ function redimensionarCinematica() {
         window.innerWidth,
         window.innerHeight
     );
+
 }
 
 // ============================================================
@@ -2441,7 +3155,9 @@ export async function iniciarCinematica(
     contenedor
 ) {
 
-    if (cinematicaActiva) {
+    if (
+        cinematicaActiva
+    ) {
         return;
     }
 
@@ -2449,28 +3165,36 @@ export async function iniciarCinematica(
         contenedor ||
         document.body;
 
-    cinematicaActiva = true;
-    cinematicaFinalizada = false;
+    cinematicaActiva =
+        true;
+
+    cinematicaFinalizada =
+        false;
 
     fase = 0;
     tiempoFase = 0;
     tiempoTotal = 0;
 
-    resultadoReal = null;
-    resultadoMostrado = false;
+    dialogoActual =
+        -1;
 
-    ruletaTerminada = false;
+    resultadoReal =
+        null;
+
+    resultadoMostrado =
+        false;
+
+    ruletaIndice =
+        0;
+
+    ruletaVueltas =
+        0;
 
     crearEscena();
 
     crearInterfazDialogo();
 
-    await cargarPersonajes();
-
-    await crearHuevo();
-
-    crearPollos3D();
-
+    // Crear loop primero
     reloj =
         new THREE.Clock();
 
@@ -2478,17 +3202,13 @@ export async function iniciarCinematica(
         requestAnimationFrame(
             actualizar
         );
-}
 
-// ============================================================
-// TERMINAR
-// ============================================================
+    await cargarPersonajes();
 
-function terminarCinematica() {
+    await crearHuevo();
 
-    cinematicaFinalizada = true;
+    crearPollos3D();
 
-    detenerCinematica();
 }
 
 // ============================================================
@@ -2497,15 +3217,20 @@ function terminarCinematica() {
 
 export function detenerCinematica() {
 
-    cinematicaActiva = false;
+    cinematicaActiva =
+        false;
 
-    if (animacionID) {
+    if (
+        animacionID
+    ) {
 
         cancelAnimationFrame(
             animacionID
         );
 
-        animacionID = null;
+        animacionID =
+            null;
+
     }
 
     window.removeEventListener(
@@ -2513,14 +3238,20 @@ export function detenerCinematica() {
         redimensionarCinematica
     );
 
-    if (cajaDialogo) {
+    if (
+        cajaDialogo
+    ) {
 
         cajaDialogo.remove();
 
-        cajaDialogo = null;
+        cajaDialogo =
+            null;
+
     }
 
-    if (renderer) {
+    if (
+        renderer
+    ) {
 
         renderer.dispose();
 
@@ -2534,27 +3265,101 @@ export function detenerCinematica() {
                 .removeChild(
                     renderer.domElement
                 );
+
         }
+
     }
 
-    escena = null;
-    camara = null;
-    renderer = null;
+    escena =
+        null;
 
-    mike = null;
-    micaela = null;
+    camara =
+        null;
 
-    huevo = null;
-    huevoBrillo = null;
-    sombraHuevo = null;
+    renderer =
+        null;
 
-    polloNoob = null;
-    polloZombie = null;
-    polloNoobEspecial = null;
+    mike =
+        null;
 
-    mikeMixer = null;
-    micaelaMixer = null;
+    micaela =
+        null;
 
-    mikeHuesos = {};
-    micaelaHuesos = {};
-        }
+    huevo =
+        null;
+
+    huevoBrillo =
+        null;
+
+    polloNoob =
+        null;
+
+    polloZombie =
+        null;
+
+    polloNoobEspecial =
+        null;
+
+    mikeMixer =
+        null;
+
+    micaelaMixer =
+        null;
+
+}
+
+// ============================================================
+// TERMINAR
+// ============================================================
+
+function terminarCinematica() {
+
+    cinematicaActiva =
+        false;
+
+    cinematicaFinalizada =
+        true;
+
+    if (
+        cajaDialogo
+    ) {
+
+        cajaDialogo.style.display =
+            "none";
+
+    }
+
+    if (
+        animacionID
+    ) {
+
+        cancelAnimationFrame(
+            animacionID
+        );
+
+        animacionID =
+            null;
+
+    }
+
+}
+
+// ============================================================
+// RESULTADO
+// ============================================================
+
+export function obtenerResultadoCinematica() {
+
+    return resultadoReal;
+
+}
+
+// ============================================================
+// MOSTRAR RESULTADO FINAL
+// ============================================================
+
+export function mostrarResultadoFinal() {
+
+    finalizarSeleccion();
+
+            }
