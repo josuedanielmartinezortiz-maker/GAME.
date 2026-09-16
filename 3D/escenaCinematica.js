@@ -1,17 +1,11 @@
 // ============================================================
 // EGGARO / GAMERPRO
 // escenaCinematica.js
-// CINEMÁTICA 3D LIMPIA
-// BLOQUE 1/10
+// CINEMATICA 3D - PARTE 1/10
 // ============================================================
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-
-
-// ============================================================
-// ESTADO
-// ============================================================
 
 let escena = null;
 let camara = null;
@@ -28,127 +22,58 @@ let mike = null;
 let micaela = null;
 
 let activa = false;
-let cinematicaFinalizada = false;
+let finalizada = false;
 
 let resultadoCinematica = "noob";
+let tiempo = 0;
+let fase = 0;
 
-let tiempoCinematica = 0;
-let faseCinematica = 0;
+let dialogo = null;
+let dialogoTexto = null;
 
-let anchoAnterior = 0;
-let altoAnterior = 0;
-
-
-// ============================================================
-// CONFIGURACIÓN
-// ============================================================
+const loader = new GLTFLoader();
 
 const CONFIG = {
-
-    colorCielo: 0x9fc5d8,
-
-    colorSuelo: 0x526b45,
-
-    velocidadPersonajes: 1.35,
-
-    sombras: true,
-
-    pixelRatio:
-        Math.min(
-            window.devicePixelRatio || 1,
-            1.5
-        )
+    velocidad: 1.35,
+    pixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+    cielo: 0x9fc5d8,
+    suelo: 0x526b45
 };
 
-
-// ============================================================
-// LOADER
-// ============================================================
-
-const loader =
-    new GLTFLoader();
-
-
-// ============================================================
-// CREAR ESCENA
-// ============================================================
-
 function crearEscena() {
-
-    escena =
-        new THREE.Scene();
+    escena = new THREE.Scene();
 
     escena.background =
-        new THREE.Color(
-            CONFIG.colorCielo
-        );
+        new THREE.Color(CONFIG.cielo);
 
-    escena.fog =
-        new THREE.FogExp2(
-            CONFIG.colorCielo,
-            0.018
-        );
-
-
-    grupoCinematica =
-        new THREE.Group();
-
-    grupoBosque =
-        new THREE.Group();
-
-    grupoPersonajes =
-        new THREE.Group();
-
-    grupoHuevo =
-        new THREE.Group();
-
-    grupoResultado =
-        new THREE.Group();
-
-
-    grupoCinematica.add(
-        grupoBosque
+    escena.fog = new THREE.FogExp2(
+        CONFIG.cielo,
+        0.018
     );
 
-    grupoCinematica.add(
-        grupoPersonajes
-    );
+    grupoCinematica = new THREE.Group();
+    grupoBosque = new THREE.Group();
+    grupoPersonajes = new THREE.Group();
+    grupoHuevo = new THREE.Group();
+    grupoResultado = new THREE.Group();
 
-    grupoCinematica.add(
-        grupoHuevo
-    );
+    grupoCinematica.add(grupoBosque);
+    grupoCinematica.add(grupoPersonajes);
+    grupoCinematica.add(grupoHuevo);
+    grupoCinematica.add(grupoResultado);
 
-    grupoCinematica.add(
-        grupoResultado
-    );
-
-
-    escena.add(
-        grupoCinematica
-    );
+    escena.add(grupoCinematica);
 }
 
-
-// ============================================================
-// CÁMARA
-// ============================================================
-
 function crearCamara() {
-
-    camara =
-        new THREE.PerspectiveCamera(
-            48,
-            window.innerWidth /
-                window.innerHeight,
-            0.1,
-            300
-        );
-
-    camara.position.set(
-        0,
-        4.5,
-        15
+    camara = new THREE.PerspectiveCamera(
+        48,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        300
     );
+
+    camara.position.set(0, 4.5, 15);
 
     camara.lookAt(
         0,
@@ -157,136 +82,56 @@ function crearCamara() {
     );
 }
 
-
-// ============================================================
-// RENDERER
-// ============================================================
-
 function crearRenderer() {
+    renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: "high-performance"
+    });
 
-    renderer =
-        new THREE.WebGLRenderer({
-            antialias: true,
-            alpha: false,
-            powerPreference:
-                "high-performance"
-        });
-
-
-    renderer.setPixelRatio(
-        CONFIG.pixelRatio
-    );
-
+    renderer.setPixelRatio(CONFIG.pixelRatio);
 
     renderer.setSize(
         window.innerWidth,
         window.innerHeight
     );
 
-
-    renderer.shadowMap.enabled =
-        CONFIG.sombras;
-
+    renderer.shadowMap.enabled = true;
     renderer.shadowMap.type =
         THREE.PCFSoftShadowMap;
-
 
     renderer.outputColorSpace =
         THREE.SRGBColorSpace;
 
-
     renderer.toneMapping =
         THREE.ACESFilmicToneMapping;
 
-    renderer.toneMappingExposure =
-        1.05;
+    renderer.toneMappingExposure = 1.05;
 
+    const canvas = renderer.domElement;
 
-    const canvas =
-        renderer.domElement;
+    canvas.style.position = "fixed";
+    canvas.style.left = "0";
+    canvas.style.top = "0";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    canvas.style.zIndex = "20";
 
-
-    canvas.style.position =
-        "fixed";
-
-    canvas.style.left =
-        "0";
-
-    canvas.style.top =
-        "0";
-
-    canvas.style.width =
-        "100%";
-
-    canvas.style.height =
-        "100%";
-
-    canvas.style.zIndex =
-        "20";
-
-
-    document.body.appendChild(
-        canvas
-    );
+    document.body.appendChild(canvas);
 }
-
-
-// ============================================================
-// RESIZE
-// ============================================================
 
 function actualizarTamaño() {
+    if (!renderer || !camara) return;
 
-    if (
-        !renderer ||
-        !camara
-    ) {
-        return;
-    }
+    const w = window.innerWidth;
+    const h = window.innerHeight;
 
-
-    const ancho =
-        window.innerWidth;
-
-    const alto =
-        window.innerHeight;
-
-
-    if (
-        ancho === anchoAnterior &&
-        alto === altoAnterior
-    ) {
-        return;
-    }
-
-
-    anchoAnterior =
-        ancho;
-
-    altoAnterior =
-        alto;
-
-
-    camara.aspect =
-        ancho / alto;
-
+    camara.aspect = w / h;
     camara.updateProjectionMatrix();
 
-
-    renderer.setSize(
-        ancho,
-        alto,
-        false
-    );
+    renderer.setSize(w, h, false);
 }
 
-
-// ============================================================
-// ILUMINACIÓN
-// ============================================================
-
 function crearIluminacion() {
-
     const ambiente =
         new THREE.HemisphereLight(
             0xbfdcff,
@@ -294,18 +139,13 @@ function crearIluminacion() {
             2.2
         );
 
-
-    escena.add(
-        ambiente
-    );
-
+    escena.add(ambiente);
 
     const sol =
         new THREE.DirectionalLight(
             0xffe4b5,
-            3.2
+            3.0
         );
-
 
     sol.position.set(
         -20,
@@ -313,50 +153,15 @@ function crearIluminacion() {
         15
     );
 
+    sol.castShadow = true;
 
-    sol.castShadow =
-        CONFIG.sombras;
+    sol.shadow.mapSize.width = 1024;
+    sol.shadow.mapSize.height = 1024;
 
-
-    sol.shadow.mapSize.width =
-        2048;
-
-    sol.shadow.mapSize.height =
-        2048;
-
-
-    sol.shadow.camera.near =
-        1;
-
-    sol.shadow.camera.far =
-        100;
-
-
-    sol.shadow.camera.left =
-        -35;
-
-    sol.shadow.camera.right =
-        35;
-
-    sol.shadow.camera.top =
-        35;
-
-    sol.shadow.camera.bottom =
-        -35;
-
-
-    escena.add(
-        sol
-    );
+    escena.add(sol);
 }
 
-
-// ============================================================
-// LOOP
-// ============================================================
-
 function renderizar() {
-
     if (
         !activa ||
         !renderer ||
@@ -366,28 +171,14 @@ function renderizar() {
         return;
     }
 
+    requestAnimationFrame(renderizar);
 
-    requestAnimationFrame(
-        renderizar
-    );
+    const delta = reloj
+        ? Math.min(reloj.getDelta(), 0.033)
+        : 0.016;
 
-
-    const delta =
-        reloj
-            ? Math.min(
-                reloj.getDelta(),
-                0.033
-            )
-            : 0.016;
-
-
-    actualizarCinematica(
-        delta
-    );
-
-
+    actualizarCinematica(delta);
     actualizarTamaño();
-
 
     renderer.render(
         escena,
@@ -395,66 +186,46 @@ function renderizar() {
     );
 }
 // ============================================================
-// BLOQUE 2/10
-// BOSQUE 3D
+// PARTE 2/10 - BOSQUE 3D
 // ============================================================
 
 function crearSuelo() {
-
     const geometria =
         new THREE.PlaneGeometry(
             90,
             90,
-            32,
-            32
+            24,
+            24
         );
 
-    geometria.rotateX(
-        -Math.PI / 2
-    );
-
+    geometria.rotateX(-Math.PI / 2);
 
     const posiciones =
         geometria.attributes.position;
-
 
     for (
         let i = 0;
         i < posiciones.count;
         i++
     ) {
+        const x = posiciones.getX(i);
+        const z = posiciones.getZ(i);
 
-        const x =
-            posiciones.getX(i);
-
-        const z =
-            posiciones.getZ(i);
-
-
-        const desnivel =
+        const y =
             Math.sin(x * 0.12) * 0.12 +
             Math.cos(z * 0.15) * 0.10;
 
-
-        posiciones.setY(
-            i,
-            desnivel
-        );
+        posiciones.setY(i, y);
     }
 
-
     posiciones.needsUpdate = true;
-
     geometria.computeVertexNormals();
-
 
     const material =
         new THREE.MeshStandardMaterial({
-            color: CONFIG.colorSuelo,
-            roughness: 1,
-            metalness: 0
+            color: CONFIG.suelo,
+            roughness: 1
         });
-
 
     const suelo =
         new THREE.Mesh(
@@ -462,262 +233,118 @@ function crearSuelo() {
             material
         );
 
-
     suelo.receiveShadow = true;
-
     suelo.position.y = -0.04;
 
-
-    grupoBosque.add(
-        suelo
-    );
+    grupoBosque.add(suelo);
 }
 
-
-// ------------------------------------------------------------
-// TRONCO
-// ------------------------------------------------------------
-
-function crearTroncoPino(
-    altura = 4
-) {
-
-    const geometria =
-        new THREE.CylinderGeometry(
-            0.22,
-            0.38,
-            altura,
-            8
-        );
-
-
-    const material =
-        new THREE.MeshStandardMaterial({
-            color: 0x62432d,
-            roughness: 1
-        });
-
+function crearPino(escala = 1) {
+    const pino = new THREE.Group();
 
     const tronco =
         new THREE.Mesh(
-            geometria,
-            material
+            new THREE.CylinderGeometry(
+                0.22 * escala,
+                0.38 * escala,
+                3.8 * escala,
+                8
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x62432d,
+                roughness: 1
+            })
         );
-
-
-    tronco.castShadow = true;
-    tronco.receiveShadow = true;
 
     tronco.position.y =
-        altura / 2;
+        1.9 * escala;
 
+    tronco.castShadow = true;
 
-    return tronco;
-}
+    pino.add(tronco);
 
+    const copas = [
+        [2.5, 3.2, 3.4, 0x315d38],
+        [2.05, 3.0, 5.0, 0x3d7043],
+        [1.55, 2.7, 6.35, 0x4b8050]
+    ];
 
-// ------------------------------------------------------------
-// COPA DEL PINO
-// ------------------------------------------------------------
+    for (const dato of copas) {
+        const copa =
+            new THREE.Mesh(
+                new THREE.ConeGeometry(
+                    dato[0] * escala,
+                    dato[1] * escala,
+                    9
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: dato[3],
+                    roughness: 0.95
+                })
+            );
 
-function crearCopaPino(
-    radio,
-    altura,
-    y,
-    color
-) {
+        copa.position.y =
+            dato[2] * escala;
 
-    const geometria =
-        new THREE.ConeGeometry(
-            radio,
-            altura,
-            9
-        );
+        copa.castShadow = true;
+        copa.receiveShadow = true;
 
-
-    const material =
-        new THREE.MeshStandardMaterial({
-            color,
-            roughness: 0.95
-        });
-
-
-    const copa =
-        new THREE.Mesh(
-            geometria,
-            material
-        );
-
-
-    copa.position.y =
-        y;
-
-
-    copa.castShadow = true;
-    copa.receiveShadow = true;
-
-
-    return copa;
-}
-
-
-// ------------------------------------------------------------
-// PINO COMPLETO
-// ------------------------------------------------------------
-
-function crearPino(
-    escala = 1
-) {
-
-    const pino =
-        new THREE.Group();
-
-
-    const tronco =
-        crearTroncoPino(
-            3.8 * escala
-        );
-
-
-    pino.add(
-        tronco
-    );
-
-
-    pino.add(
-        crearCopaPino(
-            2.5 * escala,
-            3.2 * escala,
-            3.4 * escala,
-            0x315d38
-        )
-    );
-
-
-    pino.add(
-        crearCopaPino(
-            2.05 * escala,
-            3.0 * escala,
-            5.0 * escala,
-            0x3d7043
-        )
-    );
-
-
-    pino.add(
-        crearCopaPino(
-            1.55 * escala,
-            2.7 * escala,
-            6.35 * escala,
-            0x4b8050
-        )
-    );
-
+        pino.add(copa);
+    }
 
     pino.rotation.y =
-        Math.random() *
-        Math.PI *
-        2;
-
+        Math.random() * Math.PI * 2;
 
     return pino;
 }
 
-
-// ------------------------------------------------------------
-// PASTO
-// ------------------------------------------------------------
-
 function crearPasto() {
+    const grupo = new THREE.Group();
 
-    const grupo =
-        new THREE.Group();
-
-
-    for (
-        let i = 0;
-        i < 5;
-        i++
-    ) {
-
-        const geometria =
-            new THREE.ConeGeometry(
-                0.035,
-                0.28 +
-                Math.random() * 0.15,
-                4
-            );
-
-
-        const material =
-            new THREE.MeshStandardMaterial({
-                color:
-                    0x668d4c,
-                roughness: 1
-            });
-
-
+    for (let i = 0; i < 4; i++) {
         const hierba =
             new THREE.Mesh(
-                geometria,
-                material
+                new THREE.ConeGeometry(
+                    0.035,
+                    0.3 + Math.random() * 0.15,
+                    4
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x668d4c,
+                    roughness: 1
+                })
             );
-
 
         hierba.position.set(
             (Math.random() - 0.5) * 0.45,
-            0.14,
+            0.15,
             (Math.random() - 0.5) * 0.45
         );
-
 
         hierba.rotation.z =
             (Math.random() - 0.5) * 0.5;
 
-
-        hierba.castShadow = true;
-
-        grupo.add(
-            hierba
-        );
+        grupo.add(hierba);
     }
-
 
     return grupo;
 }
 
-
-// ------------------------------------------------------------
-// PIEDRA
-// ------------------------------------------------------------
-
 function crearPiedra() {
-
-    const geometria =
-        new THREE.DodecahedronGeometry(
-            0.25 +
-            Math.random() * 0.3,
-            0
-        );
-
-
-    const material =
-        new THREE.MeshStandardMaterial({
-            color: 0x77756d,
-            roughness: 1
-        });
-
-
     const piedra =
         new THREE.Mesh(
-            geometria,
-            material
+            new THREE.DodecahedronGeometry(
+                0.25 + Math.random() * 0.3
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x77756d,
+                roughness: 1
+            })
         );
 
+    piedra.scale.y = 0.55;
 
-    piedra.scale.y =
-        0.55;
-
+    piedra.position.y = 0.15;
 
     piedra.rotation.set(
         Math.random(),
@@ -725,55 +352,32 @@ function crearPiedra() {
         Math.random()
     );
 
-
     piedra.castShadow = true;
-    piedra.receiveShadow = true;
-
 
     return piedra;
 }
 
-
-// ------------------------------------------------------------
-// BOSQUE COMPLETO
-// ------------------------------------------------------------
-
 function crearBosque() {
-
     crearSuelo();
 
-
-    // Pinos
-    for (
-        let i = 0;
-        i < 18;
-        i++
-    ) {
-
+    for (let i = 0; i < 18; i++) {
         const pino =
             crearPino(
-                0.75 +
-                Math.random() * 0.55
+                0.75 + Math.random() * 0.55
             );
-
 
         let x;
         let z;
 
-
         do {
-
             x =
                 (Math.random() - 0.5) * 70;
-
             z =
                 (Math.random() - 0.5) * 70;
-
         } while (
             Math.abs(x) < 10 &&
             Math.abs(z) < 15
         );
-
 
         pino.position.set(
             x,
@@ -781,319 +385,258 @@ function crearBosque() {
             z
         );
 
-
-        grupoBosque.add(
-            pino
-        );
+        grupoBosque.add(pino);
     }
 
-
-    // Pasto
-    for (
-        let i = 0;
-        i < 80;
-        i++
-    ) {
-
-        const pasto =
-            crearPasto();
-
+    for (let i = 0; i < 70; i++) {
+        const pasto = crearPasto();
 
         pasto.position.set(
-            (Math.random() - 0.5) * 70,
-            0,
-            (Math.random() - 0.5) * 70
-        );
-
-
-        grupoBosque.add(
-            pasto
-        );
-    }
-
-
-    // Piedras
-    for (
-        let i = 0;
-        i < 25;
-        i++
-    ) {
-
-        const piedra =
-            crearPiedra();
-
-
-        piedra.position.set(
             (Math.random() - 0.5) * 65,
-            0.15,
+            0,
             (Math.random() - 0.5) * 65
         );
 
-
-        grupoBosque.add(
-            piedra
-        );
+        grupoBosque.add(pasto);
     }
-        }
+
+    for (let i = 0; i < 22; i++) {
+        const piedra = crearPiedra();
+
+        piedra.position.set(
+            (Math.random() - 0.5) * 60,
+            0,
+            (Math.random() - 0.5) * 60
+        );
+
+        grupoBosque.add(piedra);
+    }
+}
 // ============================================================
-// BLOQUE 3/10
-// PERSONAJES Y RIG PROCEDURAL
+// PARTE 3/10 - CARGA DE MIKE Y MICAELA
 // ============================================================
 
-function limpiarNombreHueso(
-    nombre
-) {
-
+function limpiarNombre(nombre) {
     return String(nombre)
         .toLowerCase()
-        .replace(
-            /[\s_\-\.]/g,
-            ""
-        );
+        .replace(/[\s_\-\.]/g, "");
 }
 
+function prepararHuesos(personaje) {
+    personaje.traverse(obj => {
+        if (!obj.isBone) return;
 
-// ------------------------------------------------------------
-// GUARDAR POSE ORIGINAL
-// ------------------------------------------------------------
+        obj.userData.eggaroRest =
+            obj.quaternion.clone();
 
-function prepararHuesos(
-    personaje
-) {
-
-    personaje.traverse(
-        objeto => {
-
-            if (!objeto.isBone) {
-                return;
-            }
-
-
-            objeto.userData
-                .eggaroRestQuaternion =
-                objeto.quaternion.clone();
-
-
-            objeto.userData
-                .eggaroRestPosition =
-                objeto.position.clone();
-
-
-            objeto.userData
-                .eggaroNombre =
-                limpiarNombreHueso(
-                    objeto.name
-                );
-        }
-    );
+        obj.userData.eggaroNombre =
+            limpiarNombre(obj.name);
+    });
 }
 
-
-// ------------------------------------------------------------
-// BUSCAR HUESO
-// ------------------------------------------------------------
-
-function buscarHueso(
-    personaje,
-    nombres
-) {
-
+function buscarHueso(personaje, nombres) {
     const buscados =
-        nombres.map(
-            limpiarNombreHueso
-        );
+        nombres.map(limpiarNombre);
 
+    let encontrado = null;
 
-    let resultado = null;
-
-
-    personaje.traverse(
-        objeto => {
-
-            if (
-                resultado ||
-                !objeto.isBone
-            ) {
-                return;
-            }
-
-
-            const nombre =
-                limpiarNombreHueso(
-                    objeto.name
-                );
-
-
-            if (
-                buscados.includes(
-                    nombre
-                )
-            ) {
-
-                resultado = objeto;
-            }
+    personaje.traverse(obj => {
+        if (encontrado || !obj.isBone) {
+            return;
         }
-    );
 
+        const nombre =
+            limpiarNombre(obj.name);
 
-    return resultado;
+        if (buscados.includes(nombre)) {
+            encontrado = obj;
+        }
+    });
+
+    return encontrado;
 }
 
-
-// ------------------------------------------------------------
-// OBTENER RIG
-// ------------------------------------------------------------
-
-function obtenerRig(
-    personaje
-) {
-
+function obtenerRig(personaje) {
     return {
+        pelvis: buscarHueso(personaje, [
+            "hips",
+            "pelvis",
+            "hip",
+            "root"
+        ]),
 
-        pelvis: buscarHueso(
-            personaje,
-            [
-                "pelvis",
-                "hips",
-                "hip",
-                "root"
-            ]
-        ),
+        spine: buscarHueso(personaje, [
+            "spine",
+            "spine1",
+            "chest",
+            "torso"
+        ]),
 
-        spine: buscarHueso(
-            personaje,
-            [
-                "spine",
-                "spine1",
-                "spine2",
-                "torso"
-            ]
-        ),
+        cabeza: buscarHueso(personaje, [
+            "head",
+            "cabeza"
+        ]),
 
-        neck: buscarHueso(
-            personaje,
-            [
-                "neck",
-                "cuello"
-            ]
-        ),
+        brazoI: buscarHueso(personaje, [
+            "leftarm",
+            "armleft",
+            "upperarml",
+            "brazoizquierdo"
+        ]),
 
-        head: buscarHueso(
-            personaje,
-            [
-                "head",
-                "cabeza"
-            ]
-        ),
+        brazoD: buscarHueso(personaje, [
+            "rightarm",
+            "armright",
+            "upperarmr",
+            "brazoderecho"
+        ]),
 
-        piernaIzq: buscarHueso(
-            personaje,
-            [
-                "thighl",
-                "leftthigh",
-                "leftupleg",
-                "uplegl",
-                "legl"
-            ]
-        ),
+        antebrazoI: buscarHueso(personaje, [
+            "leftforearm",
+            "forearml",
+            "antebrazoizquierdo"
+        ]),
 
-        piernaDer: buscarHueso(
-            personaje,
-            [
-                "thighr",
-                "rightthigh",
-                "rightupleg",
-                "uplegr",
-                "legr"
-            ]
-        ),
+        antebrazoD: buscarHueso(personaje, [
+            "rightforearm",
+            "forearmr",
+            "antebrazoderecho"
+        ]),
 
-        pieIzq: buscarHueso(
-            personaje,
-            [
-                "footl",
-                "leftfoot",
-                "leftankle"
-            ]
-        ),
+        piernaI: buscarHueso(personaje, [
+            "leftupleg",
+            "leftthigh",
+            "thighl",
+            "legleft",
+            "piernaizquierda"
+        ]),
 
-        pieDer: buscarHueso(
-            personaje,
-            [
-                "footr",
-                "rightfoot",
-                "rightankle"
-            ]
-        ),
+        piernaD: buscarHueso(personaje, [
+            "rightupleg",
+            "rightthigh",
+            "thighr",
+            "legright",
+            "piernaderecha"
+        ]),
 
-        brazoIzq: buscarHueso(
-            personaje,
-            [
-                "arml",
-                "leftarm",
-                "leftupperarm"
-            ]
-        ),
+        pantorrillaI: buscarHueso(personaje, [
+            "leftleg",
+            "leftcalf",
+            "calfl",
+            "pantorrillaizquierda"
+        ]),
 
-        brazoDer: buscarHueso(
-            personaje,
-            [
-                "armr",
-                "rightarm",
-                "rightupperarm"
-            ]
-        ),
+        pantorrillaD: buscarHueso(personaje, [
+            "rightleg",
+            "rightcalf",
+            "calfr",
+            "pantorrilladerecha"
+        ]),
 
-        antebrazoIzq: buscarHueso(
-            personaje,
-            [
-                "forearml",
-                "leftforearm",
-                "leftlowerarm"
-            ]
-        ),
+        pieI: buscarHueso(personaje, [
+            "leftfoot",
+            "footl",
+            "pieizquierdo"
+        ]),
 
-        antebrazoDer: buscarHueso(
-            personaje,
-            [
-                "forearmr",
-                "rightforearm",
-                "rightlowerarm"
-            ]
-        )
+        pieD: buscarHueso(personaje, [
+            "rightfoot",
+            "footr",
+            "piederecho"
+        ])
     };
 }
 
+function prepararPersonaje(objeto) {
+    prepararHuesos(objeto);
 
-// ------------------------------------------------------------
-// ROTACIÓN RELATIVA
-// ------------------------------------------------------------
+    objeto.userData.eggaroRig =
+        obtenerRig(objeto);
+
+    objeto.userData.baseY =
+        objeto.position.y;
+
+    objeto.userData.caminando = false;
+    objeto.userData.destinoZ = 0;
+
+    objeto.traverse(obj => {
+        if (obj.isMesh) {
+            obj.castShadow = true;
+            obj.receiveShadow = true;
+        }
+    });
+}
+
+function cargarPersonaje(ruta) {
+    return new Promise((resolve, reject) => {
+        loader.load(
+            ruta,
+            gltf => {
+                const objeto =
+                    gltf.scene;
+
+                prepararPersonaje(objeto);
+
+                resolve(objeto);
+            },
+            undefined,
+            reject
+        );
+    });
+}
+
+async function cargarPersonajes() {
+    mike =
+        await cargarPersonaje(
+            "./3D/mike.glb"
+        );
+
+    micaela =
+        await cargarPersonaje(
+            "./3D/micaela.glb"
+        );
+
+    mike.position.set(
+        -1.1,
+        0,
+        8
+    );
+
+    micaela.position.set(
+        1.1,
+        0,
+        8.8
+    );
+
+    mike.rotation.y = Math.PI;
+    micaela.rotation.y = Math.PI;
+
+    grupoPersonajes.add(mike);
+    grupoPersonajes.add(micaela);
+    }
+// ============================================================
+// PARTE 4/10 - ANIMACION PROCEDURAL DE CAMINATA
+// ============================================================
+
+const EJE_X =
+    new THREE.Vector3(1, 0, 0);
+
+const EJE_Z =
+    new THREE.Vector3(0, 0, 1);
 
 function rotacionRelativa(
     hueso,
     eje,
     angulo
 ) {
-
-    if (!hueso) {
-        return;
-    }
-
+    if (!hueso) return;
 
     const rest =
-        hueso.userData
-            .eggaroRestQuaternion;
+        hueso.userData.eggaroRest;
 
+    if (!rest) return;
 
-    if (!rest) {
-        return;
-    }
-
-
-    hueso.quaternion.copy(
-        rest
-    );
-
+    hueso.quaternion.copy(rest);
 
     const q =
         new THREE.Quaternion()
@@ -1102,659 +645,262 @@ function rotacionRelativa(
                 angulo
             );
 
-
-    hueso.quaternion.multiply(
-        q
-    );
+    hueso.quaternion.multiply(q);
 }
 
+function iniciarCaminata(personaje, destino) {
+    if (!personaje) return;
 
-// ------------------------------------------------------------
-// PREPARAR PERSONAJE
-// ------------------------------------------------------------
+    personaje.userData.caminando = true;
+    personaje.userData.destinoZ = destino;
+}
 
-function prepararPersonaje(
-    objeto,
-    nombre
-) {
+function detenerCaminata(personaje) {
+    if (!personaje) return;
 
-    prepararHuesos(
-        objeto
-    );
+    personaje.userData.caminando = false;
+}
 
+function aplicarPoseReposo(personaje) {
+    if (!personaje) return;
 
-    objeto.userData
-        .eggaroNombre =
-        nombre;
+    personaje.traverse(obj => {
+        if (!obj.isBone) return;
 
+        const rest =
+            obj.userData.eggaroRest;
 
-    objeto.userData
-        .eggaroRig =
-        obtenerRig(
-            objeto
-        );
-
-
-    objeto.userData
-        .eggaroCaminando =
-        false;
-
-
-    objeto.userData
-        .eggaroTiempo =
-        0;
-
-
-    objeto.userData
-        .eggaroDestinoZ =
-        objeto.position.z;
-
-
-    objeto.userData
-        .eggaroBaseY =
-        objeto.position.y;
-
-
-    objeto.traverse(
-        parte => {
-
-            if (
-                parte.isMesh
-            ) {
-
-                parte.castShadow =
-                    true;
-
-                parte.receiveShadow =
-                    true;
-            }
+        if (rest) {
+            obj.quaternion.copy(rest);
         }
-    );
-
-
-    return objeto;
+    });
 }
-
-
-// ------------------------------------------------------------
-// CARGAR PERSONAJE
-// ------------------------------------------------------------
-
-function cargarPersonaje(
-    ruta,
-    nombre
-) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            loader.load(
-                ruta,
-
-                gltf => {
-
-                    const objeto =
-                        prepararPersonaje(
-                            gltf.scene,
-                            nombre
-                        );
-
-
-                    resolve(
-                        objeto
-                    );
-                },
-
-                undefined,
-
-                error => {
-
-                    console.error(
-                        "EGGARO: error cargando",
-                        ruta,
-                        error
-                    );
-
-                    reject(error);
-                }
-            );
-        }
-    );
-}
-
-
-// ------------------------------------------------------------
-// CARGAR MIKE Y MICAELA
-// ------------------------------------------------------------
-
-async function cargarPersonajes() {
-
-    try {
-
-        mike =
-            await cargarPersonaje(
-                "./3D/mike.glb",
-                "Mike"
-            );
-
-
-        micaela =
-            await cargarPersonaje(
-                "./3D/micaela.glb",
-                "Micaela"
-            );
-
-
-        mike.position.set(
-            -1.25,
-            0,
-            8
-        );
-
-
-        micaela.position.set(
-            1.25,
-            0,
-            8.8
-        );
-
-
-        mike.rotation.y =
-            Math.PI;
-
-
-        micaela.rotation.y =
-            Math.PI;
-
-
-        grupoPersonajes.add(
-            mike
-        );
-
-        grupoPersonajes.add(
-            micaela
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "EGGARО: no se pudieron cargar Mike/Micaela.",
-            error
-        );
-
-        mike = null;
-        micaela = null;
-    }
-        }
-// ============================================================
-// BLOQUE 4/10
-// ANIMACIÓN PROCEDURAL DE CAMINATA
-// ============================================================
-
-function iniciarCaminata(
-    personaje,
-    destinoZ
-) {
-
-    if (!personaje) {
-        return;
-    }
-
-
-    personaje.userData
-        .eggarCaminando =
-        true;
-
-
-    personaje.userData
-        .eggarDestinoZ =
-        destinoZ;
-}
-
-
-function detenerCaminata(
-    personaje
-) {
-
-    if (!personaje) {
-        return;
-    }
-
-
-    personaje.userData
-        .eggarCaminando =
-        false;
-
-
-    aplicarPoseReposo(
-        personaje
-    );
-}
-
-
-// ------------------------------------------------------------
-// POSE DE REPOSO
-// ------------------------------------------------------------
-
-function aplicarPoseReposo(
-    personaje
-) {
-
-    if (!personaje) {
-        return;
-    }
-
-
-    const rig =
-        personaje.userData
-            .eggarRig;
-
-
-    if (!rig) {
-        return;
-    }
-
-
-    const ejeX =
-        new THREE.Vector3(
-            1,
-            0,
-            0
-        );
-
-
-    const ejeZ =
-        new THREE.Vector3(
-            0,
-            0,
-            1
-        );
-
-
-    Object.values(rig)
-        .forEach(hueso => {
-
-            if (hueso) {
-
-                const rest =
-                    hueso.userData
-                        .eggaroRestQuaternion;
-
-                if (rest) {
-                    hueso.quaternion.copy(
-                        rest
-                    );
-                }
-            }
-        });
-}
-
-
-// ------------------------------------------------------------
-// ACTUALIZAR CAMINATA
-// ------------------------------------------------------------
 
 function actualizarCaminata(
     personaje,
-    delta
+    delta,
+    tiempoAnim
 ) {
-
-    if (!personaje) {
-        return;
-    }
-
-
-    const datos =
-        personaje.userData;
-
+    if (!personaje) return;
 
     const rig =
-        datos.eggarRig;
+        personaje.userData.eggaroRig;
 
+    const caminando =
+        personaje.userData.caminando;
 
-    if (!rig) {
-        return;
+    if (!rig) return;
+
+    if (caminando) {
+        const destino =
+            personaje.userData.destinoZ;
+
+        const z =
+            personaje.position.z;
+
+        const direccion =
+            Math.sign(destino - z);
+
+        const paso =
+            CONFIG.velocidad *
+            delta;
+
+        if (
+            Math.abs(destino - z) <= paso
+        ) {
+            personaje.position.z =
+                destino;
+
+            detenerCaminata(personaje);
+        } else {
+            personaje.position.z +=
+                direccion * paso;
+        }
+
+        const ciclo =
+            Math.sin(
+                tiempoAnim * 8
+            );
+
+        const ciclo2 =
+            Math.sin(
+                tiempoAnim * 8 +
+                Math.PI
+            );
+
+        rotacionRelativa(
+            rig.piernaI,
+            EJE_X,
+            ciclo * 0.48
+        );
+
+        rotacionRelativa(
+            rig.piernaD,
+            EJE_X,
+            ciclo2 * 0.48
+        );
+
+        rotacionRelativa(
+            rig.pantorrillaI,
+            EJE_X,
+            Math.max(0, -ciclo) * 0.3
+        );
+
+        rotacionRelativa(
+            rig.pantorrillaD,
+            EJE_X,
+            Math.max(0, -ciclo2) * 0.3
+        );
+
+        rotacionRelativa(
+            rig.brazoI,
+            EJE_X,
+            ciclo2 * 0.30
+        );
+
+        rotacionRelativa(
+            rig.brazoD,
+            EJE_X,
+            ciclo * 0.30
+        );
+
+        rotacionRelativa(
+            rig.antebrazoI,
+            EJE_X,
+            0.12
+        );
+
+        rotacionRelativa(
+            rig.antebrazoD,
+            EJE_X,
+            0.12
+        );
+
+        if (rig.pelvis) {
+            personaje.position.y =
+                personaje.userData.baseY +
+                Math.abs(
+                    Math.sin(
+                        tiempoAnim * 8
+                    )
+                ) * 0.025;
+        }
+    } else {
+        aplicarPoseReposo(personaje);
+
+        personaje.position.y =
+            personaje.userData.baseY;
     }
-
-
-    if (!datos.eggarCaminando) {
-
-        aplicarPoseReposo(
-            personaje
-        );
-
-        return;
-    }
-
-
-    const distancia =
-        datos.eggarDestinoZ -
-        personaje.position.z;
-
-
-    const direccion =
-        Math.sign(
-            distancia
-        );
-
-
-    const movimiento =
-        CONFIG.velocidadPersonajes *
-        delta;
-
-
-    if (
-        Math.abs(distancia) <=
-        movimiento
-    ) {
-
-        personaje.position.z =
-            datos.eggarDestinoZ;
-
-
-        datos.eggarCaminando =
-            false;
-
-
-        aplicarPoseReposo(
-            personaje
-        );
-
-        return;
-    }
-
-
-    personaje.position.z +=
-        movimiento *
-        direccion;
-
-
-    datos.eggarTiempo +=
-        delta;
-
-
-    const t =
-        datos.eggarTiempo *
-        7;
-
-
-    const paso =
-        Math.sin(t);
-
-
-    const pasoOpuesto =
-        Math.sin(
-            t + Math.PI
-        );
-
-
-    const ejeX =
-        new THREE.Vector3(
-            1,
-            0,
-            0
-        );
-
-
-    const ejeZ =
-        new THREE.Vector3(
-            0,
-            0,
-            1
-        );
-
-
-    // Piernas
-    rotacionRelativa(
-        rig.piernaIzq,
-        ejeX,
-        paso * 0.38
-    );
-
-
-    rotacionRelativa(
-        rig.piernaDer,
-        ejeX,
-        pasoOpuesto * 0.38
-    );
-
-
-    // Pies
-    rotacionRelativa(
-        rig.pieIzq,
-        ejeX,
-        -paso * 0.16
-    );
-
-
-    rotacionRelativa(
-        rig.pieDer,
-        ejeX,
-        -pasoOpuesto * 0.16
-    );
-
-
-    // Brazos
-    rotacionRelativa(
-        rig.brazoIzq,
-        ejeX,
-        pasoOpuesto * 0.25
-    );
-
-
-    rotacionRelativa(
-        rig.brazoDer,
-        ejeX,
-        paso * 0.25
-    );
-
-
-    // Antebrazos
-    rotacionRelativa(
-        rig.antebrazoIzq,
-        ejeX,
-        Math.abs(paso) * 0.06
-    );
-
-
-    rotacionRelativa(
-        rig.antebrazoDer,
-        ejeX,
-        Math.abs(pasoOpuesto) * 0.06
-    );
-
-
-    // Pequeño movimiento natural del torso
-    rotacionRelativa(
-        rig.spine,
-        ejeZ,
-        Math.sin(t * 0.5) * 0.025
-    );
-
-
-    // Cabeza estable
-    rotacionRelativa(
-        rig.head,
-        ejeZ,
-        Math.sin(t * 0.4) * 0.018
-    );
-
-
-    // Balanceo pequeño del personaje completo
-    personaje.position.y =
-        datos.eggarBaseY +
-        Math.abs(
-            Math.sin(t)
-        ) * 0.025;
 }
 
-
-// ------------------------------------------------------------
-// ACTUALIZAR PERSONAJES
-// ------------------------------------------------------------
-
-function actualizarPersonajes(
-    delta
-) {
-
+function actualizarPersonajes(delta) {
     actualizarCaminata(
         mike,
-        delta
+        delta,
+        tiempo
     );
-
 
     actualizarCaminata(
         micaela,
-        delta
+        delta,
+        tiempo
     );
-                 }
+}
 // ============================================================
-// BLOQUE 5/10
-// HUEVO
+// PARTE 5/10 - HUEVO
 // ============================================================
 
 let huevo = null;
-let particulasHuevo = null;
+let huevoSuperior = null;
+let huevoInferior = null;
 let energiaHuevo = null;
+let particulasHuevo = null;
 let flashHuevo = null;
 
-let huevoActivo = false;
-let huevoAbriendo = false;
 let huevoAbierto = false;
-
 let tiempoHuevo = 0;
-let tiempoApertura = 0;
 
-
-// ------------------------------------------------------------
-// MATERIAL
-// ------------------------------------------------------------
-
-function crearMaterialHuevo() {
-
+function crearMaterialHuevo(color) {
     return new THREE.MeshStandardMaterial({
-        color: 0xf4e5c2,
-        roughness: 0.72,
+        color,
+        roughness: 0.48,
         metalness: 0.02
     });
 }
 
-
-// ------------------------------------------------------------
-// CREAR HUEVO
-// ------------------------------------------------------------
-
 function crearHuevo() {
+    huevo = new THREE.Group();
 
-    const geometria =
-        new THREE.SphereGeometry(
-            1,
-            32,
-            24
-        );
-
-
-    const material =
-        crearMaterialHuevo();
-
-
-    huevo =
+    huevoSuperior =
         new THREE.Mesh(
-            geometria,
-            material
+            new THREE.SphereGeometry(
+                0.95,
+                32,
+                24
+            ),
+            crearMaterialHuevo(
+                0xf1e2b6
+            )
         );
 
+    huevoInferior =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                0.95,
+                32,
+                24
+            ),
+            crearMaterialHuevo(
+                0xf1e2b6
+            )
+        );
 
-    huevo.scale.set(
+    huevoSuperior.scale.set(
         0.78,
-        1.08,
+        1.05,
         0.78
     );
 
+    huevoInferior.scale.set(
+        0.78,
+        0.70,
+        0.78
+    );
+
+    huevoSuperior.position.y =
+        0.42;
+
+    huevoInferior.position.y =
+        -0.28;
+
+    huevo.add(huevoSuperior);
+    huevo.add(huevoInferior);
 
     huevo.position.set(
         0,
         1.15,
-        -3
+        -0.4
     );
 
+    huevo.scale.setScalar(0.85);
 
-    huevo.castShadow =
-        true;
-
-    huevo.receiveShadow =
-        true;
-
-
-    huevo.userData
-        .eggaroHuevo =
-        true;
-
-
-    const luz =
-        new THREE.PointLight(
-            0xffd36b,
-            0,
-            7
-        );
-
-
-    luz.position.y =
-        0.4;
-
-
-    luz.userData
-        .eggaroLuzHuevo =
-        true;
-
-
-    huevo.add(
-        luz
-    );
-
-
-    grupoHuevo.add(
-        huevo
-    );
+    grupoHuevo.add(huevo);
 }
 
-
-// ------------------------------------------------------------
-// PARTÍCULAS
-// ------------------------------------------------------------
-
 function crearParticulasHuevo() {
-
-    const posiciones = [];
-
-    for (
-        let i = 0;
-        i < 36;
-        i++
-    ) {
-
-        const angulo =
-            Math.random() *
-            Math.PI * 2;
-
-
-        const radio =
-            0.7 +
-            Math.random() * 0.7;
-
-
-        posiciones.push(
-            Math.cos(angulo) * radio,
-            Math.random() * 1.8,
-            Math.sin(angulo) * radio
-        );
-    }
-
-
     const geometria =
         new THREE.BufferGeometry();
 
+    const cantidad = 90;
+    const posiciones = [];
+
+    for (let i = 0; i < cantidad; i++) {
+        posiciones.push(
+            (Math.random() - 0.5) * 3,
+            Math.random() * 3,
+            (Math.random() - 0.5) * 3
+        );
+    }
 
     geometria.setAttribute(
         "position",
@@ -1764,15 +910,13 @@ function crearParticulasHuevo() {
         )
     );
 
-
     const material =
         new THREE.PointsMaterial({
-            color: 0xffe59a,
-            size: 0.09,
+            color: 0xfff0a0,
+            size: 0.055,
             transparent: true,
             opacity: 0
         });
-
 
     particulasHuevo =
         new THREE.Points(
@@ -1780,1885 +924,841 @@ function crearParticulasHuevo() {
             material
         );
 
-
     particulasHuevo.position.set(
         0,
-        0.3,
-        -3
+        1.1,
+        -0.4
     );
-
 
     grupoHuevo.add(
         particulasHuevo
     );
 }
 
-
-// ------------------------------------------------------------
-// ENERGÍA
-// ------------------------------------------------------------
-
 function crearEnergiaHuevo() {
-
-    const posiciones = [];
-
-    for (
-        let i = 0;
-        i < 48;
-        i++
-    ) {
-
-        const angulo =
-            Math.random() *
-            Math.PI * 2;
-
-
-        const radio =
-            0.2 +
-            Math.random() * 1.1;
-
-
-        posiciones.push(
-            Math.cos(angulo) * radio,
-            Math.random() * 1.8,
-            Math.sin(angulo) * radio
-        );
-    }
-
-
-    const geometria =
-        new THREE.BufferGeometry();
-
-
-    geometria.setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute(
-            posiciones,
-            3
-        )
-    );
-
-
-    const material =
-        new THREE.PointsMaterial({
-            color: 0xffffff,
-            size: 0.12,
-            transparent: true,
-            opacity: 0
-        });
-
-
     energiaHuevo =
-        new THREE.Points(
-            geometria,
-            material
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                1.1,
+                24,
+                16
+            ),
+            new THREE.MeshBasicMaterial({
+                color: 0xffef9a,
+                transparent: true,
+                opacity: 0
+            })
         );
-
 
     energiaHuevo.position.set(
         0,
-        0.4,
-        -3
+        1.1,
+        -0.4
     );
 
+    energiaHuevo.scale.setScalar(0.2);
 
     grupoHuevo.add(
         energiaHuevo
     );
 }
 
-
-// ------------------------------------------------------------
-// FLASH
-// ------------------------------------------------------------
-
 function crearFlashHuevo() {
-
-    if (flashHuevo) {
-        return;
-    }
-
-
-    const geometria =
-        new THREE.SphereGeometry(
-            1,
-            16,
-            16
-        );
-
-
-    const material =
-        new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0
-        });
-
-
     flashHuevo =
         new THREE.Mesh(
-            geometria,
-            material
+            new THREE.PlaneGeometry(
+                30,
+                30
+            ),
+            new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0,
+                depthWrite: false
+            })
         );
-
 
     flashHuevo.position.set(
         0,
-        1.15,
-        -3
+        4,
+        0
     );
 
+    flashHuevo.rotation.x =
+        -Math.PI / 2;
 
-    flashHuevo.scale.setScalar(
-        0.1
-    );
-
-
-    grupoHuevo.add(
-        flashHuevo
-    );
+    grupoHuevo.add(flashHuevo);
 }
 
-
-// ------------------------------------------------------------
-// PREPARAR
-// ------------------------------------------------------------
-
 function prepararHuevo() {
-
     crearHuevo();
-
     crearParticulasHuevo();
-
     crearEnergiaHuevo();
-
     crearFlashHuevo();
 }
 
-
-// ------------------------------------------------------------
-// ACTIVAR
-// ------------------------------------------------------------
-
 function activarHuevo() {
-
-    huevoActivo = true;
-
     tiempoHuevo = 0;
+
+    huevoAbierto = false;
 
     if (huevo) {
         huevo.visible = true;
+        huevo.scale.setScalar(0.85);
+    }
+
+    if (energiaHuevo) {
+        energiaHuevo.material.opacity = 0;
+        energiaHuevo.scale.setScalar(0.2);
+    }
+
+    if (particulasHuevo) {
+        particulasHuevo.material.opacity = 0;
     }
 }
-
-
-// ------------------------------------------------------------
-// ABRIR
-// ------------------------------------------------------------
 
 function abrirHuevo() {
+    if (huevoAbierto) return;
 
-    if (huevoAbriendo || huevoAbierto) {
-        return;
-    }
-
-
-    huevoAbriendo = true;
-
-    tiempoApertura = 0;
+    huevoAbierto = true;
+    tiempoHuevo = 0;
 }
 
+function actualizarHuevo(delta) {
+    if (!huevo) return;
 
-// ------------------------------------------------------------
-// ACTUALIZAR HUEVO
-// ------------------------------------------------------------
+    tiempoHuevo += delta;
 
-function actualizarHuevo(
-    delta
-) {
+    if (!huevoAbierto) {
+        huevo.rotation.y +=
+            delta * 0.25;
 
-    if (
-        !huevo ||
-        !huevoActivo
-    ) {
-        return;
-    }
-
-
-    tiempoHuevo +=
-        delta;
-
-
-    const escala =
-        1 +
-        Math.sin(
-            tiempoHuevo * 4
-        ) * 0.025;
-
-
-    huevo.scale.set(
-        0.78 * escala,
-        1.08 * escala,
-        0.78 * escala
-    );
-
-
-    huevo.rotation.y +=
-        delta * 0.25;
-
-
-    const luz =
-        huevo.children.find(
-            obj =>
-                obj.userData &&
-                obj.userData.eggaroLuzHuevo
-        );
-
-
-    if (luz) {
-
-        luz.intensity =
-            0.8 +
+        const pulso =
+            0.85 +
             Math.sin(
                 tiempoHuevo * 5
-            ) * 0.35;
-    }
+            ) * 0.025;
 
+        huevo.scale.setScalar(pulso);
 
-    if (
-        particulasHuevo &&
-        particulasHuevo.material
-    ) {
-
-        particulasHuevo.material.opacity =
-            0.15 +
-            Math.sin(
-                tiempoHuevo * 4
-            ) * 0.08;
-    }
-}
-// ============================================================
-// BLOQUE 6/10
-// APERTURA DEL HUEVO
-// ============================================================
-
-function actualizarAperturaHuevo(
-    delta
-) {
-
-    if (!huevoAbriendo) {
         return;
     }
 
-
-    tiempoApertura +=
-        delta;
-
-
-    const progreso =
+    const t =
         Math.min(
-            tiempoApertura / 0.8,
+            tiempoHuevo / 1.6,
             1
         );
 
+    huevoSuperior.position.y =
+        0.42 + t * 1.35;
 
-    // El huevo tiembla antes de abrirse.
-    huevo.rotation.z =
-        Math.sin(
-            tiempoApertura * 30
-        ) *
-        0.035 *
-        (1 - progreso);
+    huevoSuperior.rotation.z =
+        t * 0.18;
 
+    huevoInferior.position.y =
+        -0.28 - t * 0.15;
 
-    huevo.scale.y =
-        1.08 +
-        Math.sin(
-            tiempoApertura * 20
-        ) *
-        0.08;
-
-
-    if (
-        particulasHuevo &&
-        particulasHuevo.material
-    ) {
-
-        particulasHuevo.material.opacity =
-            progreso * 0.75;
-    }
-
-
-    if (
-        progreso >= 1 &&
-        !huevoAbierto
-    ) {
-
-        huevoAbierto =
-            true;
-
-        huevoAbriendo =
-            false;
-
-
-        if (huevo) {
-
-            huevo.visible =
-                false;
-        }
-
-
-        if (
-            energiaHuevo &&
-            energiaHuevo.material
-        ) {
-
-            energiaHuevo.material.opacity =
-                1;
-        }
-
-
-        crearFlashHuevo();
-
-
-        if (flashHuevo) {
-
-            flashHuevo.visible =
-                true;
-
-            flashHuevo.scale.setScalar(
-                0.2
+    if (energiaHuevo) {
+        energiaHuevo.material.opacity =
+            Math.max(
+                0,
+                0.6 - t * 0.6
             );
 
-            flashHuevo.material.opacity =
-                1;
+        energiaHuevo.scale.setScalar(
+            0.2 + t * 1.7
+        );
+    }
+
+    if (particulasHuevo) {
+        particulasHuevo.material.opacity =
+            Math.min(t * 1.5, 1);
+    }
         }
-
-
-        mostrarResultadoCinematica();
-    }
-}
-
-
-// ------------------------------------------------------------
-// ENERGÍA
-// ------------------------------------------------------------
-
-function actualizarEnergiaHuevo(
-    delta
-) {
-
-    if (
-        !energiaHuevo ||
-        !energiaHuevo.material
-    ) {
-        return;
-    }
-
-
-    if (
-        !huevoAbierto
-    ) {
-        return;
-    }
-
-
-    energiaHuevo.rotation.y +=
-        delta;
-
-
-    energiaHuevo.position.y +=
-        delta * 0.35;
-
-
-    energiaHuevo.material.opacity =
-        Math.max(
-            0,
-            energiaHuevo.material.opacity -
-            delta * 0.18
-        );
-}
-
-
-// ------------------------------------------------------------
-// FLASH
-// ------------------------------------------------------------
-
-function actualizarFlashHuevo(
-    delta
-) {
-
-    if (
-        !flashHuevo ||
-        !flashHuevo.visible
-    ) {
-        return;
-    }
-
-
-    flashHuevo.scale.multiplyScalar(
-        1 + delta * 6
-    );
-
-
-    flashHuevo.material.opacity =
-        Math.max(
-            0,
-            flashHuevo.material.opacity -
-            delta * 2.5
-        );
-
-
-    if (
-        flashHuevo.material.opacity <= 0
-    ) {
-
-        flashHuevo.visible =
-            false;
-    }
-}
-
-
-// ------------------------------------------------------------
-// EFECTOS
-// ------------------------------------------------------------
-
-function actualizarEfectosHuevo(
-    delta
-) {
-
-    actualizarHuevo(
-        delta
-    );
-
-    actualizarAperturaHuevo(
-        delta
-    );
-
-    actualizarEnergiaHuevo(
-        delta
-    );
-
-    actualizarFlashHuevo(
-        delta
-    );
-}
 // ============================================================
-// BLOQUE 7/10
-// POLLITO 3D
+// PARTE 6/10 - EFECTOS DEL HUEVO
 // ============================================================
+
+function actualizarEfectosHuevo(delta) {
+    if (particulasHuevo) {
+        particulasHuevo.rotation.y +=
+            delta * 0.25;
+
+        if (
+            particulasHuevo.material.opacity > 0
+        ) {
+            const posiciones =
+                particulasHuevo.geometry
+                    .attributes.position;
+
+            for (
+                let i = 0;
+                i < posiciones.count;
+                i++
+            ) {
+                let y =
+                    posiciones.getY(i);
+
+                y += delta * 0.35;
+
+                if (y > 3) {
+                    y = 0;
+                }
+
+                posiciones.setY(i, y);
+            }
+
+            posiciones.needsUpdate = true;
+        }
+    }
+
+    if (flashHuevo) {
+        if (
+            huevoAbierto &&
+            tiempoHuevo < 0.45
+        ) {
+            const intensidad =
+                1 -
+                tiempoHuevo / 0.45;
+
+            flashHuevo.material.opacity =
+                intensidad * 0.85;
+        } else {
+            flashHuevo.material.opacity =
+                0;
+        }
+    }
+}
+
+function actualizarEnergiaHuevo() {
+    if (!energiaHuevo) return;
+
+    if (!huevoAbierto) {
+        energiaHuevo.material.opacity =
+            0.12 +
+            Math.sin(
+                tiempoHuevo * 6
+            ) * 0.08;
+
+        const escala =
+            0.2 +
+            Math.sin(
+                tiempoHuevo * 5
+            ) * 0.03;
+
+        energiaHuevo.scale.setScalar(
+            escala
+        );
+    }
+}
+
+// ============================================================
+// POLLITO
+// ============================================================
+
+let pollito = null;
 
 function crearPollitoProcedural() {
-
     const grupo =
         new THREE.Group();
 
-
-    grupo.name =
-        "PollitoCinematico";
-
-
-    grupo.userData
-        .eggaroPollito =
-        true;
-
-
-    grupo.userData
-        .activo =
-        false;
-
-
-    grupo.userData
-        .tiempo =
-        0;
-
-
-    // --------------------------------------------------------
-    // CUERPO
-    // --------------------------------------------------------
-
-    const materialCuerpo =
-        new THREE.MeshStandardMaterial({
-            color: 0xf2c94c,
-            roughness: 0.9
-        });
-
-
     const cuerpo =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.62,
-                20,
-                16
-            ),
-            materialCuerpo
-        );
-
-
-    cuerpo.scale.set(
-        1,
-        0.9,
-        0.95
-    );
-
-
-    cuerpo.position.y =
-        0.65;
-
-
-    cuerpo.castShadow =
-        true;
-
-
-    grupo.add(
-        cuerpo
-    );
-
-
-    // --------------------------------------------------------
-    // CABEZA
-    // --------------------------------------------------------
-
-    const cabeza =
         new THREE.Mesh(
             new THREE.SphereGeometry(
                 0.48,
                 20,
                 16
             ),
-            materialCuerpo
+            new THREE.MeshStandardMaterial({
+                color: 0xf3cf58,
+                roughness: 0.9
+            })
         );
 
-
-    cabeza.position.set(
-        0,
-        1.18,
-        -0.08
+    cuerpo.scale.set(
+        1,
+        0.85,
+        1.05
     );
 
+    grupo.add(cuerpo);
 
-    cabeza.castShadow =
-        true;
-
-
-    grupo.add(
-        cabeza
-    );
-
-
-    // --------------------------------------------------------
-    // OJOS
-    // --------------------------------------------------------
-
-    const materialOjo =
-        new THREE.MeshBasicMaterial({
-            color: 0x111111
-        });
-
-
-    const ojoIzq =
+    const cabeza =
         new THREE.Mesh(
             new THREE.SphereGeometry(
-                0.055,
-                10,
-                8
+                0.35,
+                20,
+                16
             ),
-            materialOjo
+            new THREE.MeshStandardMaterial({
+                color: 0xf7d96b,
+                roughness: 0.9
+            })
         );
 
+    cabeza.position.y = 0.55;
 
-    const ojoDer =
-        ojoIzq.clone();
-
-
-    ojoIzq.position.set(
-        -0.17,
-        1.28,
-        -0.43
-    );
-
-
-    ojoDer.position.set(
-        0.17,
-        1.28,
-        -0.43
-    );
-
-
-    grupo.add(
-        ojoIzq
-    );
-
-    grupo.add(
-        ojoDer
-    );
-
-
-    // --------------------------------------------------------
-    // PICO
-    // --------------------------------------------------------
-
-    const materialPico =
-        new THREE.MeshStandardMaterial({
-            color: 0xe58b32,
-            roughness: 0.8
-        });
-
+    grupo.add(cabeza);
 
     const pico =
         new THREE.Mesh(
             new THREE.ConeGeometry(
-                0.13,
+                0.12,
                 0.28,
-                8
+                4
             ),
-            materialPico
+            new THREE.MeshStandardMaterial({
+                color: 0xe78b32
+            })
         );
 
-
-    pico.rotation.x =
-        Math.PI / 2;
-
+    pico.rotation.z =
+        -Math.PI / 2;
 
     pico.position.set(
         0,
-        1.13,
-        -0.5
+        0.52,
+        0.34
     );
 
+    grupo.add(pico);
 
-    grupo.add(
-        pico
-    );
-
-
-    // --------------------------------------------------------
-    // ALAS
-    // --------------------------------------------------------
-
-    const alaIzq =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.32,
-                16,
-                12
-            ),
-            materialCuerpo
-        );
-
-
-    const alaDer =
-        alaIzq.clone();
-
-
-    alaIzq.name =
-        "AlaIzquierda";
-
-
-    alaDer.name =
-        "AlaDerecha";
-
-
-    alaIzq.scale.set(
-        0.45,
-        0.8,
-        0.3
-    );
-
-
-    alaDer.scale.copy(
-        alaIzq.scale
-    );
-
-
-    alaIzq.position.set(
-        -0.55,
-        0.72,
-        0
-    );
-
-
-    alaDer.position.set(
-        0.55,
-        0.72,
-        0
-    );
-
-
-    grupo.add(
-        alaIzq
-    );
-
-    grupo.add(
-        alaDer
-    );
-
-
-    // --------------------------------------------------------
-    // PATAS
-    // --------------------------------------------------------
-
-    const materialPata =
-        new THREE.MeshStandardMaterial({
-            color: 0xe58b32,
-            roughness: 0.9
+    const ojoMaterial =
+        new THREE.MeshBasicMaterial({
+            color: 0x111111
         });
 
+    for (const x of [-0.13, 0.13]) {
+        const ojo =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.045,
+                    10,
+                    8
+                ),
+                ojoMaterial
+            );
 
-    const pataIzq =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.035,
-                0.045,
-                0.35,
-                8
-            ),
-            materialPata
+        ojo.position.set(
+            x,
+            0.66,
+            0.27
         );
 
-
-    const pataDer =
-        pataIzq.clone();
-
-
-    pataIzq.position.set(
-        -0.18,
-        0.13,
-        0
-    );
-
-
-    pataDer.position.set(
-        0.18,
-        0.13,
-        0
-    );
-
-
-    grupo.add(
-        pataIzq
-    );
-
-    grupo.add(
-        pataDer
-    );
-
+        grupo.add(ojo);
+    }
 
     grupo.position.set(
         0,
-        0.15,
-        -3
+        0.45,
+        -0.4
     );
 
+    grupo.scale.setScalar(0.01);
 
-    grupo.visible =
-        false;
-
-
-    grupo.scale.setScalar(
-        0.01
-    );
-
-
-    grupoResultado.add(
-        grupo
-    );
-
+    grupo.visible = false;
 
     return grupo;
 }
 
-
-// ------------------------------------------------------------
-// PREPARAR RESULTADO
-// ------------------------------------------------------------
-
 function prepararResultado() {
+    pollito =
+        crearPollitoProcedural();
 
-    if (!grupoResultado) {
-        return;
-    }
-
-
-    crearPollitoProcedural();
+    grupoResultado.add(
+        pollito
+    );
 }
-
-
-// ------------------------------------------------------------
-// OBTENER POLLITO
-// ------------------------------------------------------------
-
-function obtenerPollito() {
-
-    if (!grupoResultado) {
-        return null;
-    }
-
-
-    return grupoResultado
-        .getObjectByName(
-            "PollitoCinematico"
-        );
-}
-
-
-// ------------------------------------------------------------
-// MOSTRAR RESULTADO
-// ------------------------------------------------------------
 
 function mostrarResultadoCinematica() {
+    if (!pollito) return;
 
-    const pollito =
-        obtenerPollito();
-
-
-    if (!pollito) {
-        return;
-    }
-
-
-    pollito.visible =
-        true;
-
-
-    pollito.userData.activo =
-        true;
-
-
-    pollito.userData.tiempo =
-        0;
-
-
-    pollito.scale.setScalar(
-        0.01
-    );
-
-
-    pollito.position.set(
-        0,
-        0.15,
-        -3
-    );
+    pollito.visible = true;
 }
 
-
-// ------------------------------------------------------------
-// ANIMACIÓN DEL POLLITO
-// ------------------------------------------------------------
-
-function actualizarPollito(
-    delta
-) {
-
-    const pollito =
-        obtenerPollito();
-
-
-    if (
-        !pollito ||
-        !pollito.userData.activo
-    ) {
+function actualizarPollito(delta) {
+    if (!pollito || !pollito.visible) {
         return;
     }
 
-
-    const datos =
-        pollito.userData;
-
-
-    datos.tiempo +=
-        delta;
-
-
-    const t =
-        datos.tiempo;
-
-
-    const entrada =
+    const crecimiento =
         Math.min(
-            t / 0.8,
+            tiempo - 1.6,
             1
         );
 
+    if (crecimiento >= 0) {
+        const escala =
+            Math.min(
+                0.01 +
+                crecimiento * 1.05,
+                1
+            );
 
-    const suavizado =
-        entrada *
-        entrada *
-        (3 - 2 * entrada);
+        pollito.scale.setScalar(
+            escala
+        );
+    }
 
-
-    pollito.scale.setScalar(
-        Math.max(
-            0.01,
-            suavizado
-        )
-    );
-
+    pollito.rotation.y +=
+        delta * 0.35;
 
     pollito.position.y =
-        0.15 +
-        Math.abs(
-            Math.sin(t * 4.5)
-        ) *
-        0.10;
-
-
-    pollito.rotation.y =
-        Math.sin(t * 1.8) *
-        0.12;
-
-
-    pollito.rotation.z =
-        Math.sin(t * 3.5) *
-        0.035;
-
-
-    const alaIzq =
-        pollito.getObjectByName(
-            "AlaIzquierda"
-        );
-
-
-    const alaDer =
-        pollito.getObjectByName(
-            "AlaDerecha"
-        );
-
-
-    if (alaIzq) {
-
-        alaIzq.rotation.z =
-            0.15 +
-            Math.sin(t * 8) *
-            0.18;
-    }
-
-
-    if (alaDer) {
-
-        alaDer.rotation.z =
-            -0.15 -
-            Math.sin(t * 8) *
-            0.18;
-    }
+        0.45 +
+        Math.sin(
+            tiempo * 5
+        ) * 0.035;
                 }
 // ============================================================
-// BLOQUE 8/10
-// CÁMARA CINEMATOGRÁFICA
+// PARTE 7/10 - CAMARA CINEMATICA
 // ============================================================
 
-const camaraCine = {
-
-    fase: 0,
-
-    posicionObjetivo:
-        new THREE.Vector3(),
-
-    miradaObjetivo:
-        new THREE.Vector3(),
-
-    tiempo: 0
-};
-
-
-// ------------------------------------------------------------
-// SUAVIZADO
-// ------------------------------------------------------------
-
-function suavizar(
-    actual,
-    objetivo,
-    velocidad,
-    delta
-) {
-
+function suavizar(actual, objetivo, velocidad) {
     return THREE.MathUtils.lerp(
         actual,
         objetivo,
         1 -
         Math.exp(
-            -velocidad * delta
+            -velocidad * 0.016
         )
     );
 }
 
-
-// ------------------------------------------------------------
-// CAMBIAR FASE
-// ------------------------------------------------------------
-
-function cambiarFaseCamara(
-    fase
+function camaraCine(
+    posicion,
+    objetivo
 ) {
+    camara.position.x =
+        suavizar(
+            camara.position.x,
+            posicion.x,
+            5
+        );
 
-    camaraCine.fase =
-        fase;
+    camara.position.y =
+        suavizar(
+            camara.position.y,
+            posicion.y,
+            5
+        );
 
-    camaraCine.tiempo =
-        0;
+    camara.position.z =
+        suavizar(
+            camara.position.z,
+            posicion.z,
+            5
+        );
+
+    const punto =
+        new THREE.Vector3(
+            objetivo.x,
+            objetivo.y,
+            objetivo.z
+        );
+
+    camara.lookAt(punto);
 }
 
+function actualizarCamaraCine() {
+    if (!camara) return;
 
-// ------------------------------------------------------------
-// CÁMARA
-// ------------------------------------------------------------
+    if (fase === 0) {
+        camaraCine(
+            new THREE.Vector3(
+                0,
+                4.5,
+                15
+            ),
+            new THREE.Vector3(
+                0,
+                2,
+                4
+            )
+        );
 
-function actualizarCamaraCine(
-    delta
-) {
-
-    if (!camara) {
         return;
     }
 
-
-    camaraCine.tiempo +=
-        delta;
-
-
-    let x = 0;
-    let y = 5;
-    let z = 15;
-
-    let mx = 0;
-    let my = 2;
-    let mz = 0;
-
-
-    // --------------------------------------------------------
-    // BOSQUE
-    // --------------------------------------------------------
-
-    if (
-        camaraCine.fase === 0
-    ) {
-
-        const t =
-            camaraCine.tiempo;
-
-
-        x =
-            Math.sin(t * 0.16) *
-            8;
-
-
-        y =
-            5.5 +
-            Math.sin(t * 0.3) *
-            0.2;
-
-
-        z =
-            15 -
-            t * 0.35;
-
-
-        mx = 0;
-        my = 2.5;
-        mz = 0;
-    }
-
-
-    // --------------------------------------------------------
-    // CAMINATA
-    // --------------------------------------------------------
-
-    else if (
-        camaraCine.fase === 1
-    ) {
-
-        const objetivo =
+    if (fase === 1) {
+        const centro =
             new THREE.Vector3(
                 0,
-                1.6,
-                3
+                1.7,
+                4
             );
 
-
-        if (
-            mike &&
-            micaela
-        ) {
-
-            objetivo.x =
+        if (mike && micaela) {
+            centro.x =
                 (
                     mike.position.x +
                     micaela.position.x
                 ) / 2;
 
-
-            objetivo.z =
+            centro.z =
                 (
                     mike.position.z +
                     micaela.position.z
                 ) / 2;
         }
 
-
-        x =
-            objetivo.x + 6;
-
-
-        y =
-            3.8;
-
-
-        z =
-            objetivo.z + 8;
-
-
-        mx =
-            objetivo.x;
-
-
-        my =
-            1.4;
-
-
-        mz =
-            objetivo.z;
-    }
-
-
-    // --------------------------------------------------------
-    // HUEVO
-    // --------------------------------------------------------
-
-    else if (
-        camaraCine.fase === 2
-    ) {
-
-        x = 4.2;
-        y = 2.8;
-        z = 4.5;
-
-        mx = 0;
-        my = 1.1;
-        mz = -3;
-    }
-
-
-    // --------------------------------------------------------
-    // APERTURA
-    // --------------------------------------------------------
-
-    else if (
-        camaraCine.fase === 3
-    ) {
-
-        const acercamiento =
-            Math.min(
-                camaraCine.tiempo / 1.5,
-                1
-            );
-
-
-        x =
-            3.5 -
-            acercamiento * 1.5;
-
-
-        y =
-            2.5 -
-            acercamiento * 0.5;
-
-
-        z =
-            3.8 -
-            acercamiento * 1.0;
-
-
-        mx = 0;
-        my = 1;
-        mz = -3;
-    }
-
-
-    // --------------------------------------------------------
-    // POLLITO
-    // --------------------------------------------------------
-
-    else if (
-        camaraCine.fase === 4
-    ) {
-
-        x = 3.2;
-        y = 2.3;
-        z = 2.8;
-
-        mx = 0;
-        my = 0.9;
-        mz = -3;
-    }
-
-
-    // --------------------------------------------------------
-    // FINAL
-    // --------------------------------------------------------
-
-    else {
-
-        x = 4.5;
-        y = 3.2;
-        z = 5.5;
-
-        mx = 0;
-        my = 1.3;
-        mz = -2.5;
-    }
-
-
-    camara.position.x =
-        suavizar(
-            camara.position.x,
-            x,
-            2.5,
-            delta
+        camaraCine(
+            new THREE.Vector3(
+                6,
+                3.4,
+                8
+            ),
+            centro
         );
 
-
-    camara.position.y =
-        suavizar(
-            camara.position.y,
-            y,
-            2.5,
-            delta
-        );
-
-
-    camara.position.z =
-        suavizar(
-            camara.position.z,
-            z,
-            2.5,
-            delta
-        );
-
-
-    camaraCine.miradaObjetivo.lerp(
-        new THREE.Vector3(
-            mx,
-            my,
-            mz
-        ),
-        1 -
-        Math.exp(
-            -3 * delta
-        )
-    );
-
-
-    camara.lookAt(
-        camaraCine.miradaObjetivo
-    );
-    }
-// ============================================================
-// BLOQUE 9/10
-// DIÁLOGOS Y SECUENCIA
-// ============================================================
-
-let dialogoElemento = null;
-let dialogoNombre = null;
-
-
-// ------------------------------------------------------------
-// INTERFAZ
-// ------------------------------------------------------------
-
-function crearInterfazDialogo() {
-
-    if (
-        document.getElementById(
-            "eggaro-dialogo"
-        )
-    ) {
         return;
     }
 
-
-    const caja =
-        document.createElement(
-            "div"
+    if (fase === 2) {
+        camaraCine(
+            new THREE.Vector3(
+                4.5,
+                3.2,
+                5
+            ),
+            new THREE.Vector3(
+                0,
+                1.2,
+                -0.4
+            )
         );
 
+        return;
+    }
 
-    caja.id =
-        "eggaro-dialogo";
+    if (fase === 3) {
+        camaraCine(
+            new THREE.Vector3(
+                3.4,
+                2.6,
+                4
+            ),
+            new THREE.Vector3(
+                0,
+                1,
+                -0.4
+            )
+        );
 
+        return;
+    }
 
-    caja.style.position =
-        "fixed";
+    camaraCine(
+        new THREE.Vector3(
+            2.8,
+            2.3,
+            3.5
+        ),
+        new THREE.Vector3(
+            0,
+            1,
+            -0.4
+        )
+    );
+}
 
+function cambiarFase(nuevaFase) {
+    fase = nuevaFase;
 
-    caja.style.left =
-        "5%";
+    if (fase === 0) {
+        tiempo = 0;
+    }
 
+    if (fase === 1) {
+        iniciarCaminata(
+            mike,
+            0.2
+        );
 
-    caja.style.right =
-        "5%";
+        iniciarCaminata(
+            micaela,
+            0.2
+        );
+    }
 
+    if (fase === 2) {
+        detenerCaminata(mike);
+        detenerCaminata(micaela);
 
-    caja.style.bottom =
-        "5%";
+        activarHuevo();
 
+        mostrarDialogo(
+            "Mike",
+            "Mira... ¿qué es eso?"
+        );
+    }
 
-    caja.style.padding =
-        "14px 18px";
+    if (fase === 3) {
+        abrirHuevo();
 
+        mostrarDialogo(
+            "Micaela",
+            "¡Es un huevo!"
+        );
+    }
 
-    caja.style.background =
-        "rgba(0,0,0,0.78)";
+    if (fase === 4) {
+        mostrarResultadoCinematica();
 
+        mostrarDialogo(
+            "Mike",
+            "¡Nació un pollito!"
+        );
+    }
+}
+// ============================================================
+// PARTE 8/10 - DIALOGOS
+// ============================================================
 
-    caja.style.border =
-        "2px solid rgba(255,255,255,0.75)";
+function crearInterfazDialogo() {
+    dialogo =
+        document.createElement("div");
 
+    dialogo.style.position = "fixed";
+    dialogo.style.left = "5%";
+    dialogo.style.right = "5%";
+    dialogo.style.bottom = "6%";
 
-    caja.style.borderRadius =
-        "14px";
+    dialogo.style.padding =
+        "18px 22px";
 
+    dialogo.style.borderRadius =
+        "18px";
 
-    caja.style.zIndex =
-        "1000";
+    dialogo.style.background =
+        "rgba(0,0,0,0.72)";
 
+    dialogo.style.border =
+        "2px solid rgba(255,255,255,0.8)";
 
-    caja.style.fontFamily =
+    dialogo.style.color = "white";
+
+    dialogo.style.fontFamily =
         "Arial, sans-serif";
 
+    dialogo.style.zIndex = "1000";
 
-    caja.style.color =
-        "white";
+    dialogo.style.display = "none";
 
-
-    caja.style.pointerEvents =
+    dialogo.style.pointerEvents =
         "none";
 
-
     const nombre =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
+    nombre.id =
+        "eggaroNombreDialogo";
 
     nombre.style.fontWeight =
         "bold";
 
-
     nombre.style.fontSize =
-        "18px";
-
+        "20px";
 
     nombre.style.marginBottom =
-        "5px";
+        "7px";
 
+    dialogoTexto =
+        document.createElement("div");
 
-    const texto =
-        document.createElement(
-            "div"
-        );
+    dialogoTexto.style.fontSize =
+        "18px";
 
-
-    texto.style.fontSize =
-        "16px";
-
-
-    texto.style.lineHeight =
+    dialogoTexto.style.lineHeight =
         "1.35";
 
-
-    caja.appendChild(
-        nombre
-    );
-
-
-    caja.appendChild(
-        texto
-    );
-
+    dialogo.appendChild(nombre);
+    dialogo.appendChild(dialogoTexto);
 
     document.body.appendChild(
-        caja
+        dialogo
     );
-
-
-    dialogoElemento =
-        texto;
-
-
-    dialogoNombre =
-        nombre;
-
-
-    caja.style.display =
-        "none";
 }
-
-
-// ------------------------------------------------------------
-// MOSTRAR DIÁLOGO
-// ------------------------------------------------------------
 
 function mostrarDialogo(
     nombre,
     texto
 ) {
+    if (!dialogo) return;
 
-    if (
-        !dialogoElemento ||
-        !dialogoNombre
-    ) {
-        crearInterfazDialogo();
-    }
-
-
-    const caja =
-        document.getElementById(
-            "eggaro-dialogo"
+    const nombreElemento =
+        dialogo.querySelector(
+            "#eggaroNombreDialogo"
         );
 
-
-    if (!caja) {
-        return;
+    if (nombreElemento) {
+        nombreElemento.textContent =
+            nombre;
     }
 
-
-    dialogoNombre.textContent =
-        nombre;
-
-
-    dialogoElemento.textContent =
+    dialogoTexto.textContent =
         texto;
 
-
-    caja.style.display =
+    dialogo.style.display =
         "block";
 }
 
-
-// ------------------------------------------------------------
-// OCULTAR
-// ------------------------------------------------------------
-
 function ocultarDialogo() {
+    if (!dialogo) return;
 
-    const caja =
-        document.getElementById(
-            "eggaro-dialogo"
-        );
-
-
-    if (caja) {
-
-        caja.style.display =
-            "none";
-    }
+    dialogo.style.display =
+        "none";
 }
 
-
-// ------------------------------------------------------------
-// LÍNEAS
-// ------------------------------------------------------------
-
 const dialogosCinematica = [
-
     {
-        inicio: 2,
-        fin: 5,
+        tiempo: 0,
+        nombre: "Narrador",
+        texto:
+            "En lo profundo del bosque..."
+    },
+    {
+        tiempo: 3,
         nombre: "Mike",
         texto:
-            "Micaela... mira ese bosque."
+            "Micaela, mira ese lugar."
     },
-
     {
-        inicio: 5,
-        fin: 8,
+        tiempo: 6,
         nombre: "Micaela",
         texto:
-            "Espera... ¿viste eso?"
+            "Vamos a acercarnos."
     },
-
     {
-        inicio: 8,
-        fin: 11,
+        tiempo: 10,
         nombre: "Mike",
         texto:
-            "Hay algo brillando entre los árboles."
-    },
-
-    {
-        inicio: 11,
-        fin: 14,
-        nombre: "Micaela",
-        texto:
-            "¡Es un huevo!"
-    },
-
-    {
-        inicio: 14,
-        fin: 17,
-        nombre: "Mike",
-        texto:
-            "Acércate. Vamos a descubrir qué hay dentro."
-    },
-
-    {
-        inicio: 17,
-        fin: 20,
-        nombre: "Micaela",
-        texto:
-            "Está empezando a moverse..."
-    },
-
-    {
-        inicio: 20,
-        fin: 23,
-        nombre: "Mike",
-        texto:
-            "¡Mira!"
-    },
-
-    {
-        inicio: 23,
-        fin: 27,
-        nombre: "Micaela",
-        texto:
-            "¡Es un pollito!"
+            "¿Qué será eso?"
     }
 ];
 
-
-// ------------------------------------------------------------
-// ACTUALIZAR DIÁLOGOS
-// ------------------------------------------------------------
-
-function actualizarDialogos(
-    tiempo
-) {
-
+function actualizarDialogos() {
     let actual = null;
 
-
     for (
-        const dialogo
+        const dialogoActual
         of dialogosCinematica
     ) {
-
         if (
-            tiempo >= dialogo.inicio &&
-            tiempo < dialogo.fin
+            tiempo >=
+            dialogoActual.tiempo
         ) {
-
-            actual =
-                dialogo;
-
-            break;
+            actual = dialogoActual;
         }
     }
 
-
-    if (actual) {
-
-        mostrarDialogo(
-            actual.nombre,
-            actual.texto
-        );
-
-    } else {
-
+    if (!actual) {
         ocultarDialogo();
-    }
-}
-
-
-// ------------------------------------------------------------
-// SECUENCIA
-// ------------------------------------------------------------
-
-function actualizarSecuencia(
-    delta
-) {
-
-    tiempoCinematica +=
-        delta;
-
-
-    // 0-3 segundos:
-    // presentación del bosque
-
-    if (
-        faseCinematica === 0 &&
-        tiempoCinematica >= 3
-    ) {
-
-        faseCinematica = 1;
-
-        if (mike) {
-
-            iniciarCaminata(
-                mike,
-                0.2
-            );
-        }
-
-
-        if (micaela) {
-
-            iniciarCaminata(
-                micaela,
-                0.2
-            );
-        }
-
-
-        cambiarFaseCamara(
-            1
-        );
+        return;
     }
 
+    mostrarDialogo(
+        actual.nombre,
+        actual.texto
+    );
+            }
+// ============================================================
+// PARTE 9/10 - SECUENCIA
+// ============================================================
 
-    // Mike y Micaela llegan
-    if (
-        faseCinematica === 1 &&
-        mike &&
-        micaela
-    ) {
+function actualizarSecuencia() {
+    if (fase === 0) {
+        if (tiempo >= 2.5) {
+            cambiarFase(1);
+        }
 
+        return;
+    }
+
+    if (fase === 1) {
         const mikeListo =
-            !mike.userData.eggarCaminando;
-
+            mike &&
+            !mike.userData.caminando;
 
         const micaelaLista =
-            !micaela.userData.eggarCaminando;
-
+            micaela &&
+            !micaela.userData.caminando;
 
         if (
             mikeListo &&
-            micaelaLista
+            micaelaLista &&
+            tiempo >= 4
         ) {
+            cambiarFase(2);
+        }
 
-            faseCinematica = 2;
+        return;
+    }
 
-            activarHuevo();
+    if (fase === 2) {
+        if (tiempo >= 2.8) {
+            cambiarFase(3);
+        }
 
-            cambiarFaseCamara(
-                2
-            );
+        return;
+    }
+
+    if (fase === 3) {
+        if (
+            huevoAbierto &&
+            tiempoHuevo >= 1.8
+        ) {
+            cambiarFase(4);
+        }
+
+        return;
+    }
+
+    if (fase === 4) {
+        if (tiempo >= 7) {
+            finalizada = true;
         }
     }
-
-
-    // Observan el huevo
-    if (
-        faseCinematica === 2 &&
-        tiempoCinematica >= 14
-    ) {
-
-        faseCinematica = 3;
-
-        abrirHuevo();
-
-        cambiarFaseCamara(
-            3
-        );
-    }
-
-
-    // Después de abrirse
-    if (
-        faseCinematica === 3 &&
-        huevoAbierto
-    ) {
-
-        faseCinematica = 4;
-
-        cambiarFaseCamara(
-            4
-        );
-    }
-
-
-    // Final
-    if (
-        faseCinematica === 4 &&
-        tiempoCinematica >= 27
-    ) {
-
-        faseCinematica = 5;
-
-        cambiarFaseCamara(
-            5
-        );
-
-        cinematicaFinalizada =
-            true;
-    }
-}
-// ============================================================
-// BLOQUE 10/10
-// ACTUALIZACIÓN + INICIO + EXPORTACIONES
-// ============================================================
-
-
-// ------------------------------------------------------------
-// ACTUALIZADOR PRINCIPAL
-// ------------------------------------------------------------
-
-function actualizarCinematica(
-    delta
-) {
-
-    if (!activa) {
-        return;
-    }
-
-
-    actualizarPersonajes(
-        delta
-    );
-
-
-    actualizarEfectosHuevo(
-        delta
-    );
-
-
-    actualizarPollito(
-        delta
-    );
-
-
-    actualizarCamaraCine(
-        delta
-    );
-
-
-    actualizarDialogos(
-        tiempoCinematica
-    );
-
-
-    actualizarSecuencia(
-        delta
-    );
 }
 
+function actualizarCinematica(delta) {
+    if (!activa) return;
 
-// ------------------------------------------------------------
-// INICIAR
-// ------------------------------------------------------------
+    tiempo += delta;
 
-export async function iniciarCinematica(
-    resultado = "noob"
-) {
+    actualizarSecuencia();
 
-    if (activa) {
-        return;
-    }
+    actualizarPersonajes(delta);
 
+    actualizarHuevo(delta);
 
-    resultadoCinematica =
-        String(
-            resultado || "noob"
-        )
-        .toLowerCase()
-        .trim();
+    actualizarEfectosHuevo(delta);
 
+    actualizarEnergiaHuevo();
 
-    activa = true;
+    actualizarPollito(delta);
 
-    cinematicaFinalizada =
-        false;
+    actualizarDialogos();
 
-
-    tiempoCinematica =
-        0;
-
-
-    faseCinematica =
-        0;
-
-
-    huevoActivo =
-        false;
-
-
-    huevoAbriendo =
-        false;
-
-
-    huevoAbierto =
-        false;
-
-
-    // Escena
-    crearEscena();
-
-
-    crearCamara();
-
-
-    crearRenderer();
-
-
-    crearIluminacion();
-
-
-    crearInterfazDialogo();
-
-
-    crearBosque();
-
-
-    prepararHuevo();
-
-
-    prepararResultado();
-
-
-    // Personajes
-    await cargarPersonajes();
-
-
-    // Cámara
-    cambiarFaseCamara(
-        0
-    );
-
-
-    reloj =
-        new THREE.Clock();
-
-
-    actualizarTamaño();
-
-
-    renderizar();
+    actualizarCamaraCine();
 }
 
-
-// ------------------------------------------------------------
-// DETENER
-// ------------------------------------------------------------
+export function cinematicaTerminada() {
+    return finalizada;
+}
 
 export function detenerCinematica() {
-
     activa = false;
 
-
-    cinematicaFinalizada =
-        false;
-
+    ocultarDialogo();
 
     if (renderer) {
-
-        renderer.dispose();
-
+        renderer.setAnimationLoop(null);
 
         if (
             renderer.domElement &&
             renderer.domElement.parentNode
         ) {
-
             renderer.domElement.parentNode
                 .removeChild(
                     renderer.domElement
@@ -3666,113 +1766,110 @@ export function detenerCinematica() {
         }
     }
 
-
-    const dialogo =
-        document.getElementById(
-            "eggaro-dialogo"
-        );
-
-
-    if (dialogo) {
-
-        dialogo.remove();
-    }
-
-
     renderer = null;
-
-    escena = null;
-
-    camara = null;
-
     reloj = null;
-
-    grupoCinematica = null;
-
-    grupoBosque = null;
-
-    grupoPersonajes = null;
-
-    grupoHuevo = null;
-
-    grupoResultado = null;
-
-    mike = null;
-
-    micaela = null;
-
-    huevo = null;
-
-    particulasHuevo = null;
-
-    energiaHuevo = null;
-
-    flashHuevo = null;
 }
-
-
-// ------------------------------------------------------------
-// ESTADO
-// ------------------------------------------------------------
-
-export function cinematicaTerminada() {
-
-    return cinematicaFinalizada;
-}
-
-
-// ------------------------------------------------------------
-// RESULTADO
-// ------------------------------------------------------------
 
 export function establecerResultadoCinematica(
     resultado
 ) {
-
     const valor =
         String(
             resultado || "noob"
-        )
-        .toLowerCase()
-        .trim();
-
+        ).toLowerCase();
 
     if (
         valor === "zombie"
     ) {
-
         resultadoCinematica =
             "zombie";
-
     } else if (
         valor === "pollitonoob" ||
         valor === "pollito_noob" ||
         valor === "pollito noob"
     ) {
-
         resultadoCinematica =
             "pollitonoob";
-
     } else {
-
         resultadoCinematica =
             "noob";
     }
 }
+// ============================================================
+// PARTE 10/10 - INICIO
+// ============================================================
 
+export async function iniciarCinematica(
+    contenedor
+) {
+    if (activa) {
+        return;
+    }
 
-// ------------------------------------------------------------
-// RESIZE
-// ------------------------------------------------------------
+    finalizada = false;
+    activa = true;
+
+    tiempo = 0;
+    fase = 0;
+    tiempoHuevo = 0;
+    huevoAbierto = false;
+
+    crearEscena();
+    crearCamara();
+    crearRenderer();
+    crearIluminacion();
+
+    crearInterfazDialogo();
+
+    crearBosque();
+
+    prepararHuevo();
+
+    prepararResultado();
+
+    try {
+        await cargarPersonajes();
+    } catch (error) {
+        console.error(
+            "Error cargando Mike/Micaela:",
+            error
+        );
+
+        activa = false;
+
+        ocultarDialogo();
+
+        if (
+            renderer &&
+            renderer.domElement &&
+            renderer.domElement.parentNode
+        ) {
+            renderer.domElement.parentNode
+                .removeChild(
+                    renderer.domElement
+                );
+        }
+
+        renderer = null;
+
+        throw error;
+    }
+
+    aplicarPoseReposo(mike);
+    aplicarPoseReposo(micaela);
+
+    cambiarFase(0);
+
+    reloj =
+        new THREE.Clock();
+
+    actualizarTamaño();
+
+    renderizar();
+}
 
 window.addEventListener(
     "resize",
-    () => {
-
-        actualizarTamaño();
-
-    },
-    {
-        passive: true
-    }
+    actualizarTamaño
 );
+    
