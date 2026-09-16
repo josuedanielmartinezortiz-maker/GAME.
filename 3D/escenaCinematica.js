@@ -1,15 +1,17 @@
 // ============================================================
 // EGGARO / GAMERPRO
 // escenaCinematica.js
-// CINEMÁTICA 3D EN TIEMPO REAL
+// CINEMÁTICA 3D LIMPIA
+// BLOQUE 1/10
 // ============================================================
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-// ------------------------------------------------------------
+
+// ============================================================
 // ESTADO
-// ------------------------------------------------------------
+// ============================================================
 
 let escena = null;
 let camara = null;
@@ -30,82 +32,117 @@ let cinematicaFinalizada = false;
 
 let resultadoCinematica = "noob";
 
+let tiempoCinematica = 0;
+let faseCinematica = 0;
+
 let anchoAnterior = 0;
 let altoAnterior = 0;
 
-// ------------------------------------------------------------
+
+// ============================================================
 // CONFIGURACIÓN
-// ------------------------------------------------------------
+// ============================================================
 
 const CONFIG = {
-    anchoBase: 1280,
-    altoBase: 720,
 
     colorCielo: 0x9fc5d8,
+
     colorSuelo: 0x526b45,
 
-    velocidadCamara: 0.35,
     velocidadPersonajes: 1.35,
 
     sombras: true,
 
-    calidadPixelRatio: Math.min(
-        window.devicePixelRatio || 1,
-        1.5
-    )
+    pixelRatio:
+        Math.min(
+            window.devicePixelRatio || 1,
+            1.5
+        )
 };
 
-// ------------------------------------------------------------
+
+// ============================================================
 // LOADER
-// ------------------------------------------------------------
+// ============================================================
 
-const loader = new GLTFLoader();
+const loader =
+    new GLTFLoader();
 
-// ------------------------------------------------------------
+
+// ============================================================
 // CREAR ESCENA
-// ------------------------------------------------------------
+// ============================================================
 
 function crearEscena() {
 
-    escena = new THREE.Scene();
+    escena =
+        new THREE.Scene();
 
-    escena.background = new THREE.Color(
-        CONFIG.colorCielo
+    escena.background =
+        new THREE.Color(
+            CONFIG.colorCielo
+        );
+
+    escena.fog =
+        new THREE.FogExp2(
+            CONFIG.colorCielo,
+            0.018
+        );
+
+
+    grupoCinematica =
+        new THREE.Group();
+
+    grupoBosque =
+        new THREE.Group();
+
+    grupoPersonajes =
+        new THREE.Group();
+
+    grupoHuevo =
+        new THREE.Group();
+
+    grupoResultado =
+        new THREE.Group();
+
+
+    grupoCinematica.add(
+        grupoBosque
     );
 
-    escena.fog = new THREE.FogExp2(
-        0x9fc5d8,
-        0.018
+    grupoCinematica.add(
+        grupoPersonajes
     );
 
-    reloj = new THREE.Clock();
+    grupoCinematica.add(
+        grupoHuevo
+    );
 
-    grupoCinematica = new THREE.Group();
-    grupoBosque = new THREE.Group();
-    grupoPersonajes = new THREE.Group();
-    grupoHuevo = new THREE.Group();
-    grupoResultado = new THREE.Group();
+    grupoCinematica.add(
+        grupoResultado
+    );
 
-    grupoCinematica.add(grupoBosque);
-    grupoCinematica.add(grupoPersonajes);
-    grupoCinematica.add(grupoHuevo);
-    grupoCinematica.add(grupoResultado);
 
-    escena.add(grupoCinematica);
+    escena.add(
+        grupoCinematica
+    );
 }
 
-// ------------------------------------------------------------
+
+// ============================================================
 // CÁMARA
-// ------------------------------------------------------------
+// ============================================================
 
 function crearCamara() {
 
-    camara = new THREE.PerspectiveCamera(
-        48,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        300
-    );
+    camara =
+        new THREE.PerspectiveCamera(
+            48,
+            window.innerWidth /
+                window.innerHeight,
+            0.1,
+            300
+        );
 
     camara.position.set(
         0,
@@ -120,26 +157,32 @@ function crearCamara() {
     );
 }
 
-// ------------------------------------------------------------
+
+// ============================================================
 // RENDERER
-// ------------------------------------------------------------
+// ============================================================
 
 function crearRenderer() {
 
-    renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: false,
-        powerPreference: "high-performance"
-    });
+    renderer =
+        new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: false,
+            powerPreference:
+                "high-performance"
+        });
+
 
     renderer.setPixelRatio(
-        CONFIG.calidadPixelRatio
+        CONFIG.pixelRatio
     );
+
 
     renderer.setSize(
         window.innerWidth,
         window.innerHeight
     );
+
 
     renderer.shadowMap.enabled =
         CONFIG.sombras;
@@ -147,36 +190,67 @@ function crearRenderer() {
     renderer.shadowMap.type =
         THREE.PCFSoftShadowMap;
 
+
     renderer.outputColorSpace =
         THREE.SRGBColorSpace;
+
 
     renderer.toneMapping =
         THREE.ACESFilmicToneMapping;
 
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure =
+        1.05;
 
-    renderer.domElement.style.position = "fixed";
-    renderer.domElement.style.left = "0";
-    renderer.domElement.style.top = "0";
-    renderer.domElement.style.width = "100%";
-    renderer.domElement.style.height = "100%";
-    renderer.domElement.style.zIndex = "20";
+
+    const canvas =
+        renderer.domElement;
+
+
+    canvas.style.position =
+        "fixed";
+
+    canvas.style.left =
+        "0";
+
+    canvas.style.top =
+        "0";
+
+    canvas.style.width =
+        "100%";
+
+    canvas.style.height =
+        "100%";
+
+    canvas.style.zIndex =
+        "20";
+
 
     document.body.appendChild(
-        renderer.domElement
+        canvas
     );
 }
 
-// ------------------------------------------------------------
+
+// ============================================================
 // RESIZE
-// ------------------------------------------------------------
+// ============================================================
 
 function actualizarTamaño() {
 
-    if (!renderer || !camara) return;
+    if (
+        !renderer ||
+        !camara
+    ) {
+        return;
+    }
 
-    const ancho = window.innerWidth;
-    const alto = window.innerHeight;
+
+    const ancho =
+        window.innerWidth;
+
+    const alto =
+        window.innerHeight;
+
 
     if (
         ancho === anchoAnterior &&
@@ -185,11 +259,19 @@ function actualizarTamaño() {
         return;
     }
 
-    anchoAnterior = ancho;
-    altoAnterior = alto;
 
-    camara.aspect = ancho / alto;
+    anchoAnterior =
+        ancho;
+
+    altoAnterior =
+        alto;
+
+
+    camara.aspect =
+        ancho / alto;
+
     camara.updateProjectionMatrix();
+
 
     renderer.setSize(
         ancho,
@@ -198,20 +280,25 @@ function actualizarTamaño() {
     );
 }
 
-// ------------------------------------------------------------
-// LUCES
-// ------------------------------------------------------------
+
+// ============================================================
+// ILUMINACIÓN
+// ============================================================
 
 function crearIluminacion() {
 
-    const luzAmbiente =
+    const ambiente =
         new THREE.HemisphereLight(
             0xbfdcff,
             0x35452c,
             2.2
         );
 
-    escena.add(luzAmbiente);
+
+    escena.add(
+        ambiente
+    );
+
 
     const sol =
         new THREE.DirectionalLight(
@@ -219,50 +306,88 @@ function crearIluminacion() {
             3.2
         );
 
+
     sol.position.set(
         -20,
         35,
         15
     );
 
+
     sol.castShadow =
         CONFIG.sombras;
 
-    sol.shadow.mapSize.width = 2048;
-    sol.shadow.mapSize.height = 2048;
 
-    sol.shadow.camera.near = 1;
-    sol.shadow.camera.far = 100;
+    sol.shadow.mapSize.width =
+        2048;
 
-    sol.shadow.camera.left = -35;
-    sol.shadow.camera.right = 35;
-    sol.shadow.camera.top = 35;
-    sol.shadow.camera.bottom = -35;
+    sol.shadow.mapSize.height =
+        2048;
 
-    escena.add(sol);
+
+    sol.shadow.camera.near =
+        1;
+
+    sol.shadow.camera.far =
+        100;
+
+
+    sol.shadow.camera.left =
+        -35;
+
+    sol.shadow.camera.right =
+        35;
+
+    sol.shadow.camera.top =
+        35;
+
+    sol.shadow.camera.bottom =
+        -35;
+
+
+    escena.add(
+        sol
+    );
 }
 
-// ------------------------------------------------------------
-// LOOP PRINCIPAL
-// ------------------------------------------------------------
+
+// ============================================================
+// LOOP
+// ============================================================
 
 function renderizar() {
 
-    if (!activa) return;
+    if (
+        !activa ||
+        !renderer ||
+        !escena ||
+        !camara
+    ) {
+        return;
+    }
+
 
     requestAnimationFrame(
         renderizar
     );
 
-    const delta =
-        Math.min(
-            reloj.getDelta(),
-            0.033
-        );
 
-    actualizarCinematica(delta);
+    const delta =
+        reloj
+            ? Math.min(
+                reloj.getDelta(),
+                0.033
+            )
+            : 0.016;
+
+
+    actualizarCinematica(
+        delta
+    );
+
 
     actualizarTamaño();
+
 
     renderer.render(
         escena,
@@ -270,13 +395,9 @@ function renderizar() {
     );
 }
 // ============================================================
-// BLOQUE 2/12
-// BOSQUE 3D — SUELO + PINOS
+// BLOQUE 2/10
+// BOSQUE 3D
 // ============================================================
-
-// ------------------------------------------------------------
-// MATERIAL DE SUELO
-// ------------------------------------------------------------
 
 function crearSuelo() {
 
@@ -288,8 +409,14 @@ function crearSuelo() {
             32
         );
 
+    geometria.rotateX(
+        -Math.PI / 2
+    );
+
+
     const posiciones =
         geometria.attributes.position;
+
 
     for (
         let i = 0;
@@ -300,30 +427,34 @@ function crearSuelo() {
         const x =
             posiciones.getX(i);
 
-        const y =
-            posiciones.getY(i);
+        const z =
+            posiciones.getZ(i);
 
-        const ruido =
-            Math.sin(x * 0.16) * 0.18 +
-            Math.cos(y * 0.13) * 0.15 +
-            Math.sin(
-                (x + y) * 0.08
-            ) * 0.12;
 
-        posiciones.setZ(
+        const desnivel =
+            Math.sin(x * 0.12) * 0.12 +
+            Math.cos(z * 0.15) * 0.10;
+
+
+        posiciones.setY(
             i,
-            ruido
+            desnivel
         );
     }
 
+
+    posiciones.needsUpdate = true;
+
     geometria.computeVertexNormals();
+
 
     const material =
         new THREE.MeshStandardMaterial({
-            color: 0x526b45,
+            color: CONFIG.colorSuelo,
             roughness: 1,
             metalness: 0
         });
+
 
     const suelo =
         new THREE.Mesh(
@@ -331,39 +462,41 @@ function crearSuelo() {
             material
         );
 
-    suelo.rotation.x =
-        -Math.PI / 2;
-
-    suelo.position.y = -0.15;
 
     suelo.receiveShadow = true;
 
-    grupoBosque.add(suelo);
+    suelo.position.y = -0.04;
+
+
+    grupoBosque.add(
+        suelo
+    );
 }
 
 
 // ------------------------------------------------------------
-// TRONCO DE PINO
+// TRONCO
 // ------------------------------------------------------------
 
 function crearTroncoPino(
-    radio,
-    altura
+    altura = 4
 ) {
 
     const geometria =
         new THREE.CylinderGeometry(
-            radio * 0.72,
-            radio,
+            0.22,
+            0.38,
             altura,
             8
         );
 
+
     const material =
         new THREE.MeshStandardMaterial({
-            color: 0x65452f,
-            roughness: 0.95
+            color: 0x62432d,
+            roughness: 1
         });
+
 
     const tronco =
         new THREE.Mesh(
@@ -371,20 +504,26 @@ function crearTroncoPino(
             material
         );
 
+
     tronco.castShadow = true;
     tronco.receiveShadow = true;
+
+    tronco.position.y =
+        altura / 2;
+
 
     return tronco;
 }
 
 
 // ------------------------------------------------------------
-// COPA DE PINO
+// COPA DEL PINO
 // ------------------------------------------------------------
 
 function crearCopaPino(
     radio,
     altura,
+    y,
     color
 ) {
 
@@ -392,15 +531,16 @@ function crearCopaPino(
         new THREE.ConeGeometry(
             radio,
             altura,
-            10,
-            4
+            9
         );
+
 
     const material =
         new THREE.MeshStandardMaterial({
-            color: color,
+            color,
             roughness: 0.95
         });
+
 
     const copa =
         new THREE.Mesh(
@@ -408,135 +548,91 @@ function crearCopaPino(
             material
         );
 
+
+    copa.position.y =
+        y;
+
+
     copa.castShadow = true;
     copa.receiveShadow = true;
+
 
     return copa;
 }
 
 
 // ------------------------------------------------------------
-// PINO 3D COMPLETO
+// PINO COMPLETO
 // ------------------------------------------------------------
 
 function crearPino(
-    x,
-    z,
     escala = 1
 ) {
 
     const pino =
         new THREE.Group();
 
-    const alturaTronco =
-        4.2 * escala;
 
     const tronco =
         crearTroncoPino(
-            0.32 * escala,
-            alturaTronco
+            3.8 * escala
         );
 
-    tronco.position.y =
-        alturaTronco / 2;
 
-    pino.add(tronco);
-
-
-    // CAPAS DE RAMAS
-
-    const capas = [
-        {
-            radio: 2.5,
-            alto: 3.4,
-            y: 3.0
-        },
-        {
-            radio: 2.15,
-            alto: 3.1,
-            y: 4.25
-        },
-        {
-            radio: 1.75,
-            alto: 2.8,
-            y: 5.35
-        },
-        {
-            radio: 1.3,
-            alto: 2.5,
-            y: 6.35
-        },
-        {
-            radio: 0.85,
-            alto: 2.1,
-            y: 7.25
-        }
-    ];
-
-    capas.forEach(
-        (capa, indice) => {
-
-            const verde =
-                indice % 2 === 0
-                    ? 0x315b3a
-                    : 0x3d7044;
-
-            const copa =
-                crearCopaPino(
-                    capa.radio * escala,
-                    capa.alto * escala,
-                    verde
-                );
-
-            copa.position.y =
-                capa.y * escala;
-
-            // Pequeña variación para que
-            // las capas no parezcan perfectas.
-
-            copa.rotation.y =
-                indice * 0.35;
-
-            pino.add(copa);
-        }
+    pino.add(
+        tronco
     );
 
 
-    pino.position.set(
-        x,
-        0,
-        z
+    pino.add(
+        crearCopaPino(
+            2.5 * escala,
+            3.2 * escala,
+            3.4 * escala,
+            0x315d38
+        )
     );
+
+
+    pino.add(
+        crearCopaPino(
+            2.05 * escala,
+            3.0 * escala,
+            5.0 * escala,
+            0x3d7043
+        )
+    );
+
+
+    pino.add(
+        crearCopaPino(
+            1.55 * escala,
+            2.7 * escala,
+            6.35 * escala,
+            0x4b8050
+        )
+    );
+
 
     pino.rotation.y =
         Math.random() *
         Math.PI *
         2;
 
-    grupoBosque.add(pino);
 
     return pino;
 }
 
 
 // ------------------------------------------------------------
-// PASTO PEQUEÑO
+// PASTO
 // ------------------------------------------------------------
 
-function crearPasto(
-    x,
-    z,
-    escala = 1
-) {
+function crearPasto() {
 
     const grupo =
         new THREE.Group();
 
-    const material =
-        new THREE.MeshStandardMaterial({
-            color: 0x557d43,
-            roughness: 1
-        });
 
     for (
         let i = 0;
@@ -544,40 +640,50 @@ function crearPasto(
         i++
     ) {
 
-        const hoja =
+        const geometria =
+            new THREE.ConeGeometry(
+                0.035,
+                0.28 +
+                Math.random() * 0.15,
+                4
+            );
+
+
+        const material =
+            new THREE.MeshStandardMaterial({
+                color:
+                    0x668d4c,
+                roughness: 1
+            });
+
+
+        const hierba =
             new THREE.Mesh(
-                new THREE.ConeGeometry(
-                    0.035 * escala,
-                    0.35 * escala,
-                    4
-                ),
+                geometria,
                 material
             );
 
-        hoja.position.set(
-            (Math.random() - 0.5) *
-                0.35 * escala,
 
-            0.17 * escala,
-
-            (Math.random() - 0.5) *
-                0.35 * escala
+        hierba.position.set(
+            (Math.random() - 0.5) * 0.45,
+            0.14,
+            (Math.random() - 0.5) * 0.45
         );
 
-        hoja.rotation.z =
-            (Math.random() - 0.5) *
-            0.7;
 
-        grupo.add(hoja);
+        hierba.rotation.z =
+            (Math.random() - 0.5) * 0.5;
+
+
+        hierba.castShadow = true;
+
+        grupo.add(
+            hierba
+        );
     }
 
-    grupo.position.set(
-        x,
-        0,
-        z
-    );
 
-    grupoBosque.add(grupo);
+    return grupo;
 }
 
 
@@ -585,23 +691,22 @@ function crearPasto(
 // PIEDRA
 // ------------------------------------------------------------
 
-function crearPiedra(
-    x,
-    z,
-    escala = 1
-) {
+function crearPiedra() {
 
     const geometria =
-        new THREE.IcosahedronGeometry(
-            0.45 * escala,
-            1
+        new THREE.DodecahedronGeometry(
+            0.25 +
+            Math.random() * 0.3,
+            0
         );
+
 
     const material =
         new THREE.MeshStandardMaterial({
-            color: 0x66685f,
+            color: 0x77756d,
             roughness: 1
         });
+
 
     const piedra =
         new THREE.Mesh(
@@ -609,163 +714,183 @@ function crearPiedra(
             material
         );
 
-    piedra.position.set(
-        x,
-        0.25 * escala,
-        z
-    );
 
     piedra.scale.y =
-        0.65;
+        0.55;
 
-    piedra.rotation.y =
-        Math.random() * Math.PI;
+
+    piedra.rotation.set(
+        Math.random(),
+        Math.random(),
+        Math.random()
+    );
+
 
     piedra.castShadow = true;
     piedra.receiveShadow = true;
 
-    grupoBosque.add(piedra);
+
+    return piedra;
 }
 
 
 // ------------------------------------------------------------
-// GENERAR BOSQUE
+// BOSQUE COMPLETO
 // ------------------------------------------------------------
 
 function crearBosque() {
 
     crearSuelo();
 
-    // PINOS DEL FONDO
 
-    const pinos = [
-        [-18, -18, 1.45],
-        [-11, -21, 1.15],
-        [-4, -23, 1.55],
-        [5, -22, 1.3],
-        [14, -20, 1.5],
-        [22, -17, 1.2],
-
-        [-23, -10, 1.25],
-        [-18, -7, 1.05],
-        [19, -8, 1.25],
-        [24, -5, 1.4],
-
-        [-24, 4, 1.4],
-        [24, 5, 1.35],
-
-        [-20, 14, 1.3],
-        [-10, 18, 1.5],
-        [10, 17, 1.35],
-        [20, 13, 1.5]
-    ];
-
-    pinos.forEach(
-        pino => {
-
-            crearPino(
-                pino[0],
-                pino[1],
-                pino[2]
-            );
-        }
-    );
-
-
-    // VEGETACIÓN DEL SUELO
-
+    // Pinos
     for (
         let i = 0;
-        i < 70;
+        i < 18;
         i++
     ) {
 
-        const x =
-            (Math.random() - 0.5) *
-            65;
+        const pino =
+            crearPino(
+                0.75 +
+                Math.random() * 0.55
+            );
 
-        const z =
-            (Math.random() - 0.5) *
-            55;
 
-        crearPasto(
+        let x;
+        let z;
+
+
+        do {
+
+            x =
+                (Math.random() - 0.5) * 70;
+
+            z =
+                (Math.random() - 0.5) * 70;
+
+        } while (
+            Math.abs(x) < 10 &&
+            Math.abs(z) < 15
+        );
+
+
+        pino.position.set(
             x,
-            z,
-            0.6 +
-            Math.random() * 0.8
+            0,
+            z
+        );
+
+
+        grupoBosque.add(
+            pino
         );
     }
 
 
-    // PIEDRAS
+    // Pasto
+    for (
+        let i = 0;
+        i < 80;
+        i++
+    ) {
 
+        const pasto =
+            crearPasto();
+
+
+        pasto.position.set(
+            (Math.random() - 0.5) * 70,
+            0,
+            (Math.random() - 0.5) * 70
+        );
+
+
+        grupoBosque.add(
+            pasto
+        );
+    }
+
+
+    // Piedras
     for (
         let i = 0;
         i < 25;
         i++
     ) {
 
-        const x =
-            (Math.random() - 0.5) *
-            55;
+        const piedra =
+            crearPiedra();
 
-        const z =
-            (Math.random() - 0.5) *
-            45;
 
-        crearPiedra(
-            x,
-            z,
-            0.5 +
-            Math.random() * 0.9
+        piedra.position.set(
+            (Math.random() - 0.5) * 65,
+            0.15,
+            (Math.random() - 0.5) * 65
+        );
+
+
+        grupoBosque.add(
+            piedra
         );
     }
-}
+        }
 // ============================================================
-// BLOQUE 3/12
-// MIKE + MICAELA + SISTEMA DE HUESOS
+// BLOQUE 3/10
+// PERSONAJES Y RIG PROCEDURAL
 // ============================================================
 
-// ------------------------------------------------------------
-// LIMPIAR NOMBRE DE HUESO
-// ------------------------------------------------------------
-
-function limpiarNombreHueso(nombre) {
+function limpiarNombreHueso(
+    nombre
+) {
 
     return String(nombre)
         .toLowerCase()
-        .replace(/[\s_\-\.]/g, "");
+        .replace(
+            /[\s_\-\.]/g,
+            ""
+        );
 }
 
 
 // ------------------------------------------------------------
-// GUARDAR POSICIÓN DE DESCANSO
+// GUARDAR POSE ORIGINAL
 // ------------------------------------------------------------
 
-function prepararHuesos(personaje) {
+function prepararHuesos(
+    personaje
+) {
 
-    if (!personaje) return;
+    personaje.traverse(
+        objeto => {
 
-    personaje.traverse(objeto => {
+            if (!objeto.isBone) {
+                return;
+            }
 
-        if (!objeto.isBone) return;
 
-        objeto.userData.eggaroRestQuaternion =
-            objeto.quaternion.clone();
+            objeto.userData
+                .eggaroRestQuaternion =
+                objeto.quaternion.clone();
 
-        objeto.userData.eggaroRestPosition =
-            objeto.position.clone();
 
-        objeto.userData.eggaroNombre =
-            limpiarNombreHueso(
-                objeto.name
-            );
-    });
+            objeto.userData
+                .eggaroRestPosition =
+                objeto.position.clone();
+
+
+            objeto.userData
+                .eggaroNombre =
+                limpiarNombreHueso(
+                    objeto.name
+                );
+        }
+    );
 }
 
 
 // ------------------------------------------------------------
-// BUSCAR HUESO POR NOMBRES POSIBLES
+// BUSCAR HUESO
 // ------------------------------------------------------------
 
 function buscarHueso(
@@ -773,48 +898,55 @@ function buscarHueso(
     nombres
 ) {
 
-    if (!personaje) return null;
-
     const buscados =
         nombres.map(
             limpiarNombreHueso
         );
 
-    let encontrado = null;
 
-    personaje.traverse(objeto => {
+    let resultado = null;
 
-        if (
-            encontrado ||
-            !objeto.isBone
-        ) {
-            return;
+
+    personaje.traverse(
+        objeto => {
+
+            if (
+                resultado ||
+                !objeto.isBone
+            ) {
+                return;
+            }
+
+
+            const nombre =
+                limpiarNombreHueso(
+                    objeto.name
+                );
+
+
+            if (
+                buscados.includes(
+                    nombre
+                )
+            ) {
+
+                resultado = objeto;
+            }
         }
+    );
 
-        const nombre =
-            objeto.userData.eggaroNombre ||
-            limpiarNombreHueso(
-                objeto.name
-            );
 
-        if (
-            buscados.includes(nombre)
-        ) {
-            encontrado = objeto;
-        }
-    });
-
-    return encontrado;
+    return resultado;
 }
 
 
 // ------------------------------------------------------------
-// CREAR MAPA DE HUESOS
+// OBTENER RIG
 // ------------------------------------------------------------
 
-function obtenerRig(personaje) {
-
-    if (!personaje) return {};
+function obtenerRig(
+    personaje
+) {
 
     return {
 
@@ -824,8 +956,7 @@ function obtenerRig(personaje) {
                 "pelvis",
                 "hips",
                 "hip",
-                "root",
-                "cadera"
+                "root"
             ]
         ),
 
@@ -835,12 +966,11 @@ function obtenerRig(personaje) {
                 "spine",
                 "spine1",
                 "spine2",
-                "chest",
                 "torso"
             ]
         ),
 
-        cuello: buscarHueso(
+        neck: buscarHueso(
             personaje,
             [
                 "neck",
@@ -848,7 +978,7 @@ function obtenerRig(personaje) {
             ]
         ),
 
-        cabeza: buscarHueso(
+        head: buscarHueso(
             personaje,
             [
                 "head",
@@ -859,13 +989,10 @@ function obtenerRig(personaje) {
         piernaIzq: buscarHueso(
             personaje,
             [
-                "leftleg",
-                "legleft",
-                "leftthigh",
-                "thighleft",
-                "upperlegleft",
-                "upperlegl",
                 "thighl",
+                "leftthigh",
+                "leftupleg",
+                "uplegl",
                 "legl"
             ]
         ),
@@ -873,13 +1000,10 @@ function obtenerRig(personaje) {
         piernaDer: buscarHueso(
             personaje,
             [
-                "rightleg",
-                "legright",
-                "rightthigh",
-                "thighright",
-                "upperlegright",
-                "upperlegr",
                 "thighr",
+                "rightthigh",
+                "rightupleg",
+                "uplegr",
                 "legr"
             ]
         ),
@@ -887,66 +1011,54 @@ function obtenerRig(personaje) {
         pieIzq: buscarHueso(
             personaje,
             [
-                "leftfoot",
-                "footleft",
                 "footl",
-                "leftankle",
-                "ankleleft"
+                "leftfoot",
+                "leftankle"
             ]
         ),
 
         pieDer: buscarHueso(
             personaje,
             [
-                "rightfoot",
-                "footright",
                 "footr",
-                "rightankle",
-                "ankleright"
+                "rightfoot",
+                "rightankle"
             ]
         ),
 
         brazoIzq: buscarHueso(
             personaje,
             [
+                "arml",
                 "leftarm",
-                "armleft",
-                "leftupperarm",
-                "upperarmleft",
-                "upperarml",
-                "arml"
+                "leftupperarm"
             ]
         ),
 
         brazoDer: buscarHueso(
             personaje,
             [
+                "armr",
                 "rightarm",
-                "armright",
-                "rightupperarm",
-                "upperarmright",
-                "upperarmr",
-                "armr"
+                "rightupperarm"
             ]
         ),
 
         antebrazoIzq: buscarHueso(
             personaje,
             [
+                "forearml",
                 "leftforearm",
-                "forearmleft",
-                "lowerarmleft",
-                "forearml"
+                "leftlowerarm"
             ]
         ),
 
         antebrazoDer: buscarHueso(
             personaje,
             [
+                "forearmr",
                 "rightforearm",
-                "forearmright",
-                "lowerarmright",
-                "forearmr"
+                "rightlowerarm"
             ]
         )
     };
@@ -954,7 +1066,7 @@ function obtenerRig(personaje) {
 
 
 // ------------------------------------------------------------
-// ROTACIÓN RELATIVA AL HUESO
+// ROTACIÓN RELATIVA
 // ------------------------------------------------------------
 
 function rotacionRelativa(
@@ -963,27 +1075,36 @@ function rotacionRelativa(
     angulo
 ) {
 
-    if (!hueso) return;
+    if (!hueso) {
+        return;
+    }
 
-    const reposo =
+
+    const rest =
         hueso.userData
             .eggaroRestQuaternion;
 
-    if (!reposo) return;
+
+    if (!rest) {
+        return;
+    }
+
 
     hueso.quaternion.copy(
-        reposo
+        rest
     );
 
-    const rotacion =
+
+    const q =
         new THREE.Quaternion()
             .setFromAxisAngle(
                 eje,
                 angulo
             );
 
+
     hueso.quaternion.multiply(
-        rotacion
+        q
     );
 }
 
@@ -997,48 +1118,66 @@ function prepararPersonaje(
     nombre
 ) {
 
-    if (!objeto) return null;
+    prepararHuesos(
+        objeto
+    );
 
-    prepararHuesos(objeto);
 
-    const rig =
-        obtenerRig(objeto);
-
-    objeto.userData.eggaroRig =
-        rig;
-
-    objeto.userData.eggaroNombre =
+    objeto.userData
+        .eggaroNombre =
         nombre;
 
-    objeto.userData.eggaroCaminando =
+
+    objeto.userData
+        .eggaroRig =
+        obtenerRig(
+            objeto
+        );
+
+
+    objeto.userData
+        .eggaroCaminando =
         false;
 
-    objeto.userData.eggaroTiempo =
-        Math.random() * 10;
 
-    objeto.userData.eggaroBaseY =
+    objeto.userData
+        .eggaroTiempo =
+        0;
+
+
+    objeto.userData
+        .eggaroDestinoZ =
+        objeto.position.z;
+
+
+    objeto.userData
+        .eggaroBaseY =
         objeto.position.y;
 
-    objeto.userData.eggaroInicioZ =
-        objeto.position.z;
 
-    objeto.userData.eggaroDestinoZ =
-        objeto.position.z;
+    objeto.traverse(
+        parte => {
 
-    objeto.traverse(parte => {
+            if (
+                parte.isMesh
+            ) {
 
-        if (!parte.isMesh) return;
+                parte.castShadow =
+                    true;
 
-        parte.castShadow = true;
-        parte.receiveShadow = true;
-    });
+                parte.receiveShadow =
+                    true;
+            }
+        }
+    );
+
 
     return objeto;
 }
 
 
 // ------------------------------------------------------------
-// CARGAR GLB
+// CARGAR PERSONAJE
 // ------------------------------------------------------------
 
 function cargarPersonaje(
@@ -1055,14 +1194,15 @@ function cargarPersonaje(
                 gltf => {
 
                     const objeto =
-                        gltf.scene;
+                        prepararPersonaje(
+                            gltf.scene,
+                            nombre
+                        );
 
-                    prepararPersonaje(
-                        objeto,
-                        nombre
+
+                    resolve(
+                        objeto
                     );
-
-                    resolve(objeto);
                 },
 
                 undefined,
@@ -1070,9 +1210,8 @@ function cargarPersonaje(
                 error => {
 
                     console.error(
-                        "Error cargando " +
-                        nombre +
-                        ":",
+                        "EGGARO: error cargando",
+                        ruta,
                         error
                     );
 
@@ -1098,6 +1237,7 @@ async function cargarPersonajes() {
                 "Mike"
             );
 
+
         micaela =
             await cargarPersonaje(
                 "./3D/micaela.glb",
@@ -1105,15 +1245,12 @@ async function cargarPersonajes() {
             );
 
 
-        // ----------------------------------------------------
-        // POSICIONES INICIALES
-        // ----------------------------------------------------
-
         mike.position.set(
             -1.25,
             0,
             8
         );
+
 
         micaela.position.set(
             1.25,
@@ -1122,22 +1259,12 @@ async function cargarPersonajes() {
         );
 
 
-        // Los modelos conservan la orientación
-        // usada por el juego.
-
         mike.rotation.y =
             Math.PI;
 
+
         micaela.rotation.y =
             Math.PI;
-
-
-        // Escala conservadora.
-        // Si tus GLB ya tienen la escala correcta,
-        // estos valores permanecen en 1.
-
-        mike.scale.setScalar(1);
-        micaela.scale.setScalar(1);
 
 
         grupoPersonajes.add(
@@ -1149,54 +1276,56 @@ async function cargarPersonajes() {
         );
 
 
-        return true;
-
     } catch (error) {
 
         console.error(
-            "No se pudieron cargar Mike/Micaela.",
+            "EGGARО: no se pudieron cargar Mike/Micaela.",
             error
         );
 
-        return false;
+        mike = null;
+        micaela = null;
     }
-            }
+        }
 // ============================================================
-// BLOQUE 4/12
-// CAMINAR PROCEDURAL
+// BLOQUE 4/10
+// ANIMACIÓN PROCEDURAL DE CAMINATA
 // ============================================================
-
-// ------------------------------------------------------------
-// CONFIGURAR CAMINATA
-// ------------------------------------------------------------
 
 function iniciarCaminata(
     personaje,
     destinoZ
 ) {
 
-    if (!personaje) return;
+    if (!personaje) {
+        return;
+    }
 
-    personaje.userData.eggaroCaminando =
+
+    personaje.userData
+        .eggarCaminando =
         true;
 
-    personaje.userData.eggaroDestinoZ =
+
+    personaje.userData
+        .eggarDestinoZ =
         destinoZ;
 }
 
-
-// ------------------------------------------------------------
-// DETENER CAMINATA
-// ------------------------------------------------------------
 
 function detenerCaminata(
     personaje
 ) {
 
-    if (!personaje) return;
+    if (!personaje) {
+        return;
+    }
 
-    personaje.userData.eggaroCaminando =
+
+    personaje.userData
+        .eggarCaminando =
         false;
+
 
     aplicarPoseReposo(
         personaje
@@ -1212,84 +1341,58 @@ function aplicarPoseReposo(
     personaje
 ) {
 
-    if (!personaje) return;
+    if (!personaje) {
+        return;
+    }
+
 
     const rig =
-        personaje.userData.eggaroRig;
+        personaje.userData
+            .eggarRig;
 
-    if (!rig) return;
+
+    if (!rig) {
+        return;
+    }
+
 
     const ejeX =
-        new THREE.Vector3(1, 0, 0);
+        new THREE.Vector3(
+            1,
+            0,
+            0
+        );
 
-    const ejeY =
-        new THREE.Vector3(0, 1, 0);
+
+    const ejeZ =
+        new THREE.Vector3(
+            0,
+            0,
+            1
+        );
 
 
-    rotacionRelativa(
-        rig.piernaIzq,
-        ejeX,
-        0
-    );
+    Object.values(rig)
+        .forEach(hueso => {
 
-    rotacionRelativa(
-        rig.piernaDer,
-        ejeX,
-        0
-    );
+            if (hueso) {
 
-    rotacionRelativa(
-        rig.pieIzq,
-        ejeX,
-        0
-    );
+                const rest =
+                    hueso.userData
+                        .eggaroRestQuaternion;
 
-    rotacionRelativa(
-        rig.pieDer,
-        ejeX,
-        0
-    );
-
-    rotacionRelativa(
-        rig.brazoIzq,
-        ejeX,
-        0
-    );
-
-    rotacionRelativa(
-        rig.brazoDer,
-        ejeX,
-        0
-    );
-
-    rotacionRelativa(
-        rig.antebrazoIzq,
-        ejeX,
-        0
-    );
-
-    rotacionRelativa(
-        rig.antebrazoDer,
-        ejeX,
-        0
-    );
-
-    rotacionRelativa(
-        rig.spine,
-        ejeX,
-        0
-    );
-
-    rotacionRelativa(
-        rig.cabeza,
-        ejeY,
-        0
-    );
+                if (rest) {
+                    hueso.quaternion.copy(
+                        rest
+                    );
+                }
+            }
+        });
 }
 
 
 // ------------------------------------------------------------
-// ANIMAR CAMINATA
+// ACTUALIZAR CAMINATA
 // ------------------------------------------------------------
 
 function actualizarCaminata(
@@ -1297,80 +1400,94 @@ function actualizarCaminata(
     delta
 ) {
 
-    if (!personaje) return;
+    if (!personaje) {
+        return;
+    }
+
 
     const datos =
         personaje.userData;
 
+
     const rig =
-        datos.eggaroRig;
-
-    if (!rig) return;
-
-    datos.eggaroTiempo +=
-        delta * 6.0;
-
-    const tiempo =
-        datos.eggaroTiempo;
+        datos.eggarRig;
 
 
-    // --------------------------------------------------------
-    // MOVIMIENTO DEL PERSONAJE
-    // --------------------------------------------------------
-
-    if (datos.eggaroCaminando) {
-
-        const destino =
-            datos.eggaroDestinoZ;
-
-        const diferencia =
-            destino -
-            personaje.position.z;
-
-        const distancia =
-            Math.abs(diferencia);
-
-        if (distancia > 0.05) {
-
-            const direccion =
-                Math.sign(diferencia);
-
-            personaje.position.z +=
-                direccion *
-                CONFIG.velocidadPersonajes *
-                delta;
-
-        } else {
-
-            personaje.position.z =
-                destino;
-
-            detenerCaminata(
-                personaje
-            );
-        }
+    if (!rig) {
+        return;
     }
 
 
-    // --------------------------------------------------------
-    // RITMO DE PASOS
-    // --------------------------------------------------------
+    if (!datos.eggarCaminando) {
 
-    const amplitudPierna =
-        datos.eggaroCaminando
-            ? 0.42
-            : 0;
+        aplicarPoseReposo(
+            personaje
+        );
+
+        return;
+    }
+
+
+    const distancia =
+        datos.eggarDestinoZ -
+        personaje.position.z;
+
+
+    const direccion =
+        Math.sign(
+            distancia
+        );
+
+
+    const movimiento =
+        CONFIG.velocidadPersonajes *
+        delta;
+
+
+    if (
+        Math.abs(distancia) <=
+        movimiento
+    ) {
+
+        personaje.position.z =
+            datos.eggarDestinoZ;
+
+
+        datos.eggarCaminando =
+            false;
+
+
+        aplicarPoseReposo(
+            personaje
+        );
+
+        return;
+    }
+
+
+    personaje.position.z +=
+        movimiento *
+        direccion;
+
+
+    datos.eggarTiempo +=
+        delta;
+
+
+    const t =
+        datos.eggarTiempo *
+        7;
+
 
     const paso =
+        Math.sin(t);
+
+
+    const pasoOpuesto =
         Math.sin(
-            tiempo
-        ) *
-        amplitudPierna;
+            t + Math.PI
+        );
 
-
-    // --------------------------------------------------------
-    // PIERNAS
-    // --------------------------------------------------------
 
     const ejeX =
         new THREE.Vector3(
@@ -1379,160 +1496,102 @@ function actualizarCaminata(
             0
         );
 
+
+    const ejeZ =
+        new THREE.Vector3(
+            0,
+            0,
+            1
+        );
+
+
+    // Piernas
     rotacionRelativa(
         rig.piernaIzq,
         ejeX,
-        paso
+        paso * 0.38
     );
+
 
     rotacionRelativa(
         rig.piernaDer,
         ejeX,
-        -paso
+        pasoOpuesto * 0.38
     );
 
 
-    // --------------------------------------------------------
-    // PIES
-    // --------------------------------------------------------
-
-    const movimientoPie =
-        Math.sin(
-            tiempo
-        ) *
-        amplitudPierna *
-        0.45;
-
+    // Pies
     rotacionRelativa(
         rig.pieIzq,
         ejeX,
-        -movimientoPie
+        -paso * 0.16
     );
+
 
     rotacionRelativa(
         rig.pieDer,
         ejeX,
-        movimientoPie
+        -pasoOpuesto * 0.16
     );
 
 
-    // --------------------------------------------------------
-    // BRAZOS
-    // --------------------------------------------------------
-
-    const amplitudBrazo =
-        datos.eggaroCaminando
-            ? 0.28
-            : 0;
-
-    const brazo =
-        Math.sin(
-            tiempo
-        ) *
-        amplitudBrazo;
-
+    // Brazos
     rotacionRelativa(
         rig.brazoIzq,
         ejeX,
-        -brazo
+        pasoOpuesto * 0.25
     );
+
 
     rotacionRelativa(
         rig.brazoDer,
         ejeX,
-        brazo
+        paso * 0.25
     );
 
 
-    // --------------------------------------------------------
-    // ANTEBRAZOS
-    // --------------------------------------------------------
-
+    // Antebrazos
     rotacionRelativa(
         rig.antebrazoIzq,
         ejeX,
-        -Math.abs(brazo) *
-        0.25
+        Math.abs(paso) * 0.06
     );
+
 
     rotacionRelativa(
         rig.antebrazoDer,
         ejeX,
-        -Math.abs(brazo) *
-        0.25
+        Math.abs(pasoOpuesto) * 0.06
     );
 
 
-    // --------------------------------------------------------
-    // CUERPO
-    // --------------------------------------------------------
-
-    const balanceo =
-        datos.eggaroCaminando
-            ? Math.sin(
-                tiempo * 2
-            ) * 0.025
-            : 0;
-
+    // Pequeño movimiento natural del torso
     rotacionRelativa(
         rig.spine,
-        ejeX,
-        balanceo
+        ejeZ,
+        Math.sin(t * 0.5) * 0.025
     );
 
 
-    // --------------------------------------------------------
-    // CABEZA
-    // --------------------------------------------------------
-
-    const movimientoCabeza =
-        datos.eggaroCaminando
-            ? Math.sin(
-                tiempo * 2
-            ) * 0.025
-            : 0;
-
-    const ejeY =
-        new THREE.Vector3(
-            0,
-            1,
-            0
-        );
-
+    // Cabeza estable
     rotacionRelativa(
-        rig.cabeza,
-        ejeY,
-        movimientoCabeza
+        rig.head,
+        ejeZ,
+        Math.sin(t * 0.4) * 0.018
     );
 
 
-    // --------------------------------------------------------
-    // PEQUEÑO BOB DEL CUERPO
-    // --------------------------------------------------------
-
-    if (datos.eggaroCaminando) {
-
-        const baseY =
-            datos.eggaroBaseY ?? 0;
-
-        personaje.position.y =
-            baseY +
-            Math.abs(
-                Math.sin(
-                    tiempo * 2
-                )
-            ) * 0.035;
-
-    } else {
-
-        personaje.position.y =
-            datos.eggaroBaseY ?? 0;
-    }
+    // Balanceo pequeño del personaje completo
+    personaje.position.y =
+        datos.eggarBaseY +
+        Math.abs(
+            Math.sin(t)
+        ) * 0.025;
 }
 
 
 // ------------------------------------------------------------
-// ACTUALIZAR AMBOS PERSONAJES
+// ACTUALIZAR PERSONAJES
 // ------------------------------------------------------------
 
 function actualizarPersonajes(
@@ -1544,26 +1603,40 @@ function actualizarPersonajes(
         delta
     );
 
+
     actualizarCaminata(
         micaela,
         delta
     );
-}
+                 }
 // ============================================================
-// BLOQUE 5/12
-// HUEVO 3D CINEMATOGRÁFICO
+// BLOQUE 5/10
+// HUEVO
 // ============================================================
 
+let huevo = null;
+let particulasHuevo = null;
+let energiaHuevo = null;
+let flashHuevo = null;
+
+let huevoActivo = false;
+let huevoAbriendo = false;
+let huevoAbierto = false;
+
+let tiempoHuevo = 0;
+let tiempoApertura = 0;
+
+
 // ------------------------------------------------------------
-// CREAR MATERIAL DEL HUEVO
+// MATERIAL
 // ------------------------------------------------------------
 
 function crearMaterialHuevo() {
 
     return new THREE.MeshStandardMaterial({
-        color: 0xf2e4c5,
-        roughness: 0.45,
-        metalness: 0.05
+        color: 0xf4e5c2,
+        roughness: 0.72,
+        metalness: 0.02
     });
 }
 
@@ -1574,18 +1647,6 @@ function crearMaterialHuevo() {
 
 function crearHuevo() {
 
-    grupoHuevo.clear();
-
-    const grupo =
-        new THREE.Group();
-
-    grupo.name =
-        "HuevoCinematico";
-
-    // --------------------------------------------------------
-    // CUERPO PRINCIPAL
-    // --------------------------------------------------------
-
     const geometria =
         new THREE.SphereGeometry(
             1,
@@ -1593,218 +1654,318 @@ function crearHuevo() {
             24
         );
 
-    const huevo =
+
+    const material =
+        crearMaterialHuevo();
+
+
+    huevo =
         new THREE.Mesh(
             geometria,
-            crearMaterialHuevo()
+            material
         );
 
-    // Forma de huevo
+
     huevo.scale.set(
         0.78,
         1.08,
         0.78
     );
 
-    huevo.castShadow = true;
-    huevo.receiveShadow = true;
 
-    grupo.add(huevo);
-
-
-    // --------------------------------------------------------
-    // PEQUEÑA BASE DE LUZ
-    // --------------------------------------------------------
-
-    const luz =
-        new THREE.PointLight(
-            0xffe9a8,
-            0,
-            6
-        );
-
-    luz.position.y =
-        0.3;
-
-    grupo.add(luz);
-
-    grupo.userData.huevo =
-        huevo;
-
-    grupo.userData.luz =
-        luz;
-
-    grupo.userData.tiempo =
-        0;
-
-    grupo.userData.activo =
-        false;
-
-    grupo.userData.abriendo =
-        false;
-
-    grupo.userData.abierto =
-        false;
-
-    grupo.position.set(
+    huevo.position.set(
         0,
         1.15,
         -3
     );
 
-    grupoHuevo.add(
-        grupo
+
+    huevo.castShadow =
+        true;
+
+    huevo.receiveShadow =
+        true;
+
+
+    huevo.userData
+        .eggaroHuevo =
+        true;
+
+
+    const luz =
+        new THREE.PointLight(
+            0xffd36b,
+            0,
+            7
+        );
+
+
+    luz.position.y =
+        0.4;
+
+
+    luz.userData
+        .eggaroLuzHuevo =
+        true;
+
+
+    huevo.add(
+        luz
     );
 
-    return grupo;
+
+    grupoHuevo.add(
+        huevo
+    );
 }
 
 
 // ------------------------------------------------------------
-// CREAR PARTÍCULAS DEL HUEVO
+// PARTÍCULAS
 // ------------------------------------------------------------
 
 function crearParticulasHuevo() {
 
-    const cantidad = 32;
-
-    const posiciones =
-        new Float32Array(
-            cantidad * 3
-        );
+    const posiciones = [];
 
     for (
         let i = 0;
-        i < cantidad;
+        i < 36;
         i++
     ) {
 
         const angulo =
             Math.random() *
-            Math.PI *
-            2;
+            Math.PI * 2;
+
 
         const radio =
             0.7 +
-            Math.random() * 1.3;
+            Math.random() * 0.7;
 
-        const altura =
-            Math.random() *
-            2.0;
 
-        posiciones[i * 3] =
-            Math.cos(angulo) *
-            radio;
-
-        posiciones[i * 3 + 1] =
-            altura;
-
-        posiciones[i * 3 + 2] =
-            Math.sin(angulo) *
-            radio;
+        posiciones.push(
+            Math.cos(angulo) * radio,
+            Math.random() * 1.8,
+            Math.sin(angulo) * radio
+        );
     }
+
 
     const geometria =
         new THREE.BufferGeometry();
 
+
     geometria.setAttribute(
         "position",
-        new THREE.BufferAttribute(
+        new THREE.Float32BufferAttribute(
             posiciones,
             3
         )
     );
 
+
     const material =
         new THREE.PointsMaterial({
-            color: 0xffe8a3,
-            size: 0.075,
+            color: 0xffe59a,
+            size: 0.09,
             transparent: true,
             opacity: 0
         });
 
-    const particulas =
+
+    particulasHuevo =
         new THREE.Points(
             geometria,
             material
         );
 
-    particulas.position.copy(
-        grupoHuevo
-            .children[0]
-            ?.position ||
-        new THREE.Vector3(
-            0,
-            1.15,
-            -3
-        )
+
+    particulasHuevo.position.set(
+        0,
+        0.3,
+        -3
     );
 
-    particulas.userData.tiempo =
-        Math.random() * 10;
-
-    particulas.userData.material =
-        material;
 
     grupoHuevo.add(
-        particulas
+        particulasHuevo
     );
 }
 
 
 // ------------------------------------------------------------
-// ACTIVAR HUEVO
+// ENERGÍA
+// ------------------------------------------------------------
+
+function crearEnergiaHuevo() {
+
+    const posiciones = [];
+
+    for (
+        let i = 0;
+        i < 48;
+        i++
+    ) {
+
+        const angulo =
+            Math.random() *
+            Math.PI * 2;
+
+
+        const radio =
+            0.2 +
+            Math.random() * 1.1;
+
+
+        posiciones.push(
+            Math.cos(angulo) * radio,
+            Math.random() * 1.8,
+            Math.sin(angulo) * radio
+        );
+    }
+
+
+    const geometria =
+        new THREE.BufferGeometry();
+
+
+    geometria.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(
+            posiciones,
+            3
+        )
+    );
+
+
+    const material =
+        new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.12,
+            transparent: true,
+            opacity: 0
+        });
+
+
+    energiaHuevo =
+        new THREE.Points(
+            geometria,
+            material
+        );
+
+
+    energiaHuevo.position.set(
+        0,
+        0.4,
+        -3
+    );
+
+
+    grupoHuevo.add(
+        energiaHuevo
+    );
+}
+
+
+// ------------------------------------------------------------
+// FLASH
+// ------------------------------------------------------------
+
+function crearFlashHuevo() {
+
+    if (flashHuevo) {
+        return;
+    }
+
+
+    const geometria =
+        new THREE.SphereGeometry(
+            1,
+            16,
+            16
+        );
+
+
+    const material =
+        new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0
+        });
+
+
+    flashHuevo =
+        new THREE.Mesh(
+            geometria,
+            material
+        );
+
+
+    flashHuevo.position.set(
+        0,
+        1.15,
+        -3
+    );
+
+
+    flashHuevo.scale.setScalar(
+        0.1
+    );
+
+
+    grupoHuevo.add(
+        flashHuevo
+    );
+}
+
+
+// ------------------------------------------------------------
+// PREPARAR
+// ------------------------------------------------------------
+
+function prepararHuevo() {
+
+    crearHuevo();
+
+    crearParticulasHuevo();
+
+    crearEnergiaHuevo();
+
+    crearFlashHuevo();
+}
+
+
+// ------------------------------------------------------------
+// ACTIVAR
 // ------------------------------------------------------------
 
 function activarHuevo() {
 
-    if (!grupoHuevo) return;
+    huevoActivo = true;
 
-    const huevo =
-        grupoHuevo.children.find(
-            objeto =>
-                objeto.name ===
-                "HuevoCinematico"
-        );
+    tiempoHuevo = 0;
 
-    if (!huevo) return;
-
-    huevo.userData.activo =
-        true;
-
-    huevo.userData.abriendo =
-        false;
-
-    huevo.userData.abierto =
-        false;
-
-    huevo.userData.tiempo =
-        0;
-
-    huevo.scale.setScalar(
-        0.01
-    );
-
-    huevo.rotation.set(
-        0,
-        0,
-        0
-    );
-
-    huevo.visible =
-        true;
-
-    const particulas =
-        grupoHuevo.children.find(
-            objeto =>
-                objeto.isPoints
-        );
-
-    if (particulas) {
-
-        particulas.material.opacity =
-            0;
+    if (huevo) {
+        huevo.visible = true;
     }
+}
+
+
+// ------------------------------------------------------------
+// ABRIR
+// ------------------------------------------------------------
+
+function abrirHuevo() {
+
+    if (huevoAbriendo || huevoAbierto) {
+        return;
+    }
+
+
+    huevoAbriendo = true;
+
+    tiempoApertura = 0;
 }
 
 
@@ -1816,498 +1977,163 @@ function actualizarHuevo(
     delta
 ) {
 
-    if (!grupoHuevo) return;
-
-    const huevo =
-        grupoHuevo.children.find(
-            objeto =>
-                objeto.name ===
-                "HuevoCinematico"
-        );
-
-    if (!huevo) return;
-
-    if (!huevo.userData.activo) {
-        return;
-    }
-
-    huevo.userData.tiempo +=
-        delta;
-
-    const tiempo =
-        huevo.userData.tiempo;
-
-
-    // --------------------------------------------------------
-    // APARICIÓN SUAVE
-    // --------------------------------------------------------
-
     if (
-        tiempo < 1.2 &&
-        !huevo.userData.abriendo
-    ) {
-
-        const progreso =
-            Math.min(
-                tiempo / 1.2,
-                1
-            );
-
-        const suave =
-            progreso *
-            progreso *
-            (3 - 2 * progreso);
-
-        huevo.scale.setScalar(
-            suave
-        );
-
-        huevo.rotation.y =
-            tiempo * 1.5;
-
-        huevo.rotation.z =
-            Math.sin(
-                tiempo * 5
-            ) *
-            0.04;
-    }
-
-
-    // --------------------------------------------------------
-    // PULSO
-    // --------------------------------------------------------
-
-    if (
-        tiempo >= 1.2 &&
-        !huevo.userData.abriendo
-    ) {
-
-        const pulso =
-            Math.sin(
-                tiempo * 4
-            );
-
-        huevo.rotation.y +=
-            delta * 0.35;
-
-        huevo.rotation.z =
-            pulso * 0.025;
-    }
-
-
-    // --------------------------------------------------------
-    // LUZ
-    // --------------------------------------------------------
-
-    const luz =
-        huevo.userData.luz;
-
-    if (luz) {
-
-        const intensidad =
-            tiempo < 1.2
-                ? tiempo * 1.5
-                : 0.7 +
-                  Math.sin(
-                      tiempo * 4
-                  ) * 0.25;
-
-        luz.intensity =
-            Math.max(
-                0,
-                intensidad
-            );
-    }
-}
-
-
-// ------------------------------------------------------------
-// INICIAR APERTURA
-// ------------------------------------------------------------
-
-function abrirHuevo() {
-
-    const huevo =
-        grupoHuevo.children.find(
-            objeto =>
-                objeto.name ===
-                "HuevoCinematico"
-        );
-
-    if (!huevo) return;
-
-    huevo.userData.abriendo =
-        true;
-
-    huevo.userData.tiempo =
-        0;
-}
-
-
-// ------------------------------------------------------------
-// CREAR HUEVO AL PREPARAR ESCENA
-// ------------------------------------------------------------
-
-function prepararHuevo() {
-
-    crearHuevo();
-    crearParticulasHuevo();
-        }
-// ============================================================
-// BLOQUE 6/12
-// APERTURA DEL HUEVO + ENERGÍA
-// ============================================================
-
-// ------------------------------------------------------------
-// CREAR ENERGÍA DEL HUEVO
-// ------------------------------------------------------------
-
-function crearEnergiaHuevo() {
-
-    const grupo =
-        new THREE.Group();
-
-    grupo.name =
-        "EnergiaHuevo";
-
-    const cantidad = 42;
-
-    const posiciones =
-        new Float32Array(
-            cantidad * 3
-        );
-
-    const velocidades =
-        [];
-
-    for (
-        let i = 0;
-        i < cantidad;
-        i++
-    ) {
-
-        const angulo =
-            Math.random() *
-            Math.PI * 2;
-
-        const radio =
-            0.45 +
-            Math.random() * 0.7;
-
-        posiciones[i * 3] =
-            Math.cos(angulo) *
-            radio;
-
-        posiciones[i * 3 + 1] =
-            Math.random() * 1.8;
-
-        posiciones[i * 3 + 2] =
-            Math.sin(angulo) *
-            radio;
-
-        velocidades.push({
-            x:
-                (Math.random() - 0.5) *
-                0.25,
-
-            y:
-                0.4 +
-                Math.random() * 0.8,
-
-            z:
-                (Math.random() - 0.5) *
-                0.25
-        });
-    }
-
-    const geometria =
-        new THREE.BufferGeometry();
-
-    geometria.setAttribute(
-        "position",
-        new THREE.BufferAttribute(
-            posiciones,
-            3
-        )
-    );
-
-    const material =
-        new THREE.PointsMaterial({
-            color: 0xffe49a,
-            size: 0.11,
-            transparent: true,
-            opacity: 0,
-            depthWrite: false
-        });
-
-    const puntos =
-        new THREE.Points(
-            geometria,
-            material
-        );
-
-    grupo.add(puntos);
-
-    grupo.userData.velocidades =
-        velocidades;
-
-    grupo.userData.tiempo =
-        0;
-
-    grupo.userData.activo =
-        false;
-
-    grupo.userData.puntos =
-        puntos;
-
-    grupoHuevo.add(
-        grupo
-    );
-
-    return grupo;
-}
-
-
-// ------------------------------------------------------------
-// ACTIVAR ENERGÍA
-// ------------------------------------------------------------
-
-function activarEnergiaHuevo() {
-
-    const energia =
-        grupoHuevo.children.find(
-            objeto =>
-                objeto.name ===
-                "EnergiaHuevo"
-        );
-
-    if (!energia) return;
-
-    energia.userData.activo =
-        true;
-
-    energia.userData.tiempo =
-        0;
-
-    energia.userData.puntos
-        .material.opacity = 1;
-}
-
-
-// ------------------------------------------------------------
-// ACTUALIZAR ENERGÍA
-// ------------------------------------------------------------
-
-function actualizarEnergiaHuevo(
-    delta
-) {
-
-    const energia =
-        grupoHuevo.children.find(
-            objeto =>
-                objeto.name ===
-                "EnergiaHuevo"
-        );
-
-    if (
-        !energia ||
-        !energia.userData.activo
+        !huevo ||
+        !huevoActivo
     ) {
         return;
     }
 
-    energia.userData.tiempo +=
+
+    tiempoHuevo +=
         delta;
 
-    const tiempo =
-        energia.userData.tiempo;
 
-    const puntos =
-        energia.userData.puntos;
-
-    const posiciones =
-        puntos.geometry
-            .attributes
-            .position;
-
-    const velocidades =
-        energia.userData.velocidades;
-
-    for (
-        let i = 0;
-        i < velocidades.length;
-        i++
-    ) {
-
-        const velocidad =
-            velocidades[i];
-
-        let x =
-            posiciones.getX(i);
-
-        let y =
-            posiciones.getY(i);
-
-        let z =
-            posiciones.getZ(i);
-
-        x +=
-            velocidad.x *
-            delta;
-
-        y +=
-            velocidad.y *
-            delta;
-
-        z +=
-            velocidad.z *
-            delta;
-
-        // Cuando una partícula sube demasiado,
-        // vuelve cerca del huevo.
-
-        if (y > 2.8) {
-
-            const angulo =
-                Math.random() *
-                Math.PI * 2;
-
-            const radio =
-                0.4 +
-                Math.random() * 0.6;
-
-            x =
-                Math.cos(angulo) *
-                radio;
-
-            y =
-                0.2 +
-                Math.random() * 0.5;
-
-            z =
-                Math.sin(angulo) *
-                radio;
-        }
-
-        posiciones.setXYZ(
-            i,
-            x,
-            y,
-            z
-        );
-    }
-
-    posiciones.needsUpdate =
-        true;
-
-
-    // --------------------------------------------------------
-    // PULSO DE ENERGÍA
-    // --------------------------------------------------------
-
-    puntos.material.size =
-        0.08 +
+    const escala =
+        1 +
         Math.sin(
-            tiempo * 8
+            tiempoHuevo * 4
         ) * 0.025;
 
 
-    // Después de un tiempo,
-    // disminuye la energía.
+    huevo.scale.set(
+        0.78 * escala,
+        1.08 * escala,
+        0.78 * escala
+    );
 
-    if (tiempo > 4.5) {
 
-        const opacidad =
-            Math.max(
-                0,
-                1 -
-                (tiempo - 4.5) /
-                1.5
-            );
+    huevo.rotation.y +=
+        delta * 0.25;
 
-        puntos.material.opacity =
-            opacidad;
+
+    const luz =
+        huevo.children.find(
+            obj =>
+                obj.userData &&
+                obj.userData.eggaroLuzHuevo
+        );
+
+
+    if (luz) {
+
+        luz.intensity =
+            0.8 +
+            Math.sin(
+                tiempoHuevo * 5
+            ) * 0.35;
     }
 
-    if (tiempo > 6) {
 
-        energia.userData.activo =
-            false;
+    if (
+        particulasHuevo &&
+        particulasHuevo.material
+    ) {
 
-        puntos.material.opacity =
-            0;
+        particulasHuevo.material.opacity =
+            0.15 +
+            Math.sin(
+                tiempoHuevo * 4
+            ) * 0.08;
     }
 }
-
-
-// ------------------------------------------------------------
-// APERTURA VISUAL
-// ------------------------------------------------------------
+// ============================================================
+// BLOQUE 6/10
+// APERTURA DEL HUEVO
+// ============================================================
 
 function actualizarAperturaHuevo(
     delta
 ) {
 
-    const huevo =
-        grupoHuevo.children.find(
-            objeto =>
-                objeto.name ===
-                "HuevoCinematico"
-        );
-
-    if (!huevo) return;
-
-    if (!huevo.userData.abriendo) {
+    if (!huevoAbriendo) {
         return;
     }
 
-    huevo.userData.tiempo +=
+
+    tiempoApertura +=
         delta;
 
-    const tiempo =
-        huevo.userData.tiempo;
+
+    const progreso =
+        Math.min(
+            tiempoApertura / 0.8,
+            1
+        );
 
 
-    // --------------------------------------------------------
-    // PRIMER IMPACTO
-    // --------------------------------------------------------
+    // El huevo tiembla antes de abrirse.
+    huevo.rotation.z =
+        Math.sin(
+            tiempoApertura * 30
+        ) *
+        0.035 *
+        (1 - progreso);
 
-    if (tiempo < 0.7) {
 
-        const golpe =
-            Math.sin(
-                tiempo * 28
-            ) *
-            (1 - tiempo / 0.7);
+    huevo.scale.y =
+        1.08 +
+        Math.sin(
+            tiempoApertura * 20
+        ) *
+        0.08;
 
-        huevo.rotation.z =
-            golpe * 0.08;
 
-        huevo.rotation.x =
-            Math.cos(
-                tiempo * 24
-            ) *
-            0.04;
+    if (
+        particulasHuevo &&
+        particulasHuevo.material
+    ) {
 
-        return;
+        particulasHuevo.material.opacity =
+            progreso * 0.75;
     }
 
 
-    // --------------------------------------------------------
-    // FLASH
-    // --------------------------------------------------------
-
     if (
-        tiempo >= 0.7 &&
-        !huevo.userData.abierto
+        progreso >= 1 &&
+        !huevoAbierto
     ) {
 
-        huevo.userData.abierto =
+        huevoAbierto =
             true;
 
-        activarEnergiaHuevo();
+        huevoAbriendo =
+            false;
+
+
+        if (huevo) {
+
+            huevo.visible =
+                false;
+        }
+
+
+        if (
+            energiaHuevo &&
+            energiaHuevo.material
+        ) {
+
+            energiaHuevo.material.opacity =
+                1;
+        }
+
 
         crearFlashHuevo();
+
+
+        if (flashHuevo) {
+
+            flashHuevo.visible =
+                true;
+
+            flashHuevo.scale.setScalar(
+                0.2
+            );
+
+            flashHuevo.material.opacity =
+                1;
+        }
+
 
         mostrarResultadoCinematica();
     }
@@ -2315,116 +2141,95 @@ function actualizarAperturaHuevo(
 
 
 // ------------------------------------------------------------
-// FLASH DE APERTURA
+// ENERGÍA
 // ------------------------------------------------------------
 
-function crearFlashHuevo() {
+function actualizarEnergiaHuevo(
+    delta
+) {
 
-    const geometria =
-        new THREE.SphereGeometry(
-            0.15,
-            16,
-            12
+    if (
+        !energiaHuevo ||
+        !energiaHuevo.material
+    ) {
+        return;
+    }
+
+
+    if (
+        !huevoAbierto
+    ) {
+        return;
+    }
+
+
+    energiaHuevo.rotation.y +=
+        delta;
+
+
+    energiaHuevo.position.y +=
+        delta * 0.35;
+
+
+    energiaHuevo.material.opacity =
+        Math.max(
+            0,
+            energiaHuevo.material.opacity -
+            delta * 0.18
         );
-
-    const material =
-        new THREE.MeshBasicMaterial({
-            color: 0xfff1b0,
-            transparent: true,
-            opacity: 0,
-            depthWrite: false
-        });
-
-    const flash =
-        new THREE.Mesh(
-            geometria,
-            material
-        );
-
-    flash.position.set(
-        0,
-        1.35,
-        -3
-    );
-
-    flash.userData.tiempo =
-        0;
-
-    flash.userData.activo =
-        true;
-
-    grupoHuevo.add(
-        flash
-    );
 }
 
 
 // ------------------------------------------------------------
-// ACTUALIZAR FLASH
+// FLASH
 // ------------------------------------------------------------
 
 function actualizarFlashHuevo(
     delta
 ) {
 
-    const flashes =
-        grupoHuevo.children.filter(
-            objeto =>
-                objeto.userData &&
-                objeto.userData.activo &&
-                objeto.userData.tiempo !== undefined &&
-                objeto.material &&
-                objeto.material.transparent
+    if (
+        !flashHuevo ||
+        !flashHuevo.visible
+    ) {
+        return;
+    }
+
+
+    flashHuevo.scale.multiplyScalar(
+        1 + delta * 6
+    );
+
+
+    flashHuevo.material.opacity =
+        Math.max(
+            0,
+            flashHuevo.material.opacity -
+            delta * 2.5
         );
 
-    flashes.forEach(
-        flash => {
 
-            flash.userData.tiempo +=
-                delta;
+    if (
+        flashHuevo.material.opacity <= 0
+    ) {
 
-            const tiempo =
-                flash.userData.tiempo;
-
-            const progreso =
-                Math.min(
-                    tiempo / 0.8,
-                    1
-                );
-
-            const escala =
-                0.2 +
-                progreso * 4;
-
-            flash.scale.setScalar(
-                escala
-            );
-
-            flash.material.opacity =
-                (1 - progreso) * 0.9;
-
-            if (progreso >= 1) {
-
-                flash.userData.activo =
-                    false;
-
-                flash.material.opacity =
-                    0;
-            }
-        }
-    );
+        flashHuevo.visible =
+            false;
+    }
 }
 
 
 // ------------------------------------------------------------
-// ACTUALIZAR TODO EL HUEVO
+// EFECTOS
 // ------------------------------------------------------------
 
 function actualizarEfectosHuevo(
     delta
 ) {
 
-    actualizarHuevo(delta);
+    actualizarHuevo(
+        delta
+    );
 
     actualizarAperturaHuevo(
         delta
@@ -2437,55 +2242,58 @@ function actualizarEfectosHuevo(
     actualizarFlashHuevo(
         delta
     );
-            }
-// ============================================================
-// BLOQUE 7/12
-// POLLITO 3D + ANIMACIÓN
-// ============================================================
-
-// ------------------------------------------------------------
-// CREAR MATERIAL
-// ------------------------------------------------------------
-
-function materialPollito(
-    color
-) {
-
-    return new THREE.MeshStandardMaterial({
-        color: color,
-        roughness: 0.8,
-        metalness: 0
-    });
 }
-
-
-// ------------------------------------------------------------
-// CREAR POLLITO PROCEDURAL
-// ------------------------------------------------------------
+// ============================================================
+// BLOQUE 7/10
+// POLLITO 3D
+// ============================================================
 
 function crearPollitoProcedural() {
 
     const grupo =
         new THREE.Group();
 
+
     grupo.name =
         "PollitoCinematico";
+
+
+    grupo.userData
+        .eggaroPollito =
+        true;
+
+
+    grupo.userData
+        .activo =
+        false;
+
+
+    grupo.userData
+        .tiempo =
+        0;
+
 
     // --------------------------------------------------------
     // CUERPO
     // --------------------------------------------------------
 
+    const materialCuerpo =
+        new THREE.MeshStandardMaterial({
+            color: 0xf2c94c,
+            roughness: 0.9
+        });
+
+
     const cuerpo =
         new THREE.Mesh(
             new THREE.SphereGeometry(
-                0.65,
+                0.62,
                 20,
                 16
             ),
-            materialPollito(
-                0xf4cf55
-            )
+            materialCuerpo
         );
+
 
     cuerpo.scale.set(
         1,
@@ -2493,13 +2301,18 @@ function crearPollitoProcedural() {
         0.95
     );
 
+
     cuerpo.position.y =
-        0.62;
+        0.65;
 
-    cuerpo.castShadow = true;
-    cuerpo.receiveShadow = true;
 
-    grupo.add(cuerpo);
+    cuerpo.castShadow =
+        true;
+
+
+    grupo.add(
+        cuerpo
+    );
 
 
     // --------------------------------------------------------
@@ -2513,305 +2326,279 @@ function crearPollitoProcedural() {
                 20,
                 16
             ),
-            materialPollito(
-                0xffdf6b
-            )
+            materialCuerpo
         );
+
 
     cabeza.position.set(
         0,
-        1.15,
-        0.08
+        1.18,
+        -0.08
     );
 
-    cabeza.castShadow = true;
 
-    grupo.add(cabeza);
+    cabeza.castShadow =
+        true;
+
+
+    grupo.add(
+        cabeza
+    );
 
 
     // --------------------------------------------------------
-    // OJO IZQUIERDO
+    // OJOS
     // --------------------------------------------------------
 
     const materialOjo =
-        new THREE.MeshStandardMaterial({
-            color: 0x171717,
-            roughness: 0.3
+        new THREE.MeshBasicMaterial({
+            color: 0x111111
         });
+
 
     const ojoIzq =
         new THREE.Mesh(
             new THREE.SphereGeometry(
                 0.055,
-                12,
+                10,
                 8
             ),
             materialOjo
         );
 
-    ojoIzq.position.set(
-        -0.19,
-        1.25,
-        0.42
-    );
-
-    grupo.add(ojoIzq);
-
-
-    // --------------------------------------------------------
-    // OJO DERECHO
-    // --------------------------------------------------------
 
     const ojoDer =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.055,
-                12,
-                8
-            ),
-            materialOjo
-        );
+        ojoIzq.clone();
 
-    ojoDer.position.set(
-        0.19,
-        1.25,
-        0.42
+
+    ojoIzq.position.set(
+        -0.17,
+        1.28,
+        -0.43
     );
 
-    grupo.add(ojoDer);
+
+    ojoDer.position.set(
+        0.17,
+        1.28,
+        -0.43
+    );
+
+
+    grupo.add(
+        ojoIzq
+    );
+
+    grupo.add(
+        ojoDer
+    );
 
 
     // --------------------------------------------------------
     // PICO
     // --------------------------------------------------------
 
+    const materialPico =
+        new THREE.MeshStandardMaterial({
+            color: 0xe58b32,
+            roughness: 0.8
+        });
+
+
     const pico =
         new THREE.Mesh(
             new THREE.ConeGeometry(
                 0.13,
-                0.32,
-                4
+                0.28,
+                8
             ),
-            materialPollito(
-                0xe89532
-            )
+            materialPico
         );
+
 
     pico.rotation.x =
         Math.PI / 2;
 
+
     pico.position.set(
         0,
         1.13,
-        0.48
+        -0.5
     );
 
-    grupo.add(pico);
+
+    grupo.add(
+        pico
+    );
 
 
     // --------------------------------------------------------
-    // ALA IZQUIERDA
+    // ALAS
     // --------------------------------------------------------
 
     const alaIzq =
         new THREE.Mesh(
             new THREE.SphereGeometry(
-                0.3,
+                0.32,
                 16,
                 12
             ),
-            materialPollito(
-                0xe8bd45
-            )
+            materialCuerpo
         );
+
+
+    const alaDer =
+        alaIzq.clone();
+
+
+    alaIzq.name =
+        "AlaIzquierda";
+
+
+    alaDer.name =
+        "AlaDerecha";
+
 
     alaIzq.scale.set(
         0.45,
         0.8,
-        0.28
+        0.3
     );
+
+
+    alaDer.scale.copy(
+        alaIzq.scale
+    );
+
 
     alaIzq.position.set(
-        -0.58,
-        0.75,
+        -0.55,
+        0.72,
         0
     );
 
-    alaIzq.rotation.z =
-        -0.25;
-
-    alaIzq.castShadow = true;
-
-    grupo.add(alaIzq);
-
-
-    // --------------------------------------------------------
-    // ALA DERECHA
-    // --------------------------------------------------------
-
-    const alaDer =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.3,
-                16,
-                12
-            ),
-            materialPollito(
-                0xe8bd45
-            )
-        );
-
-    alaDer.scale.set(
-        0.45,
-        0.8,
-        0.28
-    );
 
     alaDer.position.set(
-        0.58,
-        0.75,
+        0.55,
+        0.72,
         0
     );
 
-    alaDer.rotation.z =
-        0.25;
 
-    alaDer.castShadow = true;
+    grupo.add(
+        alaIzq
+    );
 
-    grupo.add(alaDer);
+    grupo.add(
+        alaDer
+    );
 
 
     // --------------------------------------------------------
     // PATAS
     // --------------------------------------------------------
 
-    const materialPatas =
-        materialPollito(
-            0xe89532
-        );
+    const materialPata =
+        new THREE.MeshStandardMaterial({
+            color: 0xe58b32,
+            roughness: 0.9
+        });
+
 
     const pataIzq =
         new THREE.Mesh(
             new THREE.CylinderGeometry(
                 0.035,
                 0.045,
-                0.3,
+                0.35,
                 8
             ),
-            materialPatas
+            materialPata
         );
-
-    pataIzq.position.set(
-        -0.2,
-        0.18,
-        0
-    );
-
-    grupo.add(pataIzq);
 
 
     const pataDer =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.035,
-                0.045,
-                0.3,
-                8
-            ),
-            materialPatas
-        );
+        pataIzq.clone();
 
-    pataDer.position.set(
-        0.2,
-        0.18,
+
+    pataIzq.position.set(
+        -0.18,
+        0.13,
         0
     );
 
-    grupo.add(pataDer);
+
+    pataDer.position.set(
+        0.18,
+        0.13,
+        0
+    );
 
 
-    // --------------------------------------------------------
-    // ESTADO
-    // --------------------------------------------------------
+    grupo.add(
+        pataIzq
+    );
 
-    grupo.userData.tiempo =
-        0;
-
-    grupo.userData.activo =
-        false;
-
-    grupo.userData.alaIzq =
-        alaIzq;
-
-    grupo.userData.alaDer =
-        alaDer;
-
-    grupo.userData.baseY =
-        0;
-
-    grupo.visible = false;
+    grupo.add(
+        pataDer
+    );
 
 
     grupo.position.set(
         0,
-        0,
+        0.15,
         -3
     );
+
+
+    grupo.visible =
+        false;
+
+
+    grupo.scale.setScalar(
+        0.01
+    );
+
 
     grupoResultado.add(
         grupo
     );
+
 
     return grupo;
 }
 
 
 // ------------------------------------------------------------
-// CREAR RESULTADO
+// PREPARAR RESULTADO
 // ------------------------------------------------------------
 
 function prepararResultado() {
 
-    const creador =
-        window.EGGARO_CREADOR_POLLO;
-
-    if (
-        typeof creador ===
-        "function"
-    ) {
-
-        try {
-
-            const externo =
-                creador(
-                    resultadoCinematica
-                );
-
-            if (externo) {
-
-                grupoResultado.add(
-                    externo
-                );
-
-                externo.visible =
-                    false;
-
-                externo.userData
-                    .eggaroExterno = true;
-
-                return externo;
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "No se pudo usar el creador externo del pollo.",
-                error
-            );
-        }
+    if (!grupoResultado) {
+        return;
     }
 
-    return crearPollitoProcedural();
+
+    crearPollitoProcedural();
+}
+
+
+// ------------------------------------------------------------
+// OBTENER POLLITO
+// ------------------------------------------------------------
+
+function obtenerPollito() {
+
+    if (!grupoResultado) {
+        return null;
+    }
+
+
+    return grupoResultado
+        .getObjectByName(
+            "PollitoCinematico"
+        );
 }
 
 
@@ -2822,37 +2609,41 @@ function prepararResultado() {
 function mostrarResultadoCinematica() {
 
     const pollito =
-        grupoResultado.children.find(
-            objeto =>
-                objeto.name ===
-                "PollitoCinematico"
-        );
+        obtenerPollito();
 
-    if (!pollito) return;
+
+    if (!pollito) {
+        return;
+    }
+
 
     pollito.visible =
         true;
 
+
     pollito.userData.activo =
         true;
+
 
     pollito.userData.tiempo =
         0;
 
+
     pollito.scale.setScalar(
-        0.05
+        0.01
     );
+
 
     pollito.position.set(
         0,
-        0.05,
+        0.15,
         -3
     );
 }
 
 
 // ------------------------------------------------------------
-// ANIMAR POLLITO
+// ANIMACIÓN DEL POLLITO
 // ------------------------------------------------------------
 
 function actualizarPollito(
@@ -2860,11 +2651,8 @@ function actualizarPollito(
 ) {
 
     const pollito =
-        grupoResultado.children.find(
-            objeto =>
-                objeto.name ===
-                "PollitoCinematico"
-        );
+        obtenerPollito();
+
 
     if (
         !pollito ||
@@ -2873,118 +2661,108 @@ function actualizarPollito(
         return;
     }
 
-    pollito.userData.tiempo +=
+
+    const datos =
+        pollito.userData;
+
+
+    datos.tiempo +=
         delta;
 
-    const tiempo =
-        pollito.userData.tiempo;
 
+    const t =
+        datos.tiempo;
 
-    // --------------------------------------------------------
-    // APARICIÓN
-    // --------------------------------------------------------
 
     const entrada =
         Math.min(
-            tiempo / 0.8,
+            t / 0.8,
             1
         );
 
-    const suave =
+
+    const suavizado =
         entrada *
         entrada *
         (3 - 2 * entrada);
 
+
     pollito.scale.setScalar(
-        suave
+        Math.max(
+            0.01,
+            suavizado
+        )
     );
 
 
-    // --------------------------------------------------------
-    // SALTO
-    // --------------------------------------------------------
-
-    const salto =
-        Math.abs(
-            Math.sin(
-                tiempo * 4
-            )
-        ) *
-        0.22 *
-        Math.min(
-            tiempo * 2,
-            1
-        );
-
     pollito.position.y =
-        0.05 +
-        salto;
+        0.15 +
+        Math.abs(
+            Math.sin(t * 4.5)
+        ) *
+        0.10;
 
-
-    // --------------------------------------------------------
-    // MOVIMIENTO DE ALAS
-    // --------------------------------------------------------
-
-    const ala =
-        Math.sin(
-            tiempo * 11
-        ) * 0.45;
-
-    if (
-        pollito.userData.alaIzq
-    ) {
-
-        pollito.userData.alaIzq
-            .rotation.z =
-            -0.25 - ala;
-    }
-
-    if (
-        pollito.userData.alaDer
-    ) {
-
-        pollito.userData.alaDer
-            .rotation.z =
-            0.25 + ala;
-    }
-
-
-    // --------------------------------------------------------
-    // PEQUEÑO GIRO
-    // --------------------------------------------------------
 
     pollito.rotation.y =
-        Math.sin(
-            tiempo * 1.5
-        ) * 0.12;
-        }
+        Math.sin(t * 1.8) *
+        0.12;
+
+
+    pollito.rotation.z =
+        Math.sin(t * 3.5) *
+        0.035;
+
+
+    const alaIzq =
+        pollito.getObjectByName(
+            "AlaIzquierda"
+        );
+
+
+    const alaDer =
+        pollito.getObjectByName(
+            "AlaDerecha"
+        );
+
+
+    if (alaIzq) {
+
+        alaIzq.rotation.z =
+            0.15 +
+            Math.sin(t * 8) *
+            0.18;
+    }
+
+
+    if (alaDer) {
+
+        alaDer.rotation.z =
+            -0.15 -
+            Math.sin(t * 8) *
+            0.18;
+    }
+                }
 // ============================================================
-// BLOQUE 8/12
+// BLOQUE 8/10
 // CÁMARA CINEMATOGRÁFICA
 // ============================================================
 
-// ------------------------------------------------------------
-// ESTADO DE CÁMARA
-// ------------------------------------------------------------
-
 const camaraCine = {
 
-    objetivo: new THREE.Vector3(),
+    fase: 0,
 
     posicionObjetivo:
         new THREE.Vector3(),
 
-    mirarObjetivo:
+    miradaObjetivo:
         new THREE.Vector3(),
 
-    tiempo: 0,
-
-    fase: 0
+    tiempo: 0
 };
 
 
 // ------------------------------------------------------------
-// SUAVIZAR VALOR
+// SUAVIZADO
 // ------------------------------------------------------------
 
 function suavizar(
@@ -3006,291 +2784,7 @@ function suavizar(
 
 
 // ------------------------------------------------------------
-// SUAVIZAR VECTOR
-// ------------------------------------------------------------
-
-function suavizarVector(
-    actual,
-    objetivo,
-    velocidad,
-    delta
-) {
-
-    actual.lerp(
-        objetivo,
-        1 -
-        Math.exp(
-            -velocidad * delta
-        )
-    );
-}
-
-
-// ------------------------------------------------------------
-// POSICIÓN DE CÁMARA
-// ------------------------------------------------------------
-
-function colocarCamaraCine(
-    posicion,
-    objetivo,
-    suavidad = 3
-) {
-
-    camaraCine.posicionObjetivo
-        .copy(posicion);
-
-    camaraCine.mirarObjetivo
-        .copy(objetivo);
-
-    camaraCine.suavidad =
-        suavidad;
-}
-
-
-// ------------------------------------------------------------
-// ACTUALIZAR CÁMARA
-// ------------------------------------------------------------
-
-function actualizarCamaraCine(
-    delta
-) {
-
-    if (!camara) return;
-
-    camaraCine.tiempo +=
-        delta;
-
-    // --------------------------------------------------------
-    // FASE 0
-    // PRESENTACIÓN DEL BOSQUE
-    // --------------------------------------------------------
-
-    if (
-        camaraCine.fase === 0
-    ) {
-
-        const movimiento =
-            Math.sin(
-                camaraCine.tiempo *
-                0.35
-            );
-
-        camaraCine.posicionObjetivo
-            .set(
-                movimiento * 2.2,
-                5.2,
-                15
-            );
-
-        camaraCine.mirarObjetivo
-            .set(
-                0,
-                2.4,
-                1
-            );
-    }
-
-
-    // --------------------------------------------------------
-    // FASE 1
-    // SEGUIMIENTO DE PERSONAJES
-    // --------------------------------------------------------
-
-    else if (
-        camaraCine.fase === 1
-    ) {
-
-        const mx =
-            mike
-                ? mike.position.x
-                : 0;
-
-        const mz =
-            mike
-                ? mike.position.z
-                : 5;
-
-        const cx =
-            micaela
-                ? micaela.position.x
-                : 0;
-
-        const cz =
-            micaela
-                ? micaela.position.z
-                : 5;
-
-        const centroX =
-            (mx + cx) * 0.5;
-
-        const centroZ =
-            (mz + cz) * 0.5;
-
-        camaraCine.posicionObjetivo
-            .set(
-                centroX + 5.5,
-                3.8,
-                centroZ + 8
-            );
-
-        camaraCine.mirarObjetivo
-            .set(
-                centroX,
-                1.8,
-                centroZ - 1
-            );
-    }
-
-
-    // --------------------------------------------------------
-    // FASE 2
-    // ACERCAMIENTO AL HUEVO
-    // --------------------------------------------------------
-
-    else if (
-        camaraCine.fase === 2
-    ) {
-
-        const movimiento =
-            Math.sin(
-                camaraCine.tiempo *
-                0.8
-            );
-
-        camaraCine.posicionObjetivo
-            .set(
-                4.5 +
-                movimiento * 0.35,
-                2.7,
-                2.2
-            );
-
-        camaraCine.mirarObjetivo
-            .set(
-                0,
-                1.25,
-                -3
-            );
-    }
-
-
-    // --------------------------------------------------------
-    // FASE 3
-    // HUEVO / APERTURA
-    // --------------------------------------------------------
-
-    else if (
-        camaraCine.fase === 3
-    ) {
-
-        const movimiento =
-            Math.sin(
-                camaraCine.tiempo *
-                1.2
-            );
-
-        camaraCine.posicionObjetivo
-            .set(
-                3.0 +
-                movimiento * 0.18,
-                2.1,
-                0.7
-            );
-
-        camaraCine.mirarObjetivo
-            .set(
-                0,
-                1.25,
-                -3
-            );
-    }
-
-
-    // --------------------------------------------------------
-    // FASE 4
-    // RESULTADO
-    // --------------------------------------------------------
-
-    else if (
-        camaraCine.fase === 4
-    ) {
-
-        const movimiento =
-            Math.sin(
-                camaraCine.tiempo *
-                0.7
-            );
-
-        camaraCine.posicionObjetivo
-            .set(
-                3.4 +
-                movimiento * 0.4,
-                2.4,
-                1.4
-            );
-
-        camaraCine.mirarObjetivo
-            .set(
-                0,
-                1.1,
-                -3
-            );
-    }
-
-
-    // --------------------------------------------------------
-    // FASE FINAL
-    // --------------------------------------------------------
-
-    else {
-
-        camaraCine.posicionObjetivo
-            .set(
-                0,
-                4.0,
-                11
-            );
-
-        camaraCine.mirarObjetivo
-            .set(
-                0,
-                1.7,
-                -1
-            );
-    }
-
-
-    // --------------------------------------------------------
-    // MOVIMIENTO SUAVE
-    // --------------------------------------------------------
-
-    suavizarVector(
-        camara.position,
-        camaraCine.posicionObjetivo,
-        3.2,
-        delta
-    );
-
-
-    // --------------------------------------------------------
-    // MIRADA SUAVE
-    // --------------------------------------------------------
-
-    suavizarVector(
-        camaraCine.mirarObjetivo,
-        camaraCine.mirarObjetivo,
-        1,
-        delta
-    );
-
-    camara.lookAt(
-        camaraCine.mirarObjetivo
-    );
-}
-
-
-// ------------------------------------------------------------
-// CAMBIAR FASE DE CÁMARA
+// CAMBIAR FASE
 // ------------------------------------------------------------
 
 function cambiarFaseCamara(
@@ -3302,132 +2796,401 @@ function cambiarFaseCamara(
 
     camaraCine.tiempo =
         0;
+}
+
+
+// ------------------------------------------------------------
+// CÁMARA
+// ------------------------------------------------------------
+
+function actualizarCamaraCine(
+    delta
+) {
+
+    if (!camara) {
+        return;
+    }
+
+
+    camaraCine.tiempo +=
+        delta;
+
+
+    let x = 0;
+    let y = 5;
+    let z = 15;
+
+    let mx = 0;
+    let my = 2;
+    let mz = 0;
+
+
+    // --------------------------------------------------------
+    // BOSQUE
+    // --------------------------------------------------------
+
+    if (
+        camaraCine.fase === 0
+    ) {
+
+        const t =
+            camaraCine.tiempo;
+
+
+        x =
+            Math.sin(t * 0.16) *
+            8;
+
+
+        y =
+            5.5 +
+            Math.sin(t * 0.3) *
+            0.2;
+
+
+        z =
+            15 -
+            t * 0.35;
+
+
+        mx = 0;
+        my = 2.5;
+        mz = 0;
+    }
+
+
+    // --------------------------------------------------------
+    // CAMINATA
+    // --------------------------------------------------------
+
+    else if (
+        camaraCine.fase === 1
+    ) {
+
+        const objetivo =
+            new THREE.Vector3(
+                0,
+                1.6,
+                3
+            );
+
+
+        if (
+            mike &&
+            micaela
+        ) {
+
+            objetivo.x =
+                (
+                    mike.position.x +
+                    micaela.position.x
+                ) / 2;
+
+
+            objetivo.z =
+                (
+                    mike.position.z +
+                    micaela.position.z
+                ) / 2;
         }
+
+
+        x =
+            objetivo.x + 6;
+
+
+        y =
+            3.8;
+
+
+        z =
+            objetivo.z + 8;
+
+
+        mx =
+            objetivo.x;
+
+
+        my =
+            1.4;
+
+
+        mz =
+            objetivo.z;
+    }
+
+
+    // --------------------------------------------------------
+    // HUEVO
+    // --------------------------------------------------------
+
+    else if (
+        camaraCine.fase === 2
+    ) {
+
+        x = 4.2;
+        y = 2.8;
+        z = 4.5;
+
+        mx = 0;
+        my = 1.1;
+        mz = -3;
+    }
+
+
+    // --------------------------------------------------------
+    // APERTURA
+    // --------------------------------------------------------
+
+    else if (
+        camaraCine.fase === 3
+    ) {
+
+        const acercamiento =
+            Math.min(
+                camaraCine.tiempo / 1.5,
+                1
+            );
+
+
+        x =
+            3.5 -
+            acercamiento * 1.5;
+
+
+        y =
+            2.5 -
+            acercamiento * 0.5;
+
+
+        z =
+            3.8 -
+            acercamiento * 1.0;
+
+
+        mx = 0;
+        my = 1;
+        mz = -3;
+    }
+
+
+    // --------------------------------------------------------
+    // POLLITO
+    // --------------------------------------------------------
+
+    else if (
+        camaraCine.fase === 4
+    ) {
+
+        x = 3.2;
+        y = 2.3;
+        z = 2.8;
+
+        mx = 0;
+        my = 0.9;
+        mz = -3;
+    }
+
+
+    // --------------------------------------------------------
+    // FINAL
+    // --------------------------------------------------------
+
+    else {
+
+        x = 4.5;
+        y = 3.2;
+        z = 5.5;
+
+        mx = 0;
+        my = 1.3;
+        mz = -2.5;
+    }
+
+
+    camara.position.x =
+        suavizar(
+            camara.position.x,
+            x,
+            2.5,
+            delta
+        );
+
+
+    camara.position.y =
+        suavizar(
+            camara.position.y,
+            y,
+            2.5,
+            delta
+        );
+
+
+    camara.position.z =
+        suavizar(
+            camara.position.z,
+            z,
+            2.5,
+            delta
+        );
+
+
+    camaraCine.miradaObjetivo.lerp(
+        new THREE.Vector3(
+            mx,
+            my,
+            mz
+        ),
+        1 -
+        Math.exp(
+            -3 * delta
+        )
+    );
+
+
+    camara.lookAt(
+        camaraCine.miradaObjetivo
+    );
+    }
 // ============================================================
-// BLOQUE 9/12
-// DIÁLOGOS + SUBTÍTULOS
+// BLOQUE 9/10
+// DIÁLOGOS Y SECUENCIA
 // ============================================================
 
-let dialogoActual = null;
 let dialogoElemento = null;
 let dialogoNombre = null;
 
 
 // ------------------------------------------------------------
-// CREAR INTERFAZ
+// INTERFAZ
 // ------------------------------------------------------------
 
 function crearInterfazDialogo() {
 
     if (
         document.getElementById(
-            "eggaro-dialogo-cine"
+            "eggaro-dialogo"
         )
     ) {
         return;
     }
 
-    const contenedor =
-        document.createElement("div");
 
-    contenedor.id =
-        "eggaro-dialogo-cine";
+    const caja =
+        document.createElement(
+            "div"
+        );
 
-    contenedor.style.position =
+
+    caja.id =
+        "eggaro-dialogo";
+
+
+    caja.style.position =
         "fixed";
 
-    contenedor.style.left =
-        "50%";
 
-    contenedor.style.bottom =
-        "7%";
+    caja.style.left =
+        "5%";
 
-    contenedor.style.transform =
-        "translateX(-50%)";
 
-    contenedor.style.width =
-        "min(90%, 760px)";
+    caja.style.right =
+        "5%";
 
-    contenedor.style.padding =
-        "16px 20px";
 
-    contenedor.style.boxSizing =
-        "border-box";
+    caja.style.bottom =
+        "5%";
 
-    contenedor.style.background =
-        "rgba(10,15,12,0.82)";
 
-    contenedor.style.border =
-        "2px solid rgba(255,255,255,0.25)";
+    caja.style.padding =
+        "14px 18px";
 
-    contenedor.style.borderRadius =
-        "18px";
 
-    contenedor.style.backdropFilter =
-        "blur(6px)";
+    caja.style.background =
+        "rgba(0,0,0,0.78)";
 
-    contenedor.style.color =
-        "white";
 
-    contenedor.style.fontFamily =
+    caja.style.border =
+        "2px solid rgba(255,255,255,0.75)";
+
+
+    caja.style.borderRadius =
+        "14px";
+
+
+    caja.style.zIndex =
+        "1000";
+
+
+    caja.style.fontFamily =
         "Arial, sans-serif";
 
-    contenedor.style.zIndex =
-        "100";
 
-    contenedor.style.opacity =
-        "0";
+    caja.style.color =
+        "white";
 
-    contenedor.style.transition =
-        "opacity 0.25s ease";
 
-    document.body.appendChild(
-        contenedor
-    );
+    caja.style.pointerEvents =
+        "none";
 
 
     const nombre =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    nombre.id =
-        "eggaro-dialogo-nombre";
-
-    nombre.style.fontSize =
-        "18px";
 
     nombre.style.fontWeight =
         "bold";
 
-    nombre.style.marginBottom =
-        "6px";
 
-    contenedor.appendChild(
+    nombre.style.fontSize =
+        "18px";
+
+
+    nombre.style.marginBottom =
+        "5px";
+
+
+    const texto =
+        document.createElement(
+            "div"
+        );
+
+
+    texto.style.fontSize =
+        "16px";
+
+
+    texto.style.lineHeight =
+        "1.35";
+
+
+    caja.appendChild(
         nombre
     );
 
 
-    const texto =
-        document.createElement("div");
-
-    texto.id =
-        "eggaro-dialogo-texto";
-
-    texto.style.fontSize =
-        "17px";
-
-    texto.style.lineHeight =
-        "1.4";
-
-    contenedor.appendChild(
+    caja.appendChild(
         texto
     );
 
 
+    document.body.appendChild(
+        caja
+    );
+
+
     dialogoElemento =
-        contenedor;
+        texto;
+
 
     dialogoNombre =
         nombre;
+
+
+    caja.style.display =
+        "none";
 }
 
 
@@ -3436,50 +3199,64 @@ function crearInterfazDialogo() {
 // ------------------------------------------------------------
 
 function mostrarDialogo(
-    personaje,
+    nombre,
     texto
 ) {
 
-    crearInterfazDialogo();
+    if (
+        !dialogoElemento ||
+        !dialogoNombre
+    ) {
+        crearInterfazDialogo();
+    }
 
-    dialogoActual = {
-        personaje,
-        texto
-    };
+
+    const caja =
+        document.getElementById(
+            "eggaro-dialogo"
+        );
+
+
+    if (!caja) {
+        return;
+    }
+
 
     dialogoNombre.textContent =
-        personaje;
+        nombre;
 
-    document.getElementById(
-        "eggaro-dialogo-texto"
-    ).textContent =
+
+    dialogoElemento.textContent =
         texto;
 
-    dialogoElemento.style.opacity =
-        "1";
+
+    caja.style.display =
+        "block";
 }
 
 
 // ------------------------------------------------------------
-// OCULTAR DIÁLOGO
+// OCULTAR
 // ------------------------------------------------------------
 
 function ocultarDialogo() {
 
-    if (!dialogoElemento) {
-        return;
+    const caja =
+        document.getElementById(
+            "eggaro-dialogo"
+        );
+
+
+    if (caja) {
+
+        caja.style.display =
+            "none";
     }
-
-    dialogoElemento.style.opacity =
-        "0";
-
-    dialogoActual =
-        null;
 }
 
 
 // ------------------------------------------------------------
-// SECUENCIA DE DIÁLOGOS
+// LÍNEAS
 // ------------------------------------------------------------
 
 const dialogosCinematica = [
@@ -3487,7 +3264,7 @@ const dialogosCinematica = [
     {
         inicio: 2,
         fin: 5,
-        personaje: "Mike",
+        nombre: "Mike",
         texto:
             "Micaela... mira ese bosque."
     },
@@ -3495,7 +3272,7 @@ const dialogosCinematica = [
     {
         inicio: 5,
         fin: 8,
-        personaje: "Micaela",
+        nombre: "Micaela",
         texto:
             "Espera... ¿viste eso?"
     },
@@ -3503,7 +3280,7 @@ const dialogosCinematica = [
     {
         inicio: 8,
         fin: 11,
-        personaje: "Mike",
+        nombre: "Mike",
         texto:
             "Hay algo brillando entre los árboles."
     },
@@ -3511,7 +3288,7 @@ const dialogosCinematica = [
     {
         inicio: 11,
         fin: 14,
-        personaje: "Micaela",
+        nombre: "Micaela",
         texto:
             "¡Es un huevo!"
     },
@@ -3519,7 +3296,7 @@ const dialogosCinematica = [
     {
         inicio: 14,
         fin: 17,
-        personaje: "Mike",
+        nombre: "Mike",
         texto:
             "Acércate. Vamos a descubrir qué hay dentro."
     },
@@ -3527,7 +3304,7 @@ const dialogosCinematica = [
     {
         inicio: 17,
         fin: 20,
-        personaje: "Micaela",
+        nombre: "Micaela",
         texto:
             "Está empezando a moverse..."
     },
@@ -3535,9 +3312,17 @@ const dialogosCinematica = [
     {
         inicio: 20,
         fin: 23,
-        personaje: "Mike",
+        nombre: "Mike",
         texto:
             "¡Mira!"
+    },
+
+    {
+        inicio: 23,
+        fin: 27,
+        nombre: "Micaela",
+        texto:
+            "¡Es un pollito!"
     }
 ];
 
@@ -3550,11 +3335,12 @@ function actualizarDialogos(
     tiempo
 ) {
 
-    let encontrado = null;
+    let actual = null;
+
 
     for (
-        const dialogo of
-        dialogosCinematica
+        const dialogo
+        of dialogosCinematica
     ) {
 
         if (
@@ -3562,7 +3348,7 @@ function actualizarDialogos(
             tiempo < dialogo.fin
         ) {
 
-            encontrado =
+            actual =
                 dialogo;
 
             break;
@@ -3570,414 +3356,363 @@ function actualizarDialogos(
     }
 
 
-    if (!encontrado) {
-
-        ocultarDialogo();
-
-        return;
-    }
-
-
-    if (
-        !dialogoActual ||
-        dialogoActual.texto !==
-            encontrado.texto
-    ) {
+    if (actual) {
 
         mostrarDialogo(
-            encontrado.personaje,
-            encontrado.texto
-        );
-    }
-}
-
-
-// ------------------------------------------------------------
-// OCULTAR TODO AL TERMINAR
-// ------------------------------------------------------------
-
-function destruirInterfazDialogo() {
-
-    const elemento =
-        document.getElementById(
-            "eggaro-dialogo-cine"
+            actual.nombre,
+            actual.texto
         );
 
-    if (elemento) {
+    } else {
 
-        elemento.remove();
-    }
-
-    dialogoElemento =
-        null;
-
-    dialogoNombre =
-        null;
-
-    dialogoActual =
-        null;
-        }
-// ============================================================
-// BLOQUE 10/12
-// SECUENCIA PRINCIPAL DE LA CINEMÁTICA
-// ============================================================
-
-let tiempoCinematica = 0;
-let faseCinematica = -1;
-let secuenciaIniciada = false;
-
-const FASE = {
-    BOSQUE: 0,
-    CAMINATA: 1,
-    HUEVO: 2,
-    APERTURA: 3,
-    RESULTADO: 4,
-    FINAL: 5
-};
-
-
-// ------------------------------------------------------------
-// INICIAR SECUENCIA
-// ------------------------------------------------------------
-
-function iniciarSecuenciaCinematica() {
-
-    tiempoCinematica = 0;
-    faseCinematica = FASE.BOSQUE;
-    secuenciaIniciada = true;
-    cinematicaFinalizada = false;
-
-    if (mike) {
-        detenerCaminata(mike);
-
-        mike.position.set(-1.25, 0, 8);
-        mike.rotation.y = Math.PI;
-    }
-
-    if (micaela) {
-        detenerCaminata(micaela);
-
-        micaela.position.set(1.25, 0, 8.8);
-        micaela.rotation.y = Math.PI;
-    }
-
-    if (grupoHuevo) {
-        grupoHuevo.visible = true;
-    }
-
-    if (grupoResultado) {
-        grupoResultado.visible = true;
-    }
-
-    if (grupoHuevo) {
-        grupoHuevo.position.set(0, 0, 0);
-    }
-
-    if (grupoResultado) {
-        grupoResultado.position.set(0, 0, 0);
-    }
-
-    if (typeof aplicarPoseReposo === "function") {
-        aplicarPoseReposo(mike);
-        aplicarPoseReposo(micaela);
-    }
-
-    cambiarFaseCamara(0);
-}
-
-
-// ------------------------------------------------------------
-// CAMBIO DE FASE
-// ------------------------------------------------------------
-
-function cambiarFaseCinematica(nuevaFase) {
-
-    faseCinematica = nuevaFase;
-
-    switch (nuevaFase) {
-
-        case FASE.BOSQUE:
-
-            if (mike) detenerCaminata(mike);
-            if (micaela) detenerCaminata(micaela);
-
-            cambiarFaseCamara(0);
-
-            break;
-
-
-        case FASE.CAMINATA:
-
-            if (mike) {
-                iniciarCaminata(mike, 0.2);
-            }
-
-            if (micaela) {
-                iniciarCaminata(micaela, 0.2);
-            }
-
-            cambiarFaseCamara(1);
-
-            break;
-
-
-        case FASE.HUEVO:
-
-            if (mike) detenerCaminata(mike);
-            if (micaela) detenerCaminata(micaela);
-
-            activarHuevo();
-
-            cambiarFaseCamara(2);
-
-            break;
-
-
-        case FASE.APERTURA:
-
-            if (mike) detenerCaminata(mike);
-            if (micaela) detenerCaminata(micaela);
-
-            abrirHuevo();
-
-            cambiarFaseCamara(3);
-
-            break;
-
-
-        case FASE.RESULTADO:
-
-            if (mike) detenerCaminata(mike);
-            if (micaela) detenerCaminata(micaela);
-
-            mostrarResultadoCinematica();
-
-            cambiarFaseCamara(4);
-
-            break;
-
-
-        case FASE.FINAL:
-
-            if (mike) detenerCaminata(mike);
-            if (micaela) detenerCaminata(micaela);
-
-            ocultarDialogo();
-
-            cambiarFaseCamara(5);
-
-            cinematicaFinalizada = true;
-
-            break;
+        ocultarDialogo();
     }
 }
 
 
 // ------------------------------------------------------------
-// ACTUALIZAR SECUENCIA
+// SECUENCIA
 // ------------------------------------------------------------
 
-function actualizarSecuenciaCinematica(delta) {
+function actualizarSecuencia(
+    delta
+) {
 
-    if (!secuenciaIniciada) return;
+    tiempoCinematica +=
+        delta;
 
-    tiempoCinematica += delta;
 
-
-    // --------------------------------------------------------
-    // 0 — PRESENTACIÓN DEL BOSQUE
-    // --------------------------------------------------------
+    // 0-3 segundos:
+    // presentación del bosque
 
     if (
-        faseCinematica === FASE.BOSQUE &&
+        faseCinematica === 0 &&
         tiempoCinematica >= 3
     ) {
 
-        cambiarFaseCinematica(FASE.CAMINATA);
+        faseCinematica = 1;
+
+        if (mike) {
+
+            iniciarCaminata(
+                mike,
+                0.2
+            );
+        }
+
+
+        if (micaela) {
+
+            iniciarCaminata(
+                micaela,
+                0.2
+            );
+        }
+
+
+        cambiarFaseCamara(
+            1
+        );
     }
 
 
-    // --------------------------------------------------------
-    // 1 — MIKE Y MICAELA CAMINAN
-    // --------------------------------------------------------
-
+    // Mike y Micaela llegan
     if (
-        faseCinematica === FASE.CAMINATA &&
+        faseCinematica === 1 &&
         mike &&
         micaela
     ) {
 
         const mikeListo =
-            Math.abs(mike.position.z - 0.2) < 0.08;
+            !mike.userData.eggarCaminando;
+
 
         const micaelaLista =
-            Math.abs(micaela.position.z - 0.2) < 0.08;
+            !micaela.userData.eggarCaminando;
 
-        if (mikeListo && micaelaLista) {
-
-            detenerCaminata(mike);
-            detenerCaminata(micaela);
-
-            cambiarFaseCinematica(FASE.HUEVO);
-        }
-    }
-
-
-    // --------------------------------------------------------
-    // 2 — OBSERVAN EL HUEVO
-    // --------------------------------------------------------
-
-    if (
-        faseCinematica === FASE.HUEVO &&
-        tiempoCinematica >= 5
-    ) {
-
-        cambiarFaseCinematica(FASE.APERTURA);
-    }
-
-
-    // --------------------------------------------------------
-    // 3 — HUEVO SE ABRE
-    // --------------------------------------------------------
-
-    if (
-        faseCinematica === FASE.APERTURA &&
-        grupoResultado
-    ) {
-
-        const pollito =
-            grupoResultado.getObjectByName("PollitoCinematico");
 
         if (
-            pollito &&
-            pollito.userData &&
-            pollito.userData.activo
+            mikeListo &&
+            micaelaLista
         ) {
 
-            cambiarFaseCinematica(FASE.RESULTADO);
+            faseCinematica = 2;
+
+            activarHuevo();
+
+            cambiarFaseCamara(
+                2
+            );
         }
     }
 
 
-    // --------------------------------------------------------
-    // 4 — RESULTADO
-    // --------------------------------------------------------
-
+    // Observan el huevo
     if (
-        faseCinematica === FASE.RESULTADO &&
-        tiempoCinematica >= 7
+        faseCinematica === 2 &&
+        tiempoCinematica >= 14
     ) {
 
-        cambiarFaseCinematica(FASE.FINAL);
+        faseCinematica = 3;
+
+        abrirHuevo();
+
+        cambiarFaseCamara(
+            3
+        );
+    }
+
+
+    // Después de abrirse
+    if (
+        faseCinematica === 3 &&
+        huevoAbierto
+    ) {
+
+        faseCinematica = 4;
+
+        cambiarFaseCamara(
+            4
+        );
+    }
+
+
+    // Final
+    if (
+        faseCinematica === 4 &&
+        tiempoCinematica >= 27
+    ) {
+
+        faseCinematica = 5;
+
+        cambiarFaseCamara(
+            5
+        );
+
+        cinematicaFinalizada =
+            true;
     }
 }
+// ============================================================
+// BLOQUE 10/10
+// ACTUALIZACIÓN + INICIO + EXPORTACIONES
+// ============================================================
 
 
 // ------------------------------------------------------------
-// ACTUALIZACIÓN GENERAL DE PERSONAJES
+// ACTUALIZADOR PRINCIPAL
 // ------------------------------------------------------------
 
-function actualizarTodoCinematica(delta) {
+function actualizarCinematica(
+    delta
+) {
 
-    actualizarPersonajes(delta);
+    if (!activa) {
+        return;
+    }
 
-    actualizarEfectosHuevo(delta);
 
-    actualizarPollito(delta);
+    actualizarPersonajes(
+        delta
+    );
 
-    actualizarCamaraCine(delta);
 
-    actualizarDialogos(tiempoCinematica);
+    actualizarEfectosHuevo(
+        delta
+    );
 
-    actualizarSecuenciaCinematica(delta);
+
+    actualizarPollito(
+        delta
+    );
+
+
+    actualizarCamaraCine(
+        delta
+    );
+
+
+    actualizarDialogos(
+        tiempoCinematica
+    );
+
+
+    actualizarSecuencia(
+        delta
+    );
 }
 
 
 // ------------------------------------------------------------
-// REEMPLAZAR EL ACTUALIZADOR PRINCIPAL
+// INICIAR
 // ------------------------------------------------------------
 
-function actualizarCinematica(delta) {
+export async function iniciarCinematica(
+    resultado = "noob"
+) {
 
-    if (!activa) return;
+    if (activa) {
+        return;
+    }
 
-    actualizarTodoCinematica(delta);
-}
-
-
-// ------------------------------------------------------------
-// INICIO PÚBLICO
-// ------------------------------------------------------------
-
-export async function iniciarCinematica(resultado = "noob") {
 
     resultadoCinematica =
-        String(resultado || "noob").toLowerCase();
+        String(
+            resultado || "noob"
+        )
+        .toLowerCase()
+        .trim();
+
 
     activa = true;
-    cinematicaFinalizada = false;
-    secuenciaIniciada = false;
 
+    cinematicaFinalizada =
+        false;
+
+
+    tiempoCinematica =
+        0;
+
+
+    faseCinematica =
+        0;
+
+
+    huevoActivo =
+        false;
+
+
+    huevoAbriendo =
+        false;
+
+
+    huevoAbierto =
+        false;
+
+
+    // Escena
     crearEscena();
+
+
     crearCamara();
+
+
     crearRenderer();
+
+
     crearIluminacion();
+
 
     crearInterfazDialogo();
 
+
     crearBosque();
+
 
     prepararHuevo();
 
-    // Importante: crear también la energía desde el inicio.
-    crearEnergiaHuevo();
 
     prepararResultado();
 
+
+    // Personajes
     await cargarPersonajes();
 
-    iniciarSecuenciaCinematica();
 
-    reloj = new THREE.Clock();
+    // Cámara
+    cambiarFaseCamara(
+        0
+    );
+
+
+    reloj =
+        new THREE.Clock();
+
+
+    actualizarTamaño();
+
 
     renderizar();
 }
 
 
 // ------------------------------------------------------------
-// DETENER CINEMÁTICA
+// DETENER
 // ------------------------------------------------------------
 
 export function detenerCinematica() {
 
     activa = false;
-    secuenciaIniciada = false;
 
-    ocultarDialogo();
 
-    if (renderer) {
-        renderer.setAnimationLoop(null);
-    }
+    cinematicaFinalizada =
+        false;
 
-    if (renderer && renderer.domElement) {
-        renderer.domElement.remove();
-    }
-
-    destruirInterfazDialogo();
 
     if (renderer) {
+
         renderer.dispose();
+
+
+        if (
+            renderer.domElement &&
+            renderer.domElement.parentNode
+        ) {
+
+            renderer.domElement.parentNode
+                .removeChild(
+                    renderer.domElement
+                );
+        }
     }
+
+
+    const dialogo =
+        document.getElementById(
+            "eggaro-dialogo"
+        );
+
+
+    if (dialogo) {
+
+        dialogo.remove();
+    }
+
 
     renderer = null;
+
     escena = null;
+
     camara = null;
+
     reloj = null;
+
+    grupoCinematica = null;
+
+    grupoBosque = null;
+
+    grupoPersonajes = null;
+
+    grupoHuevo = null;
+
+    grupoResultado = null;
+
+    mike = null;
+
+    micaela = null;
+
+    huevo = null;
+
+    particulasHuevo = null;
+
+    energiaHuevo = null;
+
+    flashHuevo = null;
 }
 
 
 // ------------------------------------------------------------
-// ESTADO DE LA CINEMÁTICA
+// ESTADO
 // ------------------------------------------------------------
 
 export function cinematicaTerminada() {
@@ -3987,572 +3722,57 @@ export function cinematicaTerminada() {
 
 
 // ------------------------------------------------------------
-// CAMBIAR RESULTADO DESDE EL JUEGO
+// RESULTADO
 // ------------------------------------------------------------
 
-export function establecerResultadoCinematica(resultado) {
+export function establecerResultadoCinematica(
+    resultado
+) {
 
     const valor =
-        String(resultado || "noob")
+        String(
+            resultado || "noob"
+        )
         .toLowerCase()
         .trim();
 
+
     if (
-        valor === "pollito_noob" ||
-        valor === "pollito noob" ||
-        valor === "pollitonoob"
-    ) {
-
-        resultadoCinematica = "pollitonoob";
-
-    } else if (
         valor === "zombie"
     ) {
 
-        resultadoCinematica = "zombie";
-
-    } else {
-
-        resultadoCinematica = "noob";
-    }
-}
-// ============================================================
-// BLOQUE 11/12
-// RESULTADO DEL HUEVO + POLLITO
-// ============================================================
-
-
-// ------------------------------------------------------------
-// BUSCAR CUALQUIER RESULTADO DISPONIBLE
-// ------------------------------------------------------------
-
-function obtenerObjetoResultado() {
-
-    if (!grupoResultado) return null;
-
-    let objeto =
-        grupoResultado.getObjectByName("PollitoCinematico");
-
-    if (objeto) return objeto;
-
-    let encontrado = null;
-
-    grupoResultado.traverse(obj => {
-
-        if (encontrado) return;
-
-        if (
-            obj.userData &&
-            obj.userData.eggaroPollito === true
-        ) {
-            encontrado = obj;
-        }
-    });
-
-    return encontrado;
-}
-
-
-// ------------------------------------------------------------
-// MOSTRAR RESULTADO
-// ------------------------------------------------------------
-
-function mostrarResultadoCinematica() {
-
-    if (!grupoResultado) return;
-
-    grupoResultado.visible = true;
-
-    const pollito =
-        obtenerObjetoResultado();
-
-    if (!pollito) {
-
-        prepararResultado();
-
-        const nuevoPollito =
-            obtenerObjetoResultado();
-
-        if (nuevoPollito) {
-
-            activarObjetoPollito(nuevoPollito);
-
-        }
-
-        return;
-    }
-
-    activarObjetoPollito(pollito);
-}
-
-
-// ------------------------------------------------------------
-// ACTIVAR POLLITO
-// ------------------------------------------------------------
-
-function activarObjetoPollito(objeto) {
-
-    if (!objeto) return;
-
-    objeto.visible = true;
-
-    objeto.userData.activo = true;
-    objeto.userData.eggaroPollito = true;
-
-    objeto.position.set(
-        0,
-        0.15,
-        -3
-    );
-
-    objeto.scale.set(
-        0.01,
-        0.01,
-        0.01
-    );
-
-    objeto.rotation.set(
-        0,
-        0,
-        0
-    );
-
-    objeto.userData.tiempo = 0;
-
-    objeto.traverse(parte => {
-
-        if (!parte) return;
-
-        parte.visible = true;
-
-        if (parte.material) {
-
-            if (Array.isArray(parte.material)) {
-
-                parte.material.forEach(material => {
-
-                    if (material) {
-                        material.transparent = false;
-                        material.opacity = 1;
-                    }
-
-                });
-
-            } else {
-
-                parte.material.transparent = false;
-                parte.material.opacity = 1;
-            }
-        }
-    });
-}
-
-
-// ------------------------------------------------------------
-// RESULTADO EXTERNO
-// ------------------------------------------------------------
-
-function activarResultadoExterno(objeto) {
-
-    if (!objeto) return;
-
-    objeto.name =
-        objeto.name ||
-        "PollitoCinematico";
-
-    objeto.userData.eggaroPollito = true;
-    objeto.userData.activo = false;
-    objeto.userData.eggaroExterno = true;
-    objeto.userData.tiempo = 0;
-
-    objeto.visible = false;
-
-    objeto.position.set(
-        0,
-        0,
-        -3
-    );
-
-    grupoResultado.add(objeto);
-}
-
-
-// ------------------------------------------------------------
-// PREPARAR RESULTADO — VERSIÓN SEGURA
-// ------------------------------------------------------------
-
-function prepararResultado() {
-
-    if (!grupoResultado) return;
-
-    // Limpiar solamente resultados creados por esta cinemática.
-    const borrar = [];
-
-    grupoResultado.children.forEach(obj => {
-
-        if (
-            obj.userData &&
-            (
-                obj.userData.eggaroPollito ||
-                obj.userData.eggaroExterno
-            )
-        ) {
-
-            borrar.push(obj);
-        }
-    });
-
-    borrar.forEach(obj => {
-
-        grupoResultado.remove(obj);
-    });
-
-
-    // --------------------------------------------------------
-    // INTENTAR USAR EL CREADOR DEL JUEGO
-    // --------------------------------------------------------
-
-    if (
-        typeof window !== "undefined" &&
-        typeof window.EGGARO_CREADOR_POLLO === "function"
+        resultadoCinematica =
+            "zombie";
+
+    } else if (
+        valor === "pollitonoob" ||
+        valor === "pollito_noob" ||
+        valor === "pollito noob"
     ) {
 
-        try {
-
-            const externo =
-                window.EGGARO_CREADOR_POLLO(
-                    resultadoCinematica
-                );
-
-            if (externo) {
-
-                activarResultadoExterno(externo);
-
-                return;
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "EGGARO: no se pudo usar el creador externo del pollito.",
-                error
-            );
-        }
-    }
-
-
-    // --------------------------------------------------------
-    // FALLBACK 3D
-    // --------------------------------------------------------
-
-    crearPollitoProcedural();
-}
-
-
-// ------------------------------------------------------------
-// ANIMACIÓN DEL RESULTADO
-// ------------------------------------------------------------
-
-function actualizarPollito(delta) {
-
-    if (!grupoResultado) return;
-
-    grupoResultado.traverse(objeto => {
-
-        if (
-            !objeto.userData ||
-            !objeto.userData.eggaroPollito ||
-            !objeto.userData.activo
-        ) {
-            return;
-        }
-
-        objeto.userData.tiempo =
-            (objeto.userData.tiempo || 0) + delta;
-
-        const t =
-            objeto.userData.tiempo;
-
-
-        // ----------------------------------------------------
-        // ENTRADA DEL POLLITO
-        // ----------------------------------------------------
-
-        const entrada =
-            Math.min(t / 0.8, 1);
-
-        const escala =
-            entrada * entrada * (3 - 2 * entrada);
-
-        objeto.scale.setScalar(
-            Math.max(0.01, escala)
-        );
-
-
-        // ----------------------------------------------------
-        // SALTO SUAVE
-        // ----------------------------------------------------
-
-        const salto =
-            Math.sin(t * 4.5) *
-            0.10 *
-            Math.exp(-t * 0.10);
-
-        objeto.position.y =
-            0.15 + Math.max(0, salto);
-
-
-        // ----------------------------------------------------
-        // MOVIMIENTO DEL CUERPO
-        // ----------------------------------------------------
-
-        objeto.rotation.y =
-            Math.sin(t * 1.8) * 0.12;
-
-
-        objeto.rotation.z =
-            Math.sin(t * 3.5) * 0.035;
-
-
-        // ----------------------------------------------------
-        // ANIMAR ALAS SI EXISTEN
-        // ----------------------------------------------------
-
-        objeto.traverse(parte => {
-
-            if (!parte || !parte.name) return;
-
-            const nombre =
-                limpiarNombreHueso(parte.name);
-
-
-            if (
-                nombre.includes("ala") ||
-                nombre.includes("wing")
-            ) {
-
-                const lado =
-                    nombre.includes("left") ||
-                    nombre.includes("izq") ||
-                    nombre.includes("l");
-
-                const signo =
-                    lado ? 1 : -1;
-
-                parte.rotation.z =
-                    signo *
-                    (
-                        0.18 +
-                        Math.sin(t * 8) * 0.12
-                    );
-            }
-        });
-    });
-}
-
-
-// ------------------------------------------------------------
-// MENSAJE FINAL
-// ------------------------------------------------------------
-
-function mostrarDialogoFinal() {
-
-    if (resultadoCinematica === "zombie") {
-
-        mostrarDialogo(
-            "Mike",
-            "¡Oh no! ¿Qué salió de ese huevo?"
-        );
+        resultadoCinematica =
+            "pollitonoob";
 
     } else {
 
-        mostrarDialogo(
-            "Micaela",
-            "¡Mira! ¡Es un pollito!"
-        );
+        resultadoCinematica =
+            "noob";
     }
 }
-// ============================================================
-// BLOQUE 12/12
-// ARRANQUE FINAL + RESIZE + LOOP
-// ============================================================
 
 
 // ------------------------------------------------------------
 // RESIZE
 // ------------------------------------------------------------
 
-function manejarResize() {
-
-    if (!renderer || !camara) return;
-
-    const ancho =
-        window.innerWidth;
-
-    const alto =
-        window.innerHeight;
-
-    if (
-        ancho === anchoAnterior &&
-        alto === altoAnterior
-    ) {
-        return;
-    }
-
-    anchoAnterior = ancho;
-    altoAnterior = alto;
-
-    camara.aspect =
-        ancho / alto;
-
-    camara.updateProjectionMatrix();
-
-    renderer.setSize(
-        ancho,
-        alto,
-        false
-    );
-}
-
-
-// ------------------------------------------------------------
-// LOOP PRINCIPAL
-// ------------------------------------------------------------
-
-function iniciarLoopCinematica() {
-
-    if (!renderer) return;
-
-    renderer.setAnimationLoop(() => {
-
-        if (!activa) return;
-
-        if (!reloj) {
-            reloj = new THREE.Clock();
-        }
-
-        const delta =
-            Math.min(
-                reloj.getDelta(),
-                0.033
-            );
-
-        manejarResize();
-
-        actualizarCinematica(delta);
-
-        renderer.render(
-            escena,
-            camara
-        );
-    });
-}
-
-
-// ------------------------------------------------------------
-// REEMPLAZAR EL RENDERIZADO ANTERIOR
-// ------------------------------------------------------------
-
-function renderizar() {
-
-    manejarResize();
-
-    iniciarLoopCinematica();
-}
-
-
-// ------------------------------------------------------------
-// ARRANQUE SEGURO
-// ------------------------------------------------------------
-
-async function arrancarCinematicaInterna(
-    resultado = "noob"
-) {
-
-    if (activa) return;
-
-    resultadoCinematica =
-        String(resultado || "noob")
-        .toLowerCase()
-        .trim();
-
-    activa = true;
-    cinematicaFinalizada = false;
-    tiempoCinematica = 0;
-    faseCinematica = -1;
-
-    crearEscena();
-
-    crearCamara();
-
-    crearRenderer();
-
-    crearIluminacion();
-
-    crearInterfazDialogo();
-
-    crearBosque();
-
-    prepararHuevo();
-
-    // Crear partículas de energía antes de abrir el huevo.
-    crearEnergiaHuevo();
-
-    prepararResultado();
-
-    await cargarPersonajes();
-
-    iniciarSecuenciaCinematica();
-
-    reloj =
-        new THREE.Clock();
-
-    manejarResize();
-
-    renderizar();
-}
-
-
-// ------------------------------------------------------------
-// EXPORTACIÓN FINAL
-// ------------------------------------------------------------
-
-export {
-    iniciarCinematica,
-    cinematicaTerminada,
-    detenerCinematica,
-    establecerResultadoCinematica
-};
-
-
-// ------------------------------------------------------------
-// EVITAR DOBLE RESIZE
-// ------------------------------------------------------------
-
 window.addEventListener(
     "resize",
-    manejarResize,
-    { passive: true }
+    () => {
+
+        actualizarTamaño();
+
+    },
+    {
+        passive: true
+    }
 );
-
-
-// ------------------------------------------------------------
-// COMPATIBILIDAD CON EL JUEGO
-// ------------------------------------------------------------
-
-if (
-    typeof window !== "undefined"
-) {
-
-    window.EGGARO_CINEMATICA = {
-
-        iniciar: arrancarCinematicaInterna,
-
-        detener: detenerCinematica,
-
-        terminada: cinematicaTerminada,
-
-        resultado:
-            establecerResultadoCinematica
-    };
-}
