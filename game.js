@@ -12,7 +12,6 @@ if (!game) {
 }
 
 const inicio = document.createElement("div");
-
 inicio.id = "inicio";
 
 Object.assign(inicio.style, {
@@ -24,59 +23,86 @@ Object.assign(inicio.style, {
     alignItems: "center",
     justifyContent: "center",
     zIndex: "99999",
-    pointerEvents: "none"
+    pointerEvents: "none",
+    background: "radial-gradient(circle at 50% 35%, rgba(37,77,70,.18), rgba(2,5,7,.56))"
+});
+
+const marca = document.createElement("div");
+marca.textContent = "EGARO";
+Object.assign(marca.style, {
+    position: "absolute",
+    top: "15%",
+    left: "0",
+    width: "100%",
+    textAlign: "center",
+    color: "#f2e5bd",
+    fontSize: "clamp(58px,15vw,150px)",
+    fontWeight: "1000",
+    letterSpacing: ".22em",
+    textShadow: "0 0 28px rgba(232,195,106,.4), 0 8px 30px #000",
+    fontFamily: "Arial Black, Arial, sans-serif"
+});
+
+const subtitulo = document.createElement("div");
+subtitulo.textContent = "UNA NUEVA AVENTURA";
+Object.assign(subtitulo.style, {
+    position: "absolute",
+    top: "31%",
+    width: "100%",
+    textAlign: "center",
+    color: "#c9d9d2",
+    fontSize: "clamp(11px,2.4vw,18px)",
+    letterSpacing: ".45em",
+    textShadow: "0 3px 12px #000"
 });
 
 const playButton = document.createElement("button");
-
 playButton.id = "playButton";
 playButton.type = "button";
-playButton.textContent = "PLAY";
+playButton.textContent = "JUGAR";
 
 Object.assign(playButton.style, {
     position: "relative",
     zIndex: "100000",
     pointerEvents: "auto",
-    width: "220px",
-    height: "80px",
-    border: "4px solid white",
-    borderRadius: "16px",
-    background: "rgba(0,0,0,0.70)",
-    color: "white",
-    fontSize: "32px",
-    fontWeight: "bold",
+    width: "min(280px,72vw)",
+    height: "74px",
+    border: "2px solid rgba(242,229,189,.85)",
+    borderRadius: "999px",
+    background: "linear-gradient(180deg, rgba(42,63,55,.94), rgba(10,18,17,.96))",
+    color: "#f8edcf",
+    fontSize: "clamp(22px,5vw,30px)",
+    fontWeight: "900",
+    letterSpacing: ".18em",
     cursor: "pointer",
-    boxShadow: "0 0 25px rgba(0,0,0,0.6)"
+    boxShadow: "0 12px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.15)"
 });
 
-inicio.appendChild(playButton);
+inicio.append(marca, subtitulo, playButton);
 game.appendChild(inicio);
 
 let menu = null;
 
 try {
     menu = iniciarEscenaMenu(game);
-    console.log("✅ MENÚ CARGADO");
+    console.log("EGARO: menú cargado");
 } catch (error) {
-    console.error("❌ Error cargando menú:", error);
+    console.error("EGARO: error cargando menú:", error);
 }
 
-playButton.addEventListener("click", () => {
-    console.log("🎮 PLAY PRESIONADO");
+playButton.addEventListener("click", function () {
     playButton.disabled = true;
     inicio.remove();
 
-    if (menu?.renderer?.domElement) {
+    if (menu && menu.renderer && menu.renderer.domElement) {
         menu.renderer.domElement.remove();
     }
-
-    console.log("🎬 INICIANDO CINEMÁTICA V1");
 
     try {
         iniciarCinematica(game);
         comprobarCinematica();
     } catch (error) {
-        console.error("❌ ERROR INICIANDO CINEMÁTICA:", error);
+        console.error("EGARO: error iniciando cinemática:", error);
         mostrarError(error);
     }
 });
@@ -84,12 +110,10 @@ playButton.addEventListener("click", () => {
 function comprobarCinematica() {
     try {
         if (cinematicaTerminada()) {
-            console.log("🌾 CINEMÁTICA TERMINADA");
             iniciarGranja();
             return;
         }
     } catch (error) {
-        console.error("❌ ERROR COMPROBANDO CINEMÁTICA:", error);
         mostrarError(error);
         return;
     }
@@ -109,24 +133,25 @@ function iniciarGranja() {
         inset: "0",
         width: "100vw",
         height: "100dvh",
-        background: "linear-gradient(#87ceeb, #7bb35a)",
+        background: "radial-gradient(circle at 50% 25%, #4d8760, #13271e 72%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: "90000"
+        zIndex: "90000",
+        fontFamily: "Arial, sans-serif"
     });
 
-    const texto = document.createElement("div");
-    texto.textContent = "🌾 GRANJA";
-
-    Object.assign(texto.style, {
-        color: "white",
-        fontSize: "48px",
-        fontWeight: "bold",
-        textShadow: "0 4px 10px rgba(0,0,0,0.6)"
+    const contenido = document.createElement("div");
+    contenido.textContent = "🌾 EGARO";
+    Object.assign(contenido.style, {
+        color: "#f2e5bd",
+        fontSize: "clamp(42px,10vw,76px)",
+        fontWeight: "900",
+        letterSpacing: ".12em",
+        textShadow: "0 6px 22px #000"
     });
 
-    pantalla.appendChild(texto);
+    pantalla.appendChild(contenido);
     game.appendChild(pantalla);
 }
 
@@ -155,17 +180,17 @@ function mostrarError(error) {
         game.appendChild(panel);
     }
 
-    panel.innerHTML = `
-        <h2>⚠️ GAMERPRO GAME</h2>
-        <p>Se produjo un error al cargar el juego.</p>
-        <p style="font-size:12px;opacity:.7;max-width:90%;">
-            ${String(error)}
-        </p>
-        <button
-            onclick="location.reload()"
-            style="margin-top:20px;padding:14px 25px;font-size:18px;border-radius:10px;"
-        >
-            🔄 RECARGAR
-        </button>
-    `;
+    panel.innerHTML = "";
+    const title = document.createElement("h2");
+    title.textContent = "EGARO";
+    const msg = document.createElement("p");
+    msg.textContent = "Se produjo un error al cargar el juego.";
+    const detail = document.createElement("p");
+    detail.textContent = String(error);
+    detail.style.cssText = "font-size:12px;opacity:.7;max-width:90%;word-break:break-word";
+    const button = document.createElement("button");
+    button.textContent = "RECARGAR";
+    button.style.cssText = "margin-top:20px;padding:14px 25px;font-size:18px;border-radius:10px";
+    button.addEventListener("click", function () { location.reload(); });
+    panel.append(title, msg, detail, button);
 }
