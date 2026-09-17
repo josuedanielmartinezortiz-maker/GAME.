@@ -3,7 +3,7 @@ import { iniciarEscenaMenu } from "./3D/escenaMenu.js";
 import {
     iniciarCinematica,
     cinematicaTerminada
-} from "./3D/escenaCinematicaV1.js";
+} from "./3D/escenaCinematica.js";
 
 const game = document.getElementById("game");
 
