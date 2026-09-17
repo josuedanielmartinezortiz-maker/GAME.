@@ -376,3 +376,98 @@ function iniciarGranja() {
         "🐔 La granja está lista para conectar."
     );
 }
+// =====================================================
+// 🔎 DIAGNÓSTICO DEL GLB DE MIKE
+// No modifica el modelo ni sus animaciones.
+// =====================================================
+
+async function diagnosticarMikeGLB() {
+
+  // Cambia este nombre SOLO si tu archivo tiene otro nombre.
+  const RUTA_MIKE = "./3D/mike.glb";
+
+  const loader = new THREE.GLTFLoader();
+
+  try {
+
+    console.log("====================================");
+    console.log("🔎 DIAGNÓSTICO MIKE.GLb");
+    console.log("====================================");
+
+    const gltf = await loader.loadAsync(RUTA_MIKE);
+
+    const modelo = gltf.scene;
+
+    console.log("✅ GLB cargado correctamente");
+    console.log("📦 Modelo:", modelo);
+    console.log("🎞️ Animaciones:", gltf.animations.length);
+
+    // -------------------------------------------------
+    // Animaciones existentes
+    // -------------------------------------------------
+
+    if (gltf.animations.length === 0) {
+      console.log("⚠️ Mike NO tiene animaciones dentro del GLB.");
+    } else {
+      console.log("🎬 Animaciones encontradas:");
+
+      gltf.animations.forEach((clip, i) => {
+        console.log(
+          `${i + 1}. ${clip.name} | duración: ${clip.duration.toFixed(2)}s`
+        );
+      });
+    }
+
+    // -------------------------------------------------
+    // Buscar SkinnedMesh / Skeleton
+    // -------------------------------------------------
+
+    let encontrados = 0;
+
+    modelo.traverse((obj) => {
+
+      if (!obj.isSkinnedMesh) return;
+
+      encontrados++;
+
+      console.log("------------------------------------");
+      console.log("🦴 SKINNED MESH ENCONTRADO");
+      console.log("Nombre:", obj.name);
+
+      if (!obj.skeleton) {
+        console.log("❌ No tiene skeleton.");
+        return;
+      }
+
+      const huesos = obj.skeleton.bones;
+
+      console.log("🦴 Cantidad de huesos:", huesos.length);
+
+      console.log("📋 Nombres de huesos:");
+
+      huesos.forEach((bone, index) => {
+        console.log(`${index}: ${bone.name}`);
+      });
+
+    });
+
+    if (encontrados === 0) {
+      console.log("❌ NO se encontró ningún SkinnedMesh.");
+      console.log("Esto significa que el GLB podría no tener skinning.");
+    }
+
+    console.log("====================================");
+    console.log("✅ DIAGNÓSTICO TERMINADO");
+    console.log("====================================");
+
+  } catch (error) {
+
+    console.error("❌ ERROR CARGANDO MIKE.GLb");
+    console.error(error);
+
+  }
+}
+
+
+// Ejecutar diagnóstico
+diagnosticarMikeGLB();
