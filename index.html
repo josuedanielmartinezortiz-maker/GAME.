@@ -289,45 +289,80 @@
     addEventListener("resize", resize);
 
     
-    // ===== MIKE + MICAELA 3D — BASE RECONSTRUIDA DE LAS REFERENCIAS =====
-    function material(color){ return new THREE.MeshStandardMaterial({color,roughness:.82}); }
-    function mesh(g,geo,p,sc,color){ const m=new THREE.Mesh(geo,material(color)); m.position.set(...p); if(sc)m.scale.set(...sc); g.add(m); return m; }
-    function eye(g,x){ mesh(g,new THREE.SphereGeometry(.105,16,10),[x,2.02,.51],[1,1,.55],0x18201d); mesh(g,new THREE.SphereGeometry(.035,10,8),[x-.025,2.045,.575],[1,1,.5],0xffffff); }
+    // ===== MIKE + MICAELA 3D — reconstrucción chibi fiel a las referencias =====
+    function material(color,rough=.8){return new THREE.MeshStandardMaterial({color,roughness:rough})}
+    function P(g,geo,p,sc,c){const m=new THREE.Mesh(geo,material(c));m.position.set(...p);if(sc)m.scale.set(...sc);g.add(m);return m}
+    function E(g,x,y,z=.54){P(g,new THREE.SphereGeometry(.115,16,12),[x,y,z],[1,1,.48],0x17231f);P(g,new THREE.SphereGeometry(.038,10,8),[x-.025,y+.025,z+.065],[1,1,.5],0xffffff)}
+    function hairSpike(g,x,y,z,sx,sy,sz,rz=0){const m=P(g,new THREE.ConeGeometry(.18,.55,8),[x,y,z],[sx,sy,sz],0x9a552e);m.rotation.z=rz;return m}
     function makeMike(){
-      const g=new THREE.Group(),skin=0xf3b89f,hair=0x9b5428,yellow=0xf2bd35,blue=0x4c83ae,orange=0xe77d2d,denim=0x2f5f8a,white=0xf5f5ee,red=0xd94a42;
-      mesh(g,new THREE.SphereGeometry(.55,24,16),[0,1.25,0],[1,.95,.75],yellow);
-      for(const [y,c] of [[1.05,blue],[1.30,orange],[1.55,blue]]) mesh(g,new THREE.TorusGeometry(.44,.055,8,24),[0,y,0],[1,.75,1],c).rotation.x=Math.PI/2;
-      mesh(g,new THREE.SphereGeometry(.58,24,16),[0,2.02,0],[1,1.02,.9],skin);
-      mesh(g,new THREE.SphereGeometry(.65,24,16),[0,2.38,-.03],[1.08,.68,.98],hair);
-      for(const x of [-.45,-.25,0,.25,.45]) mesh(g,new THREE.ConeGeometry(.13,.45,8),[x,2.62,.03],[1,.9,1],hair).rotation.z=-x*.55;
-      eye(g,-.22); eye(g,.22);
-      mesh(g,new THREE.SphereGeometry(.1,12,8),[0,1.91,.53],[1,.7,.4],0xf08f82);
-      for(const x of [-.58,.58]) mesh(g,new THREE.CapsuleGeometry(.13,.62,6,10),[x,1.25,0],[1,1,1],skin);
-      for(const x of [-.22,.22]) mesh(g,new THREE.BoxGeometry(.34,.62,.38),[x,.57,0],[1,1,1],denim);
-      for(const x of [-.22,.22]){mesh(g,new THREE.BoxGeometry(.43,.18,.56),[x,.15,.08],[1,1,1],white);mesh(g,new THREE.BoxGeometry(.28,.07,.18),[x,.23,.18],[1,1,1],red)}
+      const g=new THREE.Group(),skin=0xf2b294,hair=0x9a552e,yellow=0xf5bd31,blue=0x4b7fa8,orange=0xe67b2e,denim=0x35668e,white=0xf7f5ed,red=0xd94c43;
+      // cabeza grande, cara redonda, orejas y cuello
+      P(g,new THREE.CylinderGeometry(.18,.2,.28,16),[0,1.35,0],null,skin);
+      P(g,new THREE.SphereGeometry(.7,28,20),[0,2.02,0],[1,.98,.88],skin);
+      P(g,new THREE.SphereGeometry(.74,28,18),[0,2.38,-.02],[1.08,.68,.98],hair);
+      // mechones característicos
+      for(const q of [[-.57,2.25,.16,.9,1.25,.7,-.65],[-.43,2.48,.34,.9,1.2,.75,-.35],[-.22,2.58,.38,.9,1.15,.75,-.15],[0,2.62,.35,.9,1.12,.72,0],[.22,2.57,.36,.9,1.15,.75,.18],[.45,2.45,.25,.9,1.2,.75,.4],[.58,2.27,.12,.9,1.2,.7,.65]]) hairSpike(g,...q);
+      E(g,-.25,2.03);E(g,.25,2.03);
+      // cejas tristes + nariz + boca
+      P(g,new THREE.BoxGeometry(.23,.045,.025),[-.25,2.23,.57],[1,1,1],hair).rotation.z=.18;
+      P(g,new THREE.BoxGeometry(.23,.045,.025),[.25,2.23,.57],[1,1,1],hair).rotation.z=-.18;
+      P(g,new THREE.SphereGeometry(.09,12,8),[0,1.91,.57],[1,.75,.45],0xef8f7e);
+      P(g,new THREE.TorusGeometry(.13,.018,8,18),[0,1.82,.57],[1,.55,1],hair).rotation.x=Math.PI;
+      // pecas
+      for(const x of [-.34,-.22,.22,.34])P(g,new THREE.SphereGeometry(.018,8,6),[x,1.92,.58],null,0xb66d55);
+      // torso y camiseta a rayas
+      P(g,new THREE.CapsuleGeometry(.55,.72,8,16),[0,1.22,0],[1,.92,.78],yellow);
+      for(const q of [[1.08,blue],[1.28,orange],[1.48,blue]])P(g,new THREE.TorusGeometry(.47,.065,8,24),[0,q[0],0],[1,.78,1],q[1]).rotation.x=Math.PI/2;
+      // mangas
+      for(const x of [-.62,.62])P(g,new THREE.CapsuleGeometry(.16,.48,6,10),[x,1.25,0],[1,1,1],yellow);
+      // brazos
+      for(const x of [-.72,.72])P(g,new THREE.CapsuleGeometry(.13,.62,6,10),[x,.98,0],[1,1,1],skin);
+      // shorts de mezclilla
+      for(const x of [-.24,.24])P(g,new THREE.BoxGeometry(.39,.58,.43),[x,.53,0],[1,1,1],denim);
+      // bolsillos y florecitas
+      for(const x of [-.24,.24])P(g,new THREE.TorusGeometry(.09,.025,6,12),[x,.68,.225],[1,.65,1],0x477aa0).rotation.x=Math.PI/2;
+      // moño central
+      P(g,new THREE.SphereGeometry(.12,12,8),[0,.78,.27],[1,.7,.6],0xf39ab1);
+      P(g,new THREE.SphereGeometry(.11,12,8),[-.13,.78,.27],[1.25,.65,.6],0xf39ab1);
+      P(g,new THREE.SphereGeometry(.11,12,8),[.13,.78,.27],[1.25,.65,.6],0xf39ab1);
+      // piernas y tenis multicolor
+      for(const x of [-.24,.24]){P(g,new THREE.CapsuleGeometry(.14,.68,6,10),[x,-.02,0],[1,1,1],skin);P(g,new THREE.BoxGeometry(.44,.2,.58),[x,-.39,.08],[1,1,1],white);P(g,new THREE.BoxGeometry(.28,.08,.12),[x,-.31,.2],[1,1,1],red);P(g,new THREE.BoxGeometry(.10,.10,.10),[x-.15,-.30,.22],[1,1,1],yellow);P(g,new THREE.BoxGeometry(.10,.10,.10),[x+.15,-.30,.22],[1,1,1],blue)}
       return g;
     }
     function makeMicaela(){
-      const g=new THREE.Group(),skin=0xf3b89f,pink=0xe6a0b7,light=0xf5c7d8,hair=0x9b5d38,boot=0xe8a5b5;
-      mesh(g,new THREE.ConeGeometry(.74,1.05,20),[0,1.18,0],[1,1,.75],pink);
-      mesh(g,new THREE.TorusGeometry(.55,.065,8,24),[0,1.62,0],[1,.75,1],light).rotation.x=Math.PI/2;
-      mesh(g,new THREE.SphereGeometry(.58,24,16),[0,2.03,0],[1,1.03,.9],skin);
-      mesh(g,new THREE.SphereGeometry(.68,24,16),[0,2.37,-.03],[1.1,.76,1],hair);
-      for(const x of [-.58,-.42,-.25,.25,.42,.58]) mesh(g,new THREE.CapsuleGeometry(.1,.58,6,10),[x,2.05,.02],[1,1.25,1],hair).rotation.z=x>0?-.18:.18;
-      eye(g,-.22);eye(g,.22);
-      mesh(g,new THREE.SphereGeometry(.1,12,8),[0,1.91,.53],[1,.7,.4],0xf08f82);
-      for(const x of [-.57,.57]) mesh(g,new THREE.CapsuleGeometry(.13,.64,6,10),[x,1.25,0],[1,1,1],skin);
-      for(const x of [-.22,.22]) mesh(g,new THREE.CylinderGeometry(.18,.21,.65,12),[x,.48,0],[1,1,1],light);
-      for(const x of [-.22,.22]) mesh(g,new THREE.BoxGeometry(.42,.3,.58),[x,.1,.08],[1,1,1],boot);
+      const g=new THREE.Group(),skin=0xf2b294,hair=0x9a5b38,pink=0xe99bb8,light=0xf7c6d8,boot=0xe7a3b5;
+      P(g,new THREE.CylinderGeometry(.18,.2,.28,16),[0,1.35,0],null,skin);
+      P(g,new THREE.SphereGeometry(.7,28,20),[0,2.02,0],[1,.98,.88],skin);
+      // cabello largo con volumen lateral
+      P(g,new THREE.SphereGeometry(.76,28,18),[0,2.37,-.02],[1.1,.76,1],hair);
+      for(const q of [[-.65,2.15,.02,.9,1.7,.75,.22],[-.58,1.85,-.02,.95,1.75,.7,.18],[-.48,1.55,-.01,.9,1.7,.65,.12],[.65,2.15,.02,.9,1.7,.75,-.22],[.58,1.85,-.02,.95,1.75,.7,-.18],[.48,1.55,-.01,.9,1.7,.65,-.12]]){const m=P(g,new THREE.CapsuleGeometry(.12,.55,6,10),[q[0],q[1],q[2]],[q[3],q[4],q[5]],hair);m.rotation.z=q[6]}
+      E(g,-.25,2.03);E(g,.25,2.03);
+      P(g,new THREE.BoxGeometry(.23,.045,.025),[-.25,2.23,.57],[1,1,1],hair).rotation.z=.18;
+      P(g,new THREE.BoxGeometry(.23,.045,.025),[.25,2.23,.57],[1,1,1],hair).rotation.z=-.18;
+      P(g,new THREE.SphereGeometry(.09,12,8),[0,1.91,.57],[1,.75,.45],0xef8f7e);
+      P(g,new THREE.TorusGeometry(.13,.018,8,18),[0,1.82,.57],[1,.55,1],hair).rotation.x=Math.PI;
+      for(const x of [-.34,-.22,.22,.34])P(g,new THREE.SphereGeometry(.018,8,6),[x,1.92,.58],null,0xb66d55);
+      // blusa rosa con cuello y falda
+      P(g,new THREE.CapsuleGeometry(.53,.65,8,16),[0,1.25,0],[1,.9,.75],pink);
+      P(g,new THREE.TorusGeometry(.45,.06,8,24),[0,1.56,.03],[1,.72,1],light).rotation.x=Math.PI/2;
+      // cuello redondo y botones
+      P(g,new THREE.TorusGeometry(.27,.045,8,20),[0,1.62,.40],[1,.7,1],light).rotation.x=Math.PI/2;
+      for(const y of [1.42,1.26,1.10])P(g,new THREE.SphereGeometry(.035,10,8),[0,y,.43],null,0xf3e4eb);
+      // falda acampanada
+      P(g,new THREE.ConeGeometry(.69,.65,20),[0,.73,0],[1,1,.75],pink);
+      // cinturón y moño
+      P(g,new THREE.TorusGeometry(.50,.045,8,20),[0,1.00,0],[1,.72,1],light).rotation.x=Math.PI/2;
+      P(g,new THREE.SphereGeometry(.11,12,8),[0,1.04,.53],[1,.7,.6],light);
+      P(g,new THREE.SphereGeometry(.11,12,8),[-.14,1.04,.52],[1.3,.65,.6],light);
+      P(g,new THREE.SphereGeometry(.11,12,8),[.14,1.04,.52],[1.3,.65,.6],light);
+      for(const x of [-.62,.62])P(g,new THREE.CapsuleGeometry(.14,.62,6,10),[x,.98,0],[1,1,1],skin);
+      for(const x of [-.23,.23]){P(g,new THREE.CapsuleGeometry(.14,.55,6,10),[x,.27,0],[1,1,1],skin);P(g,new THREE.CylinderGeometry(.20,.24,.55,12),[x,-.08,0],[1,1,1],boot);P(g,new THREE.TorusGeometry(.20,.025,8,18),[x,.19,0],[1,1,1],light).rotation.x=Math.PI/2}
       return g;
     }
     const mike3D=makeMike(),mikaela3D=makeMicaela();
-    // Los personajes 3D viven en la escena Three.js; el overlay de la cinemática solo controla su aparición.
-    mike3D.position.set(-2.15,0,-2.2); mikaela3D.position.set(2.15,0,-2.2);
-    mike3D.scale.setScalar(.82); mikaela3D.scale.setScalar(.82);
-    mike3D.visible=false; mikaela3D.visible=false;
-    scene.add(mike3D); scene.add(mikaela3D);
-
+    mike3D.position.set(-2.15,0,-2.2);mikaela3D.position.set(2.15,0,-2.2);
+    mike3D.scale.setScalar(.82);mikaela3D.scale.setScalar(.82);
+    mike3D.visible=false;mikaela3D.visible=false;scene.add(mike3D);scene.add(mikaela3D);
     let started = false;
     let startTime = performance.now();let cinematicTimer=null,cinematicRunning=false;const cinematicSteps=[{t:0,title:"EL COMIENZO",speaker:"",text:"Una nueva mañana comienza en la granja."},{t:2200,title:"",speaker:"MIKE",text:"¿Escuchaste eso?"},{t:4700,title:"",speaker:"MICAELA",text:"Sí... viene de ahí."},{t:7200,title:"",speaker:"MIKE",text:"¡Mira! Hay algo en el camino."},{t:9800,title:"",speaker:"MICAELA",text:"¡Es un huevo!"},{t:12400,title:"",speaker:"",text:"Algo está a punto de comenzar..."}];function showCinematicStep(x){cinematicTitle.textContent=x.title||"";cinematicTitle.classList.toggle("show",!!x.title);speaker.textContent=x.speaker||"";dialogueText.textContent=x.text||"";dialogue.classList.toggle("show",!!x.text);if(x.t>=2200){mikeActor.classList.add("show");mike3D.visible=true;mike3D.rotation.y=.10}if(x.t>=4700){mikaelaActor.classList.add("show");mikaela3D.visible=true;mikaela3D.rotation.y=-.10};if(x.t>=7200)cinematicEgg.classList.add("show")}function finishCinematic(){cinematicRunning=false;clearTimeout(cinematicTimer);cinematic.classList.remove("show");dialogue.classList.remove("show");cinematicTitle.classList.remove("show");mikeActor.classList.remove("show");mikaelaActor.classList.remove("show");cinematicEgg.classList.remove("show");mike3D.visible=false;mikaela3D.visible=false;sceneUI.classList.add("show")}function startCinematic(){cinematicRunning=true;cinematic.classList.add("show");sceneUI.classList.remove("show");cinematicSteps.forEach(x=>setTimeout(()=>{if(cinematicRunning)showCinematicStep(x)},x.t));cinematicTimer=setTimeout(finishCinematic,15500)}skipCinematic.addEventListener("click",finishCinematic);
 
