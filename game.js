@@ -1,28 +1,15 @@
 import {
   iniciarCinematica,
   cinematicaTerminada
-} from "./3D/escenaCinematica.js?v=2872725";
+} from "./3D/escenaCinematica.js?v=20260917";
 
 const game = document.getElementById("game");
-
 if (!game) throw new Error("No se encontró #game");
 
 game.innerHTML = "";
-Object.assign(game.style, {
-  position: "relative",
-  width: "100%",
-  minHeight: "100dvh",
-  overflow: "hidden",
-  background: "#050807"
-});
-
-// ============================================================
-// EGGARO — PORTADA NUEVA
-// ============================================================
 
 const cover = document.createElement("div");
-cover.id = "gairoCover";
-
+cover.id = "eggaroCover";
 Object.assign(cover.style, {
   position: "fixed",
   inset: "0",
@@ -33,38 +20,37 @@ Object.assign(cover.style, {
   justifyContent: "center",
   overflow: "hidden",
   background:
-    "radial-gradient(circle at 50% 42%, rgba(116,161,104,.25), transparent 32%), linear-gradient(145deg,#183326 0%,#0b1913 45%,#020504 100%)",
+    "radial-gradient(circle at 50% 40%, rgba(126,164,111,.28), transparent 34%), linear-gradient(145deg,#183326,#0b1913 52%,#020504)",
   color: "#fff"
 });
 
 const glow = document.createElement("div");
 Object.assign(glow.style, {
   position: "absolute",
-  width: "80vw",
-  height: "80vw",
-  maxWidth: "760px",
-  maxHeight: "760px",
+  width: "85vw",
+  height: "85vw",
+  maxWidth: "780px",
+  maxHeight: "780px",
   borderRadius: "50%",
-  background: "radial-gradient(circle,rgba(232,195,106,.22),transparent 68%)",
-  filter: "blur(10px)"
+  background: "radial-gradient(circle,rgba(232,195,106,.20),transparent 68%)",
+  filter: "blur(12px)",
+  pointerEvents: "none"
 });
 
-const name = document.createElement("div");
-name.textContent = "EGGARO";
-
-Object.assign(name.style, {
+const title = document.createElement("div");
+title.textContent = "EGGARO";
+Object.assign(title.style, {
   position: "relative",
   zIndex: "2",
   color: "#f4e7bf",
   fontFamily: "Arial Black,Arial,sans-serif",
-  fontSize: "clamp(88px,22vw,210px)",
+  fontSize: "clamp(72px,20vw,210px)",
   fontWeight: "1000",
-  lineHeight: ".8",
+  lineHeight: ".82",
   letterSpacing: ".10em",
   paddingLeft: ".10em",
   textAlign: "center",
-  textShadow:
-    "0 0 42px rgba(232,195,106,.35),0 16px 45px rgba(0,0,0,.95)"
+  textShadow: "0 0 42px rgba(232,195,106,.35),0 16px 45px rgba(0,0,0,.95)"
 });
 
 const line = document.createElement("div");
@@ -73,20 +59,19 @@ Object.assign(line.style, {
   zIndex: "2",
   width: "min(360px,65vw)",
   height: "2px",
-  margin: "26px 0 15px",
+  margin: "24px 0 14px",
   background: "linear-gradient(90deg,transparent,#e8c36a,transparent)"
 });
 
 const subtitle = document.createElement("div");
 subtitle.textContent = "LA GRANJA DESPERTÓ";
-
 Object.assign(subtitle.style, {
   position: "relative",
   zIndex: "2",
   fontFamily: "Arial,sans-serif",
-  fontSize: "clamp(13px,3vw,21px)",
+  fontSize: "clamp(12px,3vw,20px)",
   fontWeight: "700",
-  letterSpacing: ".35em",
+  letterSpacing: ".34em",
   color: "#e2ebe5",
   textAlign: "center"
 });
@@ -94,13 +79,12 @@ Object.assign(subtitle.style, {
 const play = document.createElement("button");
 play.type = "button";
 play.textContent = "JUGAR";
-
 Object.assign(play.style, {
   position: "relative",
   zIndex: "3",
-  marginTop: "clamp(42px,8vh,72px)",
+  marginTop: "clamp(40px,8vh,72px)",
   width: "min(330px,78vw)",
-  height: "74px",
+  height: "72px",
   border: "2px solid #e8c36a",
   borderRadius: "20px",
   background: "linear-gradient(180deg,#456f55,#1c3327)",
@@ -108,14 +92,13 @@ Object.assign(play.style, {
   fontFamily: "Arial Black,Arial,sans-serif",
   fontSize: "clamp(22px,5vw,31px)",
   fontWeight: "900",
-  letterSpacing: ".25em",
+  letterSpacing: ".22em",
   boxShadow: "0 18px 55px rgba(0,0,0,.6)",
   cursor: "pointer"
 });
 
 const footer = document.createElement("div");
 footer.textContent = "UNA HISTORIA DE EGGARO";
-
 Object.assign(footer.style, {
   position: "absolute",
   bottom: "5%",
@@ -125,7 +108,7 @@ Object.assign(footer.style, {
   letterSpacing: ".28em"
 });
 
-cover.append(glow, name, line, subtitle, play, footer);
+cover.append(glow, title, line, subtitle, play, footer);
 game.appendChild(cover);
 
 let started = false;
@@ -134,55 +117,38 @@ play.addEventListener("click", () => {
   if (started) return;
   started = true;
   play.disabled = true;
-
-  cover.style.transition = "opacity .7s ease,transform .7s ease";
+  cover.style.transition = "opacity .65s ease,transform .65s ease";
   cover.style.opacity = "0";
   cover.style.transform = "scale(1.035)";
 
   setTimeout(() => {
     cover.remove();
-
     try {
       iniciarCinematica(game);
       waitForEnd();
     } catch (error) {
       showError(error);
     }
-  }, 720);
+  }, 660);
 });
 
 function waitForEnd() {
   if (cinematicaTerminada()) {
-    showGameStart();
+    const screen = document.createElement("div");
+    Object.assign(screen.style, {
+      position: "fixed",
+      inset: "0",
+      zIndex: "100000",
+      background: "#000"
+    });
+    game.appendChild(screen);
     return;
   }
   requestAnimationFrame(waitForEnd);
 }
 
-// Pantalla negra: punto exacto donde continuará el juego real.
-function showGameStart() {
-  const screen = document.createElement("div");
-  Object.assign(screen.style, {
-    position: "fixed",
-    inset: "0",
-    zIndex: "100000",
-    background: "#000",
-    color: "#fff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily: "Arial,sans-serif"
-  });
-
-  const text = document.createElement("div");
-  text.textContent = "";
-  screen.appendChild(text);
-  game.appendChild(screen);
-}
-
 function showError(error) {
   const panel = document.createElement("div");
-
   Object.assign(panel.style, {
     position: "fixed",
     inset: "0",
@@ -200,21 +166,14 @@ function showError(error) {
 
   const title = document.createElement("h2");
   title.textContent = "EGGARO";
-
   const message = document.createElement("p");
   message.textContent = "No se pudo iniciar la cinemática.";
-
   const detail = document.createElement("p");
   detail.textContent = String(error);
-  detail.style.opacity = ".65";
-  detail.style.fontSize = "12px";
-  detail.style.maxWidth = "90%";
-  detail.style.wordBreak = "break-word";
-
+  detail.style.cssText = "opacity:.65;font-size:12px;max-width:90%;word-break:break-word";
   const retry = document.createElement("button");
   retry.textContent = "RECARGAR";
-  retry.style.cssText =
-    "margin-top:20px;padding:14px 26px;border-radius:12px;border:0;font-size:17px";
+  retry.style.cssText = "margin-top:20px;padding:14px 26px;border-radius:12px;border:0;font-size:17px";
   retry.addEventListener("click", () => location.reload());
 
   panel.append(title, message, detail, retry);
