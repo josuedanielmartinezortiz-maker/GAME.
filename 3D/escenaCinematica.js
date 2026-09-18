@@ -285,7 +285,7 @@ async function loadCharacters() {
 
     scene.add(mike, micaela);
   } catch (error) {
-    console.error("[GAIRO] Error cargando personajes:", error);
+    console.error("[EK GARO] Error cargando personajes:", error);
   }
 }
 
@@ -549,7 +549,7 @@ function updateWalk(delta) {
   );
 
   setHud(
-    "GAIRO",
+    "EK GARO",
     "Mike y Micaela atraviesan la granja abandonada..."
   );
 
