@@ -110,8 +110,9 @@ function buildScene() {
   camera.lookAt(0, 2.1, -12);
 
   renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    powerPreference: "high-performance"
+    antialias: false,
+    powerPreference: "default",
+    failIfMajorPerformanceCaveat: false
   });
 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -119,7 +120,7 @@ function buildScene() {
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.15));
 
   Object.assign(renderer.domElement.style, {
     position: "fixed",
@@ -168,7 +169,7 @@ function buildWorld() {
   const moonLight = new THREE.DirectionalLight(0x9bbcff, 2.4);
   moonLight.position.set(-24, 30, -18);
   moonLight.castShadow = true;
-  moonLight.shadow.mapSize.set(2048, 2048);
+  moonLight.shadow.mapSize.set(1024, 1024);
   moonLight.shadow.camera.left = -45;
   moonLight.shadow.camera.right = 45;
   moonLight.shadow.camera.top = 45;
@@ -419,15 +420,15 @@ async function cargarPersonajes() {
   ];
 
   try {
-    const [mikeGLB, micaelaGLB] = await Promise.all([
-      loader.loadAsync(FILES.mike),
-      loader.loadAsync(FILES.mikaela)
-    ]);
-
+    setHud("EGGARO", "Cargando a Mike...", true);
+    const mikeGLB = await loader.loadAsync(FILES.mike);
     mike = prepararPersonaje(mikeGLB.scene, -1.0, 8.0);
-    micaela = prepararPersonaje(micaelaGLB.scene, 1.0, 9.0);
+    scene.add(mike);
 
-    scene.add(mike, micaela);
+    setHud("EGGARO", "Cargando a Micaela...", true);
+    const micaelaGLB = await loader.loadAsync(FILES.mikaela);
+    micaela = prepararPersonaje(micaelaGLB.scene, 1.0, 9.0);
+    scene.add(micaela);
 
     mikeBones = findBones(mike);
     micaelaBones = findBones(micaela);
@@ -455,8 +456,7 @@ async function cargarPersonajes() {
       "EGGARO",
       "ERROR: no se pudieron cargar los modelos GLB de Mike y Micaela."
     );
-    running = false;
-    finished = true;
+    setHud("EGGARO", "No se pudo cargar un modelo. Recarga la página para intentarlo de nuevo.", true);
   }
 }
 
