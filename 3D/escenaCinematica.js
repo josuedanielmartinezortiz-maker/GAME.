@@ -54,6 +54,7 @@ export function iniciarCinematica(container) {
   loadCharacters();
 
   clock = new THREE.Clock();
+  renderer.render(scene, camera);
   raf = requestAnimationFrame(loop);
 }
 
@@ -78,6 +79,15 @@ function createScene(container) {
 
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.7));
   renderer.setSize(innerWidth, innerHeight);
+  Object.assign(renderer.domElement.style, {
+    position: "fixed",
+    inset: "0",
+    width: "100%",
+    height: "100%",
+    display: "block",
+    zIndex: "50000",
+    opacity: "1"
+  });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.45;
@@ -683,7 +693,7 @@ function updateResult(delta) {
 }
 
 function updateBlack() {
-  renderer.domElement.style.opacity = String(Math.max(0, 1 - phaseTime * 2.5));
+  renderer.domElement.style.opacity = "1";
 
   if (hud) {
     hud.style.background = "#000";
