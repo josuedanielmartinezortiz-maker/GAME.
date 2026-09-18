@@ -170,7 +170,7 @@
       opacity: .8;
     }
 
-    #cinematic{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:0;transition:opacity .5s ease}#cinematic.show{opacity:1}.cinematic-vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,transparent 30%,rgba(0,0,0,.5) 100%)}.actor{position:absolute;bottom:13%;width:clamp(110px,25vw,190px);filter:drop-shadow(0 12px 8px rgba(0,0,0,.35));opacity:0;transform:translateY(35px) scale(.9);transition:opacity .5s ease,transform .7s ease}.actor.show{opacity:1;transform:translateY(0) scale(1)}#mikeActor{left:13%}#mikaelaActor{right:13%}#cinematicEgg{position:absolute;left:50%;bottom:31%;font-size:clamp(55px,12vw,90px);transform:translate(-50%,30px) scale(.75);opacity:0;transition:opacity .5s ease,transform .7s ease}#cinematicEgg.show{opacity:1;transform:translate(-50%,0) scale(1)}#dialogue{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);width:min(90vw,720px);padding:16px 20px;border:1px solid rgba(255,255,255,.2);border-radius:18px;background:rgba(4,8,5,.82);backdrop-filter:blur(10px);text-align:left;opacity:0;transition:opacity .35s ease}#dialogue.show{opacity:1}#speaker{font-weight:900;color:#e8c36a;font-size:13px;letter-spacing:.12em}#dialogueText{margin-top:6px;font-size:16px;line-height:1.35}#skipCinematic{position:absolute;right:18px;bottom:18px;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:8px 12px;background:rgba(0,0,0,.35);color:#fff;pointer-events:auto;cursor:pointer;opacity:.75}#cinematicTitle{position:absolute;top:12%;left:50%;transform:translateX(-50%);font-size:clamp(25px,7vw,52px);font-weight:950;letter-spacing:.08em;text-shadow:0 5px 20px rgba(0,0,0,.6);opacity:0;transition:opacity .5s ease}#cinematicTitle.show{opacity:1}
+    #cinematic{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:0;transition:opacity .5s ease}#cinematic.show{opacity:1}.cinematic-vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,transparent 30%,rgba(0,0,0,.5) 100%)}#cinematicStage{position:absolute;inset:0;pointer-events:none}.cinematic-actor3d{position:absolute;bottom:9%;width:190px;height:350px;opacity:0;transform:translateY(35px) scale(.9);transition:opacity .5s ease,transform .7s ease;filter:drop-shadow(0 12px 8px rgba(0,0,0,.35))}.cinematic-actor3d.show{opacity:1;transform:translateY(0) scale(1)}#mikeActor3d{left:7%}#mikaelaActor3d{right:7%}.actor-label{position:absolute;bottom:-20px;width:100%;text-align:center;font-size:11px;font-weight:900;letter-spacing:.12em;opacity:.65}#cinematicEgg{position:absolute;left:50%;bottom:31%;font-size:clamp(55px,12vw,90px);transform:translate(-50%,30px) scale(.75);opacity:0;transition:opacity .5s ease,transform .7s ease}#cinematicEgg.show{opacity:1;transform:translate(-50%,0) scale(1)}#dialogue{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);width:min(90vw,720px);padding:16px 20px;border:1px solid rgba(255,255,255,.2);border-radius:18px;background:rgba(4,8,5,.82);backdrop-filter:blur(10px);text-align:left;opacity:0;transition:opacity .35s ease}#dialogue.show{opacity:1}#speaker{font-weight:900;color:#e8c36a;font-size:13px;letter-spacing:.12em}#dialogueText{margin-top:6px;font-size:16px;line-height:1.35}#skipCinematic{position:absolute;right:18px;bottom:18px;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:8px 12px;background:rgba(0,0,0,.35);color:#fff;pointer-events:auto;cursor:pointer;opacity:.75}#cinematicTitle{position:absolute;top:12%;left:50%;transform:translateX(-50%);font-size:clamp(25px,7vw,52px);font-weight:950;letter-spacing:.08em;text-shadow:0 5px 20px rgba(0,0,0,.6);opacity:0;transition:opacity .5s ease}#cinematicTitle.show{opacity:1}
   </style>
 
   <script type="importmap">
@@ -202,7 +202,7 @@
     </section>
 
     <div id="scene"></div>
-    <div id="scene-ui"><div id="scene-label">EGGARO • GRANJA</div></div><div id="cinematic"><div class="cinematic-vignette"></div><div id="cinematicTitle">EL COMIENZO</div><img id="mikeActor" class="actor" src="mike.png" alt="Mike"><img id="mikaelaActor" class="actor" src="mikaela.png" alt="Micaela"><div id="cinematicEgg">🥚</div><div id="dialogue"><div id="speaker"></div><div id="dialogueText"></div></div><button id="skipCinematic" type="button">Saltar</button></div>
+    <div id="scene-ui"><div id="scene-label">EGGARO • GRANJA</div></div><div id="cinematic"><div class="cinematic-vignette"></div><div id="cinematicTitle">EL COMIENZO</div><div id="cinematicStage"><div id="mikeActor3d" class="cinematic-actor3d"><div class="actor-label">MIKE</div></div><div id="mikaelaActor3d" class="cinematic-actor3d"><div class="actor-label">MICAELA</div></div></div><div id="cinematicEgg">🥚</div><div id="dialogue"><div id="speaker"></div><div id="dialogueText"></div></div><button id="skipCinematic" type="button">Saltar</button></div>
   </main>
 
   <script type="module">
@@ -215,7 +215,7 @@
     const sceneUI = document.getElementById("scene-ui");
     const play = document.getElementById("play");
     const bar = document.getElementById("bar");
-    const loadingText = document.getElementById("loading-text");const cinematic=document.getElementById("cinematic"),cinematicTitle=document.getElementById("cinematicTitle"),mikeActor=document.getElementById("mikeActor"),mikaelaActor=document.getElementById("mikaelaActor"),cinematicEgg=document.getElementById("cinematicEgg"),dialogue=document.getElementById("dialogue"),speaker=document.getElementById("speaker"),dialogueText=document.getElementById("dialogueText"),skipCinematic=document.getElementById("skipCinematic");
+    const loadingText = document.getElementById("loading-text");const cinematic=document.getElementById("cinematic"),cinematicTitle=document.getElementById("cinematicTitle"),mikeActor=document.getElementById("mikeActor3d"),mikaelaActor=document.getElementById("mikaelaActor3d"),cinematicEgg=document.getElementById("cinematicEgg"),dialogue=document.getElementById("dialogue"),speaker=document.getElementById("speaker"),dialogueText=document.getElementById("dialogueText"),skipCinematic=document.getElementById("skipCinematic");
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x102018);
@@ -288,8 +288,45 @@
     }
     addEventListener("resize", resize);
 
+    
+    // ===== MIKE + MICAELA 3D — BASE RECONSTRUIDA DE LAS REFERENCIAS =====
+    function material(color){ return new THREE.MeshStandardMaterial({color,roughness:.82}); }
+    function mesh(g,geo,p,sc,color){ const m=new THREE.Mesh(geo,material(color)); m.position.set(...p); if(sc)m.scale.set(...sc); g.add(m); return m; }
+    function eye(g,x){ mesh(g,new THREE.SphereGeometry(.105,16,10),[x,2.02,.51],[1,1,.55],0x18201d); mesh(g,new THREE.SphereGeometry(.035,10,8),[x-.025,2.045,.575],[1,1,.5],0xffffff); }
+    function makeMike(){
+      const g=new THREE.Group(),skin=0xf3b89f,hair=0x9b5428,yellow=0xf2bd35,blue=0x4c83ae,orange=0xe77d2d,denim=0x2f5f8a,white=0xf5f5ee,red=0xd94a42;
+      mesh(g,new THREE.SphereGeometry(.55,24,16),[0,1.25,0],[1,.95,.75],yellow);
+      for(const [y,c] of [[1.05,blue],[1.30,orange],[1.55,blue]]) mesh(g,new THREE.TorusGeometry(.44,.055,8,24),[0,y,0],[1,.75,1],c).rotation.x=Math.PI/2;
+      mesh(g,new THREE.SphereGeometry(.58,24,16),[0,2.02,0],[1,1.02,.9],skin);
+      mesh(g,new THREE.SphereGeometry(.65,24,16),[0,2.38,-.03],[1.08,.68,.98],hair);
+      for(const x of [-.45,-.25,0,.25,.45]) mesh(g,new THREE.ConeGeometry(.13,.45,8),[x,2.62,.03],[1,.9,1],hair).rotation.z=-x*.55;
+      eye(g,-.22); eye(g,.22);
+      mesh(g,new THREE.SphereGeometry(.1,12,8),[0,1.91,.53],[1,.7,.4],0xf08f82);
+      for(const x of [-.58,.58]) mesh(g,new THREE.CapsuleGeometry(.13,.62,6,10),[x,1.25,0],[1,1,1],skin);
+      for(const x of [-.22,.22]) mesh(g,new THREE.BoxGeometry(.34,.62,.38),[x,.57,0],[1,1,1],denim);
+      for(const x of [-.22,.22]){mesh(g,new THREE.BoxGeometry(.43,.18,.56),[x,.15,.08],[1,1,1],white);mesh(g,new THREE.BoxGeometry(.28,.07,.18),[x,.23,.18],[1,1,1],red)}
+      return g;
+    }
+    function makeMicaela(){
+      const g=new THREE.Group(),skin=0xf3b89f,pink=0xe6a0b7,light=0xf5c7d8,hair=0x9b5d38,boot=0xe8a5b5;
+      mesh(g,new THREE.ConeGeometry(.74,1.05,20),[0,1.18,0],[1,1,.75],pink);
+      mesh(g,new THREE.TorusGeometry(.55,.065,8,24),[0,1.62,0],[1,.75,1],light).rotation.x=Math.PI/2;
+      mesh(g,new THREE.SphereGeometry(.58,24,16),[0,2.03,0],[1,1.03,.9],skin);
+      mesh(g,new THREE.SphereGeometry(.68,24,16),[0,2.37,-.03],[1.1,.76,1],hair);
+      for(const x of [-.58,-.42,-.25,.25,.42,.58]) mesh(g,new THREE.CapsuleGeometry(.1,.58,6,10),[x,2.05,.02],[1,1.25,1],hair).rotation.z=x>0?-.18:.18;
+      eye(g,-.22);eye(g,.22);
+      mesh(g,new THREE.SphereGeometry(.1,12,8),[0,1.91,.53],[1,.7,.4],0xf08f82);
+      for(const x of [-.57,.57]) mesh(g,new THREE.CapsuleGeometry(.13,.64,6,10),[x,1.25,0],[1,1,1],skin);
+      for(const x of [-.22,.22]) mesh(g,new THREE.CylinderGeometry(.18,.21,.65,12),[x,.48,0],[1,1,1],light);
+      for(const x of [-.22,.22]) mesh(g,new THREE.BoxGeometry(.42,.3,.58),[x,.1,.08],[1,1,1],boot);
+      return g;
+    }
+    const mike3D=makeMike(),mikaela3D=makeMicaela();
+    mikeActor.appendChild(mike3D); mikaelaActor.appendChild(mikaela3D);
+    mike3D.scale.setScalar(.82); mikaela3D.scale.setScalar(.82);
+
     let started = false;
-    let startTime = performance.now();let cinematicTimer=null,cinematicRunning=false;const cinematicSteps=[{t:0,title:"EL COMIENZO",speaker:"",text:"Una nueva mañana comienza en la granja."},{t:2200,title:"",speaker:"MIKE",text:"¿Escuchaste eso?"},{t:4700,title:"",speaker:"MICAELA",text:"Sí... viene de ahí."},{t:7200,title:"",speaker:"MIKE",text:"¡Mira! Hay algo en el camino."},{t:9800,title:"",speaker:"MICAELA",text:"¡Es un huevo!"},{t:12400,title:"",speaker:"",text:"Algo está a punto de comenzar..."}];function showCinematicStep(x){cinematicTitle.textContent=x.title||"";cinematicTitle.classList.toggle("show",!!x.title);speaker.textContent=x.speaker||"";dialogueText.textContent=x.text||"";dialogue.classList.toggle("show",!!x.text);if(x.t>=2200)mikeActor.classList.add("show");if(x.t>=4700)mikaelaActor.classList.add("show");if(x.t>=7200)cinematicEgg.classList.add("show")}function finishCinematic(){cinematicRunning=false;clearTimeout(cinematicTimer);cinematic.classList.remove("show");dialogue.classList.remove("show");cinematicTitle.classList.remove("show");mikeActor.classList.remove("show");mikaelaActor.classList.remove("show");cinematicEgg.classList.remove("show");sceneUI.classList.add("show")}function startCinematic(){cinematicRunning=true;cinematic.classList.add("show");sceneUI.classList.remove("show");cinematicSteps.forEach(x=>setTimeout(()=>{if(cinematicRunning)showCinematicStep(x)},x.t));cinematicTimer=setTimeout(finishCinematic,15500)}skipCinematic.addEventListener("click",finishCinematic);
+    let startTime = performance.now();let cinematicTimer=null,cinematicRunning=false;const cinematicSteps=[{t:0,title:"EL COMIENZO",speaker:"",text:"Una nueva mañana comienza en la granja."},{t:2200,title:"",speaker:"MIKE",text:"¿Escuchaste eso?"},{t:4700,title:"",speaker:"MICAELA",text:"Sí... viene de ahí."},{t:7200,title:"",speaker:"MIKE",text:"¡Mira! Hay algo en el camino."},{t:9800,title:"",speaker:"MICAELA",text:"¡Es un huevo!"},{t:12400,title:"",speaker:"",text:"Algo está a punto de comenzar..."}];function showCinematicStep(x){cinematicTitle.textContent=x.title||"";cinematicTitle.classList.toggle("show",!!x.title);speaker.textContent=x.speaker||"";dialogueText.textContent=x.text||"";dialogue.classList.toggle("show",!!x.text);if(x.t>=2200){mikeActor.classList.add("show");mike3D.rotation.y=.10}if(x.t>=4700){mikaelaActor.classList.add("show");mikaela3D.rotation.y=-.10};if(x.t>=7200)cinematicEgg.classList.add("show")}function finishCinematic(){cinematicRunning=false;clearTimeout(cinematicTimer);cinematic.classList.remove("show");dialogue.classList.remove("show");cinematicTitle.classList.remove("show");mikeActor.classList.remove("show");mikaelaActor.classList.remove("show");cinematicEgg.classList.remove("show");sceneUI.classList.add("show")}function startCinematic(){cinematicRunning=true;cinematic.classList.add("show");sceneUI.classList.remove("show");cinematicSteps.forEach(x=>setTimeout(()=>{if(cinematicRunning)showCinematicStep(x)},x.t));cinematicTimer=setTimeout(finishCinematic,15500)}skipCinematic.addEventListener("click",finishCinematic);
 
     function finishLoading() {
       bar.style.width = "100%";
