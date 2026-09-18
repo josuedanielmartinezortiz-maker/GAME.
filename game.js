@@ -1,3 +1,8 @@
+import {
+  iniciarCinematica,
+  cinematicaTerminada
+} from "./3D/escenaCinematica.js?v=20260918";
+
 const game = document.getElementById("game");
 if (!game) throw new Error("No se encontró #game");
 
@@ -108,7 +113,7 @@ game.appendChild(cover);
 
 let started = false;
 
-play.addEventListener("click", async () => {
+play.addEventListener("click", () => {
   if (started) return;
   started = true;
   play.disabled = true;
@@ -119,9 +124,8 @@ play.addEventListener("click", async () => {
   setTimeout(() => {
     cover.remove();
     try {
-      const mod = await import("./3D/escenaCinematica.js?v=20260918");
-      mod.iniciarCinematica(game);
-      waitForEnd(mod.cinematicaTerminada);
+      iniciarCinematica(game);
+      waitForEnd();
     } catch (error) {
       console.error("[EGGARO] Error al cargar la cinemática:", error);
       showError(error);
@@ -129,8 +133,8 @@ play.addEventListener("click", async () => {
   }, 660);
 });
 
-function waitForEnd(cinematicaTerminada) {
-  if (typeof cinematicaTerminada === "function" && cinematicaTerminada()) {
+function waitForEnd() {
+  if (cinematicaTerminada()) {
     const screen = document.createElement("div");
     Object.assign(screen.style, {
       position: "fixed",
@@ -141,7 +145,7 @@ function waitForEnd(cinematicaTerminada) {
     game.appendChild(screen);
     return;
   }
-  requestAnimationFrame(() => waitForEnd(cinematicaTerminada));
+  requestAnimationFrame(waitForEnd);
 }
 
 function showError(error) {
