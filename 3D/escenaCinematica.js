@@ -67,7 +67,8 @@ export function iniciarCinematica(container) {
 
 function createScene(container) {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x9bb3a1);
+  scene.background = new THREE.Color(0x6f8f78);
+  renderer?.setClearColor?.(0x6f8f78, 1);
   scene.fog = new THREE.Fog(0x8fa99b, 18, 78);
 
   camera = new THREE.PerspectiveCamera(
@@ -296,59 +297,31 @@ function createAtmosphere() {
   }
 }
 
-function createDrawnFallbackCharacter(textureFile, x, z, scale = 1) {
-  const group = new THREE.Group();
-  const tex = new THREE.TextureLoader().load(textureFile);
-  tex.colorSpace = THREE.SRGBColorSpace;
-
-  const shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.7 * scale, 24),
-    new THREE.MeshBasicMaterial({ color: 0x172018, transparent: true, opacity: 0.45 })
-  );
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.y = 0.02;
-  group.add(shadow);
-
-  const card = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.55 * scale, 2.65 * scale),
-    new THREE.MeshBasicMaterial({
-      map: tex,
-      transparent: true,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    })
-  );
-  card.position.y = 1.32 * scale;
-  group.add(card);
-
-  group.position.set(x, 0, z);
-  group.userData.drawnFallback = true;
-  group.userData.card = card;
-  scene.add(group);
-  return group;
-}
-
-function faceDrawnFallback(obj) {
-  if (!obj?.userData?.drawnFallback) return;
-  obj.userData.card.lookAt(camera.position);
+function showLoadError(label, error) {
+  console.error("[EGGARO] Error de modelo:", label, error);
+  if (hud) {
+    hud.title.textContent = "CARGANDO EGGARO";
+    hud.sub.textContent = "No se pudo cargar " + label + ". Revisa la consola del navegador.";
+    hud.sub.style.color = "#ffb4b4";
+  }
 }
 
 async function loadCharacters() {
-  const loadOne = async (file, fallbackFile, x, z) => {
+  const loadOne = async (file, x, z, label) => {
     try {
       const gltf = await loader.loadAsync(file);
       const obj = prepareCharacter(gltf.scene, x, z);
       scene.add(obj);
       return obj;
     } catch (error) {
-      console.error("[EGGARO] No se pudo cargar", file, error);
-      return createDrawnFallbackCharacter(fallbackFile, x, z, 1);
+      showLoadError(label, error);
+      return null;
     }
   };
 
   const [loadedMike, loadedMicaela] = await Promise.all([
-    loadOne(FILES.mike, "./3D/personajes/mike/mike.png", -1.0, 8),
-    loadOne(FILES.micaela, "./3D/personajes/mikaela/micaela.png", 1.0, 9)
+    loadOne(FILES.mike, -1.0, 8, "Mike"),
+    loadOne(FILES.micaela, 1.0, 9, "Micaela")
   ]);
 
   mike = loadedMike;
@@ -356,24 +329,51 @@ async function loadCharacters() {
 
   mikeBones = findBones(mike);
   micaelaBones = findBones(micaela);
-  charactersReady = !!mike && !!micaela;
-  phaseTime = 0;
-  elapsed = 0;
+
+  if (mike && micaela) {
+    charactersReady = true;
+    phaseTime = 0;
+    elapsed = 0;
+    setHud("EGGARO", "La historia comienza...");
+  } else {
+    charactersReady = false;
+    setHud("EGGARO", "No se pudieron cargar los modelos 3D.");
+  }
 }
 
 function prepareCharacter(obj, x, z) {
-  obj.position.set(x, 0, z);
   obj.rotation.y = Math.PI;
 
   obj.traverse(n => {
     if (n.isMesh) {
       n.castShadow = true;
       n.receiveShadow = true;
+      if (n.material) {
+        n.material.needsUpdate = true;
+      }
     }
   });
 
+  // Adapt any original GLB unit scale to a common EGGARO character height.
   const box = new THREE.Box3().setFromObject(obj);
-  if (Number.isFinite(box.min.y)) obj.position.y -= box.min.y;
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  if (Number.isFinite(size.y) && size.y > 0.001) {
+    const targetHeight = 2.35;
+    const scale = THREE.MathUtils.clamp(targetHeight / size.y, 0.02, 20);
+    obj.scale.multiplyScalar(scale);
+  }
+
+  const fitted = new THREE.Box3().setFromObject(obj);
+  const fittedCenter = new THREE.Vector3();
+  fitted.getCenter(fittedCenter);
+
+  obj.position.x = x - fittedCenter.x;
+  obj.position.y = -fitted.min.y;
+  obj.position.z = z - fittedCenter.z;
 
   return obj;
 }
@@ -794,7 +794,8 @@ function updateResult(delta) {
 }
 
 function updateBlack() {
-  renderer.domElement.style.opacity = "1";
+  renderer.setClearColor(0x000000, 1);
+  renderer.clear(true, true, true);
 
   if (hud) {
     hud.style.background = "#000";
@@ -868,31 +869,25 @@ function resizeCinematic() {
   const width = Math.max(1, window.visualViewport?.width || window.innerWidth);
   const height = Math.max(1, window.visualViewport?.height || window.innerHeight);
 
-  // Keep the authored camera composition at 16:9.
-  const targetAspect = 16 / 9;
+  // Render to the complete viewport. Camera framing remains a 16:9-safe
+  // composition but adapts its perspective to portrait/landscape.
   const viewportAspect = width / height;
+  const safeAspect = 16 / 9;
 
-  let renderWidth = width;
-  let renderHeight = Math.round(width / targetAspect);
-
-  if (renderHeight > height) {
-    renderHeight = height;
-    renderWidth = Math.round(height * targetAspect);
-  }
-
-  camera.aspect = targetAspect;
+  camera.aspect = viewportAspect;
+  camera.fov = viewportAspect < safeAspect ? 55 : 48;
   camera.updateProjectionMatrix();
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-  renderer.setSize(renderWidth, renderHeight, false);
+  renderer.setSize(width, height, false);
 
-  renderer.domElement.style.width = width + "px";
-  renderer.domElement.style.height = height + "px";
-  renderer.domElement.style.objectFit = "contain";
   renderer.domElement.style.position = "fixed";
-  renderer.domElement.style.left = "50%";
-  renderer.domElement.style.top = "50%";
-  renderer.domElement.style.transform = "translate(-50%, -50%)";
+  renderer.domElement.style.left = "0";
+  renderer.domElement.style.top = "0";
+  renderer.domElement.style.width = "100vw";
+  renderer.domElement.style.height = "100dvh";
+  renderer.domElement.style.transform = "none";
+  renderer.domElement.style.objectFit = "fill";
 }
 
 window.addEventListener("resize", resizeCinematic, { passive: true });
