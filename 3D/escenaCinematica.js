@@ -282,40 +282,35 @@ function buildRocks() {
 }
 
 async function loadCharacters() {
-  setHud("EGGARO", "Cargando a Mike y Micaela...");
+  // La cinemática comienza con los diseños reales del repositorio.
+  // Los GLB se intentan cargar en segundo plano y no bloquean la historia.
+  mike = makeCharacterFallback(FILES.mikeImage, -1.0, 8);
+  micaela = makeCharacterFallback(FILES.micaelaImage, 1.0, 9);
+  scene.add(mike, micaela);
+  ready = true;
+  setHud("EGGARO", "Mike y Micaela entran en la granja...");
 
   try {
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Tiempo de carga agotado")), 9000)
-    );
-
-    const [a, b] = await Promise.race([
-      Promise.all([
-        loader.loadAsync(FILES.mike),
-        loader.loadAsync(FILES.micaela)
-      ]),
-      timeout
+    const [a, b] = await Promise.all([
+      loader.loadAsync(FILES.mike),
+      loader.loadAsync(FILES.micaela)
     ]);
 
-    mike = prepare(a.scene, -1.0, 8);
-    micaela = prepare(b.scene, 1.0, 9);
+    const nextMike = prepare(a.scene, -1.0, 8);
+    const nextMicaela = prepare(b.scene, 1.0, 9);
+
+    if (mike?.parent) scene.remove(mike);
+    if (micaela?.parent) scene.remove(micaela);
+
+    mike = nextMike;
+    micaela = nextMicaela;
     scene.add(mike, micaela);
 
     mikeBones = findBones(mike);
     micaelaBones = findBones(micaela);
-    ready = true;
-    phaseTime = 0;
     setHud("EGGARO", "Mike y Micaela entran en la granja...");
   } catch (error) {
-    console.error("[EGGARO] GLB:", error);
-    // Nunca dejamos la cinemática congelada por un modelo que falle al cargar.
-    // Usamos los PNG originales del repositorio como respaldo 3D sobre planos.
-    mike = makeCharacterFallback(FILES.mikeImage, -1.0, 8);
-    micaela = makeCharacterFallback(FILES.micaelaImage, 1.0, 9);
-    scene.add(mike, micaela);
-    ready = true;
-    phaseTime = 0;
-    setHud("EGGARO", "Mike y Micaela entran en la granja...");
+    console.warn("[EGGARO] Se mantienen los diseños PNG del repositorio:", error);
   }
 }
 
@@ -557,23 +552,7 @@ function cameraTo(x, y, z, tx, ty, tz, speed = 0.06) {
 }
 
 function updateWalk() {
-  if (!ready && phaseTime < 10) {
-    cameraTo(0, 6.5, 18, 2, 3.2, -10, 0.03);
-    setHud("EGGARO", "Preparando la escena...");
-    return;
-  }
-
-  // La historia no puede quedarse esperando un recurso externo.
-  // A los 10 s continúa aunque el GLB siga pendiente.
-  if (!ready) {
-    if (!mike) mike = makeCharacterFallback(FILES.mikeImage, -1.0, 8);
-    if (!micaela) micaela = makeCharacterFallback(FILES.micaelaImage, 1.0, 9);
-    if (!mike.parent) scene.add(mike);
-    if (!micaela.parent) scene.add(micaela);
-    ready = true;
-    mikeBones = {};
-    micaelaBones = {};
-  }
+  if (!ready) return;
 
   const p = THREE.MathUtils.clamp(phaseTime / WALK_TIME, 0, 1);
 
