@@ -7,6 +7,8 @@ let mike, micaela, egg, selector;
 let mikeBones = {}, micaelaBones = {};
 let running = false, finished = false, raf = 0, elapsed = 0;
 let phase = 0, phaseTime = 0, result = "noob";
+let charactersReady = false;
+let cinematicStartTime = 0;
 let hud, selectorCards = [];
 
 const loader = new GLTFLoader();
@@ -45,18 +47,22 @@ export function iniciarCinematica(container) {
   phase = PHASES.WALK;
   phaseTime = 0;
   result = "noob";
+  charactersReady = false;
 
   createScene(container);
   createWorld();
   createHud();
   createEgg();
   createSelector();
-  loadCharacters();
 
   clock = new THREE.Clock();
-  phase = PHASES.WALK;
+  cinematicStartTime = performance.now();
   renderer.render(scene, camera);
+
+  // Show the actual 3D scene immediately, but don't advance the 60-second
+  // story clock until both characters exist.
   renderer.setAnimationLoop(loop);
+  loadCharacters();
 }
 
 function createScene(container) {
@@ -350,6 +356,9 @@ async function loadCharacters() {
 
   mikeBones = findBones(mike);
   micaelaBones = findBones(micaela);
+  charactersReady = !!mike && !!micaela;
+  phaseTime = 0;
+  elapsed = 0;
 }
 
 function prepareCharacter(obj, x, z) {
@@ -617,6 +626,12 @@ function cameraTo(x, y, z, tx, ty, tz, speed = 0.055) {
 }
 
 function updateWalk(delta) {
+  if (!charactersReady) {
+    cameraTo(0, 3.4, 13, 0, 1.2, 0, 0.05);
+    setHud("EGGARO", "Preparando la escena...");
+    return;
+  }
+
   const p = Math.min(phaseTime / WALK_TIME, 1);
 
   if (mike) {
@@ -743,7 +758,7 @@ function updateResult(delta) {
     result === "zombie" ? FILES.zombie :
     FILES.noob;
 
-  if (!window.__gairoResult) {
+  if (!window.__eggAroResult) {
     const tex = new THREE.TextureLoader().load(file);
     tex.colorSpace = THREE.SRGBColorSpace;
 
@@ -760,10 +775,10 @@ function updateResult(delta) {
     g.position.set(0, 1.55, -2.7);
     g.scale.setScalar(0.3);
     scene.add(g);
-    window.__gairoResult = g;
+    window.__eggAroResult = g;
   }
 
-  const g = window.__gairoResult;
+  const g = window.__eggAroResult;
   g.scale.setScalar(Math.min(1, 0.3 + phaseTime * 1.7));
   g.rotation.y += delta * 0.45;
 
@@ -787,7 +802,7 @@ function updateBlack() {
     hud.sub.textContent = "";
   }
 
-  if (phaseTime > 1.5) finish();
+  if (phaseTime > 2.2) finish();
 }
 
 function changePhase(next) {
@@ -844,7 +859,7 @@ function detener() {
   selector = null;
   selectorCards = [];
   hud = null;
-  window.__gairoResult = null;
+  window.__eggAroResult = null;
 }
 
 function resizeCinematic() {
