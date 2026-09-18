@@ -1009,7 +1009,7 @@ function clearHud() {
    FASE 1 — CAMINATA
    ============================================================ */
 
-function updateWalk() {
+function updateWalk(delta) {
   const p = THREE.MathUtils.clamp(phaseTime / WALK_TIME, 0, 1);
 
   if (!mike || !micaela) {
@@ -1034,8 +1034,8 @@ function updateWalk() {
 
   cameraTo(cameraX, 4.8, cameraZ, 0, 2.0, -4, 0.045);
 
-  if (mikeMixer) mikeMixer.update(clock.getDelta());
-  if (micaelaMixer) micaelaMixer.update(0);
+  if (mikeMixer) mikeMixer.update(delta);
+  if (micaelaMixer) micaelaMixer.update(delta);
 
   setHud(
     "EGGARO",
@@ -1227,7 +1227,7 @@ function frame() {
   elapsed += delta;
   phaseTime += delta;
 
-  if (phase === "WALK") updateWalk();
+  if (phase === "WALK") updateWalk(delta);
   else if (phase === "ARRIVE") updateArrive(delta);
   else if (phase === "EGG") updateEgg(delta);
   else if (phase === "SELECT") updateSelect(delta);
