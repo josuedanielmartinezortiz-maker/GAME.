@@ -91,6 +91,7 @@ export function iniciarCinematica(container) {
 
   clock = new THREE.Clock();
   renderer.setAnimationLoop(frame);
+  renderer.render(scene, camera);
 
   cargarPersonajes();
 }
@@ -111,16 +112,20 @@ function buildScene() {
 
   renderer = new THREE.WebGLRenderer({
     antialias: false,
-    powerPreference: "default",
+    alpha: false,
+    powerPreference: "low-power",
     failIfMajorPerformanceCaveat: false
   });
+
+  renderer.setClearColor(0x07101a, 1);
+  renderer.debug.checkShaderErrors = true;
 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.15));
+  renderer.setPixelRatio(1);
 
   Object.assign(renderer.domElement.style, {
     position: "fixed",
