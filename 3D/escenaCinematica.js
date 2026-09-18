@@ -51,8 +51,8 @@ export function iniciarCinematica(container) {
 
 function createScene() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x081117);
-  scene.fog = new THREE.FogExp2(0x0b1718, 0.017);
+  scene.background = new THREE.Color(0x12242a);
+  scene.fog = new THREE.FogExp2(0x17302d, 0.012);
 
   camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.05, 180);
   camera.position.set(0, 4.2, 15);
@@ -62,26 +62,37 @@ function createScene() {
   renderer.setSize(innerWidth, innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.08;
+  renderer.toneMappingExposure = 1.28;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   root.appendChild(renderer.domElement);
 
-  scene.add(new THREE.HemisphereLight(0x9dc9db, 0x102014, 1.15));
+  scene.add(new THREE.AmbientLight(0x9fc8c2, 1.25));
+  scene.add(new THREE.HemisphereLight(0xbfe8f0, 0x25452e, 1.8));
 
-  const moon = new THREE.DirectionalLight(0x7fa8ff, 2.8);
+  const moon = new THREE.DirectionalLight(0x9ec5ff, 3.8);
   moon.position.set(-10, 16, 8);
   moon.castShadow = true;
   moon.shadow.mapSize.set(2048, 2048);
   scene.add(moon);
 
-  const warm = new THREE.DirectionalLight(0xffb46b, 2.0);
+  const warm = new THREE.DirectionalLight(0xffc27b, 3.0);
   warm.position.set(8, 6, -12);
   scene.add(warm);
 
-  const magic = new THREE.PointLight(0x73dfff, 2.0, 14);
+  const magic = new THREE.PointLight(0x73dfff, 3.5, 18);
   magic.position.set(0, 2.5, -3);
   scene.add(magic);
+
+  const fill = new THREE.PointLight(0xffd28a, 2.4, 22);
+  fill.position.set(-5, 4.5, 4);
+  scene.add(fill);
+
+  const eggLight = new THREE.SpotLight(0xffe3a3, 5.5, 18, Math.PI / 4, 0.55, 1.2);
+  eggLight.position.set(0, 5.5, 3.5);
+  eggLight.target.position.set(0, 1, -2);
+  scene.add(eggLight);
+  scene.add(eggLight.target);
 
   createSky();
   createGround();
@@ -428,11 +439,36 @@ function createHUD() {
 
   const title = document.createElement("div");
   title.id = "egaroCineTitle";
-  Object.assign(title.style, { position: "absolute", left: "7%", bottom: "15%", color: "#fff", fontSize: "clamp(24px,5vw,54px)", fontWeight: "900", letterSpacing: ".08em", textShadow: "0 5px 22px #000", opacity: "0", transition: "opacity .3s" });
+  Object.assign(title.style, {
+    position: "absolute",
+    left: "7%",
+    right: "7%",
+    bottom: "17%",
+    color: "#fff",
+    fontSize: "clamp(22px,5vw,52px)",
+    lineHeight: "1.05",
+    fontWeight: "900",
+    letterSpacing: ".07em",
+    textShadow: "0 5px 22px #000",
+    opacity: "0",
+    transition: "opacity .3s"
+  });
 
   const sub = document.createElement("div");
   sub.id = "egaroCineSub";
-  Object.assign(sub.style, { position: "absolute", left: "7%", bottom: "9%", maxWidth: "82%", color: "#d9e8df", fontSize: "clamp(13px,2.5vw,23px)", textShadow: "0 3px 12px #000", opacity: "0", transition: "opacity .3s" });
+  Object.assign(sub.style, {
+    position: "absolute",
+    left: "7%",
+    right: "7%",
+    bottom: "9%",
+    maxWidth: "86%",
+    color: "#d9e8df",
+    fontSize: "clamp(12px,2.5vw,22px)",
+    lineHeight: "1.3",
+    textShadow: "0 3px 12px #000",
+    opacity: "0",
+    transition: "opacity .3s"
+  });
 
   const flash = document.createElement("div");
   flash.id = "egaroFlash";
@@ -457,20 +493,8 @@ function hideText() {
 }
 
 function createTitle() {
-  logo = document.createElement("div");
-  logo.id = "egaroMenuTitle";
-  Object.assign(logo.style, { position: "fixed", inset: "0", zIndex: "50001", pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", background: "radial-gradient(circle,rgba(17,43,49,.15),rgba(0,0,0,.55))", opacity: "0", transition: "opacity .8s" });
-
-  const name = document.createElement("div");
-  name.textContent = "EGARO";
-  Object.assign(name.style, { color: "#f2e5bd", fontSize: "clamp(56px,14vw,138px)", fontWeight: "1000", letterSpacing: ".2em", textShadow: "0 0 28px rgba(232,195,106,.4),0 8px 30px #000" });
-
-  const tagline = document.createElement("div");
-  tagline.textContent = "UNA NUEVA AVENTURA";
-  Object.assign(tagline.style, { color: "#c8d9d0", fontSize: "clamp(11px,2vw,18px)", letterSpacing: ".42em", marginTop: "8px" });
-
-  logo.append(name, tagline);
-  root.appendChild(logo);
+  // La portada vive en game.js. La cinemática usa un único HUD para evitar
+  // títulos/subtítulos duplicados y elementos encimados.
 }
 
 function pointCamera(position, target) {
@@ -491,7 +515,7 @@ function updatePhase(delta) {
   const p = Math.max(0, Math.min(1, time / LENGTH[phase]));
   const s = smooth(p);
 
-  if (logo) logo.style.opacity = phase === PHASE.TITLE ? String(1 - p * 1.8) : "0";
+
 
   if (phase === PHASE.TITLE) {
     pointCamera(new THREE.Vector3(0, 4.8, 15), new THREE.Vector3(0, 2, -5));
@@ -516,7 +540,7 @@ function updatePhase(delta) {
   if (phase === PHASE.DISCOVER) {
     if (mike) animateCharacter(mike, mikeBones, time, false, 1.5);
     if (micaela) animateCharacter(micaela, micaelaBones, time + 0.3, false, 1.4);
-    pointCamera(new THREE.Vector3(3.8, 2.15, 4.0), new THREE.Vector3(0, 1.0, -1.6));
+    pointCamera(new THREE.Vector3(2.8, 1.75, 2.8), new THREE.Vector3(0, 1.0, -2.15));
     if (egg) {
       egg.rotation.y = Math.sin(time * 1.5) * .08;
       egg.userData.glow.intensity = 1.5 + Math.sin(time * 3) * .5;
@@ -531,7 +555,7 @@ function updatePhase(delta) {
       roulette.rotation.z += delta * (7 + (1 - s) * 9);
       roulette.position.y = 2 + Math.sin(p * Math.PI) * .16;
     }
-    pointCamera(new THREE.Vector3(0, 2.35, 5.2), new THREE.Vector3(0, 2.0, -2.1));
+    pointCamera(new THREE.Vector3(0, 2.35, 4.0), new THREE.Vector3(0, 2.0, -2.1));
     setText("RULETA DE EGARO", "Probabilidades reales del huevo noob.");
 
     if (p > .84 && !result) result = abrirHuevo("huevo_noob") || "noob";
@@ -542,10 +566,10 @@ function updatePhase(delta) {
     if (egg) {
       egg.visible = true;
       egg.rotation.y += delta * 2.0;
-      egg.scale.setScalar(.91 + Math.sin(time * 14) * .045);
-      egg.userData.glow.intensity = 3 + s * 7;
+      egg.scale.setScalar(1.08 + Math.sin(time * 14) * .055);
+      egg.userData.glow.intensity = 4 + s * 9;
     }
-    pointCamera(new THREE.Vector3(0, 1.6, 2.8), new THREE.Vector3(0, 1.0, -2));
+    pointCamera(new THREE.Vector3(0, 1.55, 0.65), new THREE.Vector3(0, 1.05, -2.05));
     setText("EL HUEVO NOOB", "La energía aumenta...");
   }
 
