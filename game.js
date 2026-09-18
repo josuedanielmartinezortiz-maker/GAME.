@@ -17,7 +17,7 @@ Object.assign(game.style, {
 });
 
 // ============================================================
-// EK GARO — PORTADA NUEVA
+// EGGARO — PORTADA NUEVA
 // ============================================================
 
 const cover = document.createElement("div");
@@ -50,7 +50,7 @@ Object.assign(glow.style, {
 });
 
 const name = document.createElement("div");
-name.textContent = "EK GARO";
+name.textContent = "EGGARO";
 
 Object.assign(name.style, {
   position: "relative",
@@ -114,7 +114,7 @@ Object.assign(play.style, {
 });
 
 const footer = document.createElement("div");
-footer.textContent = "UNA HISTORIA DE EK GARO";
+footer.textContent = "UNA HISTORIA DE EGGARO";
 
 Object.assign(footer.style, {
   position: "absolute",
@@ -199,7 +199,7 @@ function showError(error) {
   });
 
   const title = document.createElement("h2");
-  title.textContent = "EK GARO";
+  title.textContent = "EGGARO";
 
   const message = document.createElement("p");
   message.textContent = "No se pudo iniciar la cinemática.";
