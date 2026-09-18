@@ -3,65 +3,171 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#050505">
+  <meta name="theme-color" content="#07110b">
   <meta name="description" content="EGGARO — experiencia 3D de GAMERPRO">
   <title>EGGARO</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #050505;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      color: #fff;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #07110b; }
+    body { font-family: Arial, sans-serif; color: #fff; }
+    button { font: inherit; }
 
     #game {
       position: fixed;
       inset: 0;
-      width: 100%;
-      height: 100%;
       overflow: hidden;
-      background: #050505;
+      background: #07110b;
     }
 
-    #boot {
+    #loading {
       position: absolute;
       inset: 0;
+      z-index: 20;
       display: grid;
       place-items: center;
       background:
-        radial-gradient(circle at 50% 42%, #263b32 0%, #101713 42%, #050505 100%);
+        radial-gradient(circle at 50% 35%, rgba(126, 164, 91, .28), transparent 35%),
+        linear-gradient(180deg, #102018 0%, #07110b 62%, #040805 100%);
+      transition: opacity .7s ease, visibility .7s ease;
     }
 
-    #boot-content {
+    #loading.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .loading-wrap {
+      width: min(88vw, 520px);
       text-align: center;
       padding: 24px;
     }
 
-    #boot-title {
-      font-size: clamp(42px, 12vw, 86px);
-      font-weight: 900;
+    .logo {
+      font-size: clamp(48px, 15vw, 92px);
+      font-weight: 950;
+      letter-spacing: .1em;
+      text-shadow: 0 6px 30px rgba(0,0,0,.5);
+    }
+
+    .sub {
+      margin-top: 8px;
+      font-size: 12px;
+      letter-spacing: .3em;
+      opacity: .7;
+      text-transform: uppercase;
+    }
+
+    .loader {
+      width: 100%;
+      height: 7px;
+      margin-top: 42px;
+      border-radius: 99px;
+      overflow: hidden;
+      background: rgba(255,255,255,.12);
+    }
+
+    #bar {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #7aa37e, #e8c36a);
+      transition: width .18s ease;
+    }
+
+    #loading-text {
+      margin-top: 12px;
+      font-size: 12px;
+      opacity: .65;
       letter-spacing: .08em;
     }
 
-    #boot-subtitle {
-      margin-top: 10px;
-      opacity: .65;
-      font-size: 14px;
+    #menu {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .6s ease;
+      background:
+        radial-gradient(circle at 50% 38%, rgba(74, 107, 72, .3), transparent 36%),
+        linear-gradient(180deg, rgba(4,9,6,.12), rgba(4,8,5,.72));
+    }
+
+    #menu.show { opacity: 1; pointer-events: auto; }
+
+    .menu-content {
+      width: min(88vw, 430px);
+      text-align: center;
+      padding: 28px;
+    }
+
+    .menu-title {
+      font-size: clamp(52px, 16vw, 100px);
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-shadow: 0 8px 35px rgba(0,0,0,.6);
+    }
+
+    .menu-sub {
+      margin: 4px 0 34px;
+      opacity: .72;
       letter-spacing: .18em;
-      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    #play {
+      min-width: min(76vw, 300px);
+      min-height: 62px;
+      padding: 0 34px;
+      border: 2px solid rgba(232,195,106,.9);
+      border-radius: 18px;
+      color: #111;
+      background: linear-gradient(135deg, #e8c36a, #f4dda0);
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      box-shadow: 0 12px 35px rgba(0,0,0,.4);
+      cursor: pointer;
+      transform: translateY(0) scale(1);
+      transition: transform .16s ease, filter .16s ease;
+    }
+
+    #play:active { transform: translateY(2px) scale(.97); }
+    #play:hover { filter: brightness(1.08); }
+
+    #scene {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity .7s ease;
+    }
+
+    #scene.show { opacity: 1; }
+
+    #scene-ui {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .5s ease;
+    }
+
+    #scene-ui.show { opacity: 1; }
+
+    #scene-label {
+      position: absolute;
+      left: 20px;
+      top: max(20px, env(safe-area-inset-top));
+      padding: 9px 13px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      background: rgba(0,0,0,.3);
+      backdrop-filter: blur(8px);
+      font-size: 12px;
+      letter-spacing: .12em;
+      opacity: .8;
     }
   </style>
 
@@ -76,59 +182,159 @@
 
 <body>
   <main id="game">
-    <section id="boot" aria-label="EGGARO">
-      <div id="boot-content">
-        <div id="boot-title">EGGARO</div>
-        <div id="boot-subtitle">GAMERPRO • 3D</div>
+    <section id="loading" aria-label="Cargando EGGARO">
+      <div class="loading-wrap">
+        <div class="logo">EGGARO</div>
+        <div class="sub">GAMERPRO • 3D</div>
+        <div class="loader"><div id="bar"></div></div>
+        <div id="loading-text">Preparando el mundo...</div>
       </div>
     </section>
+
+    <section id="menu" aria-label="Menú principal">
+      <div class="menu-content">
+        <div class="menu-title">EGGARO</div>
+        <div class="menu-sub">UNA AVENTURA GAMERPRO</div>
+        <button id="play" type="button">▶ JUGAR</button>
+      </div>
+    </section>
+
+    <div id="scene"></div>
+    <div id="scene-ui"><div id="scene-label">EGGARO • GRANJA</div></div>
   </main>
 
   <script type="module">
     import * as THREE from "three";
 
     const game = document.getElementById("game");
+    const loading = document.getElementById("loading");
+    const menu = document.getElementById("menu");
+    const sceneRoot = document.getElementById("scene");
+    const sceneUI = document.getElementById("scene-ui");
+    const play = document.getElementById("play");
+    const bar = document.getElementById("bar");
+    const loadingText = document.getElementById("loading-text");
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050505);
+    scene.background = new THREE.Color(0x102018);
+    scene.fog = new THREE.Fog(0x102018, 8, 30);
 
-    const camera = new THREE.PerspectiveCamera(
-      60,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      100
-    );
-    camera.position.set(0, 1.5, 5);
+    const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(0, 2.7, 7);
 
     const renderer = new THREE.WebGLRenderer({
-      antialias: false,
-      powerPreference: "low-power"
+      antialias: true,
+      powerPreference: "high-performance"
     });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    sceneRoot.appendChild(renderer.domElement);
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    game.appendChild(renderer.domElement);
+    const hemi = new THREE.HemisphereLight(0xdde9d0, 0x233326, 2.2);
+    scene.add(hemi);
 
-    const geometry = new THREE.IcosahedronGeometry(1, 2);
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xe8c36a,
-      wireframe: true
-    });
+    const sun = new THREE.DirectionalLight(0xffe3a8, 3.2);
+    sun.position.set(-5, 8, 4);
+    scene.add(sun);
 
-    const testObject = new THREE.Mesh(geometry, material);
-    scene.add(testObject);
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(60, 60),
+      new THREE.MeshStandardMaterial({ color: 0x476a43, roughness: 1 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
 
-    function resize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    const path = new THREE.Mesh(
+      new THREE.PlaneGeometry(5, 60),
+      new THREE.MeshStandardMaterial({ color: 0x9b7955, roughness: 1 })
+    );
+    path.rotation.x = -Math.PI / 2;
+    path.position.y = .012;
+    scene.add(path);
+
+    const treeMat = new THREE.MeshStandardMaterial({ color: 0x315a36, roughness: 1 });
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x563c25, roughness: 1 });
+
+    function addTree(x, z, s = 1) {
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.18*s, .25*s, 1.8*s, 7), trunkMat);
+      trunk.position.set(x, .9*s, z);
+      scene.add(trunk);
+
+      const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1.05*s, 1), treeMat);
+      crown.position.set(x, 2.05*s, z);
+      scene.add(crown);
     }
 
-    window.addEventListener("resize", resize);
+    for (const [x,z,s] of [
+      [-4,-7,1.1],[4,-5,1.0],[-4.2,0,1.15],[4.1,2,1.05],
+      [-4.3,8,1.0],[4.2,10,1.15]
+    ]) addTree(x,z,s);
+
+    const egg = new THREE.Mesh(
+      new THREE.SphereGeometry(.55, 24, 16),
+      new THREE.MeshStandardMaterial({ color: 0xe8c36a, roughness: .5 })
+    );
+    egg.scale.set(.82, 1.18, .82);
+    egg.position.set(0, .65, -3.5);
+    scene.add(egg);
+
+    function resize() {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    }
+    addEventListener("resize", resize);
+
+    let started = false;
+    let startTime = performance.now();
+
+    function finishLoading() {
+      bar.style.width = "100%";
+      loadingText.textContent = "Listo";
+      setTimeout(() => {
+        loading.classList.add("hide");
+        menu.classList.add("show");
+      }, 350);
+    }
+
+    let progress = 0;
+    const loadingTimer = setInterval(() => {
+      progress += progress < 70 ? 8 : 3;
+      if (progress >= 100) {
+        clearInterval(loadingTimer);
+        finishLoading();
+      } else {
+        bar.style.width = progress + "%";
+        loadingText.textContent =
+          progress < 35 ? "Preparando el mundo..." :
+          progress < 70 ? "Cargando la granja..." :
+          "Últimos detalles...";
+      }
+    }, 90);
+
+    play.addEventListener("click", () => {
+      if (started) return;
+      started = true;
+      menu.classList.remove("show");
+      sceneRoot.classList.add("show");
+      sceneUI.classList.add("show");
+      startTime = performance.now();
+    });
 
     renderer.setAnimationLoop((time) => {
-      testObject.rotation.y = time * 0.0005;
-      testObject.rotation.x = time * 0.00025;
+      const t = (time - startTime) * 0.001;
+      egg.rotation.y = t * .35;
+      egg.position.y = .65 + Math.sin(t * 2.2) * .035;
+
+      if (started) {
+        camera.position.x = Math.sin(t * .22) * .7;
+        camera.position.y = 2.7 + Math.sin(t * .4) * .08;
+        camera.lookAt(0, 1, -3);
+      } else {
+        camera.lookAt(0, 1, -2);
+      }
+
       renderer.render(scene, camera);
     });
   </script>
