@@ -54,6 +54,7 @@ export function iniciarCinematica(container) {
   loadCharacters();
 
   clock = new THREE.Clock();
+  phase = PHASES.WALK;
   renderer.render(scene, camera);
   renderer.setAnimationLoop(loop);
 }
@@ -78,7 +79,7 @@ function createScene(container) {
   });
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-  renderer.setSize(Math.max(1, innerWidth), Math.max(1, innerHeight), false);
+  resizeCinematic();
   Object.assign(renderer.domElement.style, {
     position: "fixed",
     inset: "0",
@@ -95,6 +96,15 @@ function createScene(container) {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   container.appendChild(renderer.domElement);
+
+  // EGGARO cinematics are authored in 16:9.
+  // The canvas always keeps that composition; unused space becomes letterbox.
+  Object.assign(renderer.domElement.style, {
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+    background: "#050807"
+  });
 }
 
 function createWorld() {
@@ -318,31 +328,28 @@ function faceDrawnFallback(obj) {
 }
 
 async function loadCharacters() {
-  try {
-    const [a, b] = await Promise.all([
-      loader.loadAsync(FILES.mike),
-      loader.loadAsync(FILES.micaela)
-    ]);
+  const loadOne = async (file, fallbackFile, x, z) => {
+    try {
+      const gltf = await loader.loadAsync(file);
+      const obj = prepareCharacter(gltf.scene, x, z);
+      scene.add(obj);
+      return obj;
+    } catch (error) {
+      console.error("[EGGARO] No se pudo cargar", file, error);
+      return createDrawnFallbackCharacter(fallbackFile, x, z, 1);
+    }
+  };
 
-    mike = prepareCharacter(a.scene, -1.0, 8);
-    micaela = prepareCharacter(b.scene, 1.0, 9);
+  const [loadedMike, loadedMicaela] = await Promise.all([
+    loadOne(FILES.mike, "./3D/personajes/mike/mike.png", -1.0, 8),
+    loadOne(FILES.micaela, "./3D/personajes/mikaela/micaela.png", 1.0, 9)
+  ]);
 
-    mikeBones = findBones(mike);
-    micaelaBones = findBones(micaela);
+  mike = loadedMike;
+  micaela = loadedMicaela;
 
-    scene.add(mike, micaela);
-  } catch (error) {
-    console.error("[EGGARO] Error cargando personajes:", error);
-    mike = createDrawnFallbackCharacter("./3D/personajes/mike/mike.png", -1.0, 8, 1.0);
-    micaela = createDrawnFallbackCharacter("./3D/personajes/mikaela/micaela.png", 1.0, 9, 1.0);
-  }
-
-  if (!mike) {
-    mike = createDrawnFallbackCharacter("./3D/personajes/mike/mike.png", -1.0, 8, 1.0);
-  }
-  if (!micaela) {
-    micaela = createDrawnFallbackCharacter("./3D/personajes/mikaela/micaela.png", 1.0, 9, 1.0);
-  }
+  mikeBones = findBones(mike);
+  micaelaBones = findBones(micaela);
 }
 
 function prepareCharacter(obj, x, z) {
@@ -564,12 +571,38 @@ function createHud() {
 
   hud.title = title;
   hud.sub = sub;
+
+  const orientation = document.createElement("div");
+  orientation.textContent = "RECOMENDADO: JUGAR EN VERTICAL";
+  Object.assign(orientation.style, {
+    position: "absolute",
+    top: "9%",
+    left: "50%",
+    transform: "translateX(-50%)",
+    padding: "8px 14px",
+    borderRadius: "999px",
+    background: "rgba(0,0,0,.45)",
+    color: "#f4e7bf",
+    fontSize: "clamp(9px, 1.8vw, 14px)",
+    fontWeight: "800",
+    letterSpacing: ".12em",
+    whiteSpace: "nowrap",
+    opacity: "0",
+    transition: "opacity .35s ease"
+  });
+  hud.appendChild(orientation);
+  hud.orientation = orientation;
 }
 
 function setHud(title, sub = "") {
   if (!hud) return;
   hud.title.textContent = title;
   hud.sub.textContent = sub;
+  const portrait = window.innerHeight > window.innerWidth;
+  if (hud.orientation) {
+    hud.orientation.style.opacity =
+      portrait && window.innerWidth < 900 ? "1" : "0";
+  }
 }
 
 function clearHud() {
@@ -820,10 +853,31 @@ function resizeCinematic() {
   const width = Math.max(1, window.visualViewport?.width || window.innerWidth);
   const height = Math.max(1, window.visualViewport?.height || window.innerHeight);
 
-  camera.aspect = width / height;
+  // Keep the authored camera composition at 16:9.
+  const targetAspect = 16 / 9;
+  const viewportAspect = width / height;
+
+  let renderWidth = width;
+  let renderHeight = Math.round(width / targetAspect);
+
+  if (renderHeight > height) {
+    renderHeight = height;
+    renderWidth = Math.round(height * targetAspect);
+  }
+
+  camera.aspect = targetAspect;
   camera.updateProjectionMatrix();
+
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-  renderer.setSize(width, height, false);
+  renderer.setSize(renderWidth, renderHeight, false);
+
+  renderer.domElement.style.width = width + "px";
+  renderer.domElement.style.height = height + "px";
+  renderer.domElement.style.objectFit = "contain";
+  renderer.domElement.style.position = "fixed";
+  renderer.domElement.style.left = "50%";
+  renderer.domElement.style.top = "50%";
+  renderer.domElement.style.transform = "translate(-50%, -50%)";
 }
 
 window.addEventListener("resize", resizeCinematic, { passive: true });
