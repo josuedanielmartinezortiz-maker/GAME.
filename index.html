@@ -169,6 +169,8 @@
       letter-spacing: .12em;
       opacity: .8;
     }
+
+    #cinematic{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:0;transition:opacity .5s ease}#cinematic.show{opacity:1}.cinematic-vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,transparent 30%,rgba(0,0,0,.5) 100%)}.actor{position:absolute;bottom:13%;width:clamp(110px,25vw,190px);filter:drop-shadow(0 12px 8px rgba(0,0,0,.35));opacity:0;transform:translateY(35px) scale(.9);transition:opacity .5s ease,transform .7s ease}.actor.show{opacity:1;transform:translateY(0) scale(1)}#mikeActor{left:13%}#mikaelaActor{right:13%}#cinematicEgg{position:absolute;left:50%;bottom:31%;font-size:clamp(55px,12vw,90px);transform:translate(-50%,30px) scale(.75);opacity:0;transition:opacity .5s ease,transform .7s ease}#cinematicEgg.show{opacity:1;transform:translate(-50%,0) scale(1)}#dialogue{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);width:min(90vw,720px);padding:16px 20px;border:1px solid rgba(255,255,255,.2);border-radius:18px;background:rgba(4,8,5,.82);backdrop-filter:blur(10px);text-align:left;opacity:0;transition:opacity .35s ease}#dialogue.show{opacity:1}#speaker{font-weight:900;color:#e8c36a;font-size:13px;letter-spacing:.12em}#dialogueText{margin-top:6px;font-size:16px;line-height:1.35}#skipCinematic{position:absolute;right:18px;bottom:18px;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:8px 12px;background:rgba(0,0,0,.35);color:#fff;pointer-events:auto;cursor:pointer;opacity:.75}#cinematicTitle{position:absolute;top:12%;left:50%;transform:translateX(-50%);font-size:clamp(25px,7vw,52px);font-weight:950;letter-spacing:.08em;text-shadow:0 5px 20px rgba(0,0,0,.6);opacity:0;transition:opacity .5s ease}#cinematicTitle.show{opacity:1}
   </style>
 
   <script type="importmap">
@@ -200,7 +202,7 @@
     </section>
 
     <div id="scene"></div>
-    <div id="scene-ui"><div id="scene-label">EGGARO • GRANJA</div></div>
+    <div id="scene-ui"><div id="scene-label">EGGARO • GRANJA</div></div><div id="cinematic"><div class="cinematic-vignette"></div><div id="cinematicTitle">EL COMIENZO</div><img id="mikeActor" class="actor" src="mike.png" alt="Mike"><img id="mikaelaActor" class="actor" src="mikaela.png" alt="Micaela"><div id="cinematicEgg">🥚</div><div id="dialogue"><div id="speaker"></div><div id="dialogueText"></div></div><button id="skipCinematic" type="button">Saltar</button></div>
   </main>
 
   <script type="module">
@@ -213,7 +215,7 @@
     const sceneUI = document.getElementById("scene-ui");
     const play = document.getElementById("play");
     const bar = document.getElementById("bar");
-    const loadingText = document.getElementById("loading-text");
+    const loadingText = document.getElementById("loading-text");const cinematic=document.getElementById("cinematic"),cinematicTitle=document.getElementById("cinematicTitle"),mikeActor=document.getElementById("mikeActor"),mikaelaActor=document.getElementById("mikaelaActor"),cinematicEgg=document.getElementById("cinematicEgg"),dialogue=document.getElementById("dialogue"),speaker=document.getElementById("speaker"),dialogueText=document.getElementById("dialogueText"),skipCinematic=document.getElementById("skipCinematic");
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x102018);
@@ -287,7 +289,7 @@
     addEventListener("resize", resize);
 
     let started = false;
-    let startTime = performance.now();
+    let startTime = performance.now();let cinematicTimer=null,cinematicRunning=false;const cinematicSteps=[{t:0,title:"EL COMIENZO",speaker:"",text:"Una nueva mañana comienza en la granja."},{t:2200,title:"",speaker:"MIKE",text:"¿Escuchaste eso?"},{t:4700,title:"",speaker:"MICAELA",text:"Sí... viene de ahí."},{t:7200,title:"",speaker:"MIKE",text:"¡Mira! Hay algo en el camino."},{t:9800,title:"",speaker:"MICAELA",text:"¡Es un huevo!"},{t:12400,title:"",speaker:"",text:"Algo está a punto de comenzar..."}];function showCinematicStep(x){cinematicTitle.textContent=x.title||"";cinematicTitle.classList.toggle("show",!!x.title);speaker.textContent=x.speaker||"";dialogueText.textContent=x.text||"";dialogue.classList.toggle("show",!!x.text);if(x.t>=2200)mikeActor.classList.add("show");if(x.t>=4700)mikaelaActor.classList.add("show");if(x.t>=7200)cinematicEgg.classList.add("show")}function finishCinematic(){cinematicRunning=false;clearTimeout(cinematicTimer);cinematic.classList.remove("show");dialogue.classList.remove("show");cinematicTitle.classList.remove("show");mikeActor.classList.remove("show");mikaelaActor.classList.remove("show");cinematicEgg.classList.remove("show");sceneUI.classList.add("show")}function startCinematic(){cinematicRunning=true;cinematic.classList.add("show");sceneUI.classList.remove("show");cinematicSteps.forEach(x=>setTimeout(()=>{if(cinematicRunning)showCinematicStep(x)},x.t));cinematicTimer=setTimeout(finishCinematic,15500)}skipCinematic.addEventListener("click",finishCinematic);
 
     function finishLoading() {
       bar.style.width = "100%";
@@ -320,6 +322,7 @@
       sceneRoot.classList.add("show");
       sceneUI.classList.add("show");
       startTime = performance.now();
+      startCinematic();
     });
 
     renderer.setAnimationLoop((time) => {
