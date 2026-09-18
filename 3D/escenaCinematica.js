@@ -557,9 +557,22 @@ function cameraTo(x, y, z, tx, ty, tz, speed = 0.06) {
 }
 
 function updateWalk() {
-  if (!ready) {
+  if (!ready && phaseTime < 10) {
     cameraTo(0, 6.5, 18, 2, 3.2, -10, 0.03);
+    setHud("EGGARO", "Preparando la escena...");
     return;
+  }
+
+  // La historia no puede quedarse esperando un recurso externo.
+  // A los 10 s continúa aunque el GLB siga pendiente.
+  if (!ready) {
+    if (!mike) mike = makeCharacterFallback(FILES.mikeImage, -1.0, 8);
+    if (!micaela) micaela = makeCharacterFallback(FILES.micaelaImage, 1.0, 9);
+    if (!mike.parent) scene.add(mike);
+    if (!micaela.parent) scene.add(micaela);
+    ready = true;
+    mikeBones = {};
+    micaelaBones = {};
   }
 
   const p = THREE.MathUtils.clamp(phaseTime / WALK_TIME, 0, 1);
