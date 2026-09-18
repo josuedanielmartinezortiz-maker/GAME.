@@ -19,7 +19,9 @@ const FILES = {
   egg: "./3D/animales/huevo%20noob.png",
   noob: "./3D/animales/noob.png",
   chick: "./3D/animales/pollito%20noob.png",
-  zombie: "./3D/animales/zombie.png"
+  zombie: "./3D/animales/zombie.png",
+  mikeImage: "./3D/personajes/mike/mike.png",
+  micaelaImage: "./3D/personajes/mikaela/micaela.png"
 };
 
 const WALK_TIME = 60;
@@ -283,9 +285,16 @@ async function loadCharacters() {
   setHud("EGGARO", "Cargando a Mike y Micaela...");
 
   try {
-    const [a, b] = await Promise.all([
-      loader.loadAsync(FILES.mike),
-      loader.loadAsync(FILES.micaela)
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Tiempo de carga agotado")), 9000)
+    );
+
+    const [a, b] = await Promise.race([
+      Promise.all([
+        loader.loadAsync(FILES.mike),
+        loader.loadAsync(FILES.micaela)
+      ]),
+      timeout
     ]);
 
     mike = prepare(a.scene, -1.0, 8);
@@ -299,9 +308,29 @@ async function loadCharacters() {
     setHud("EGGARO", "Mike y Micaela entran en la granja...");
   } catch (error) {
     console.error("[EGGARO] GLB:", error);
-    setHud("EGGARO", "No se pudieron cargar los modelos 3D del repositorio.");
-    ready = false;
+    // Nunca dejamos la cinemática congelada por un modelo que falle al cargar.
+    // Usamos los PNG originales del repositorio como respaldo 3D sobre planos.
+    mike = makeCharacterFallback(FILES.mikeImage, -1.0, 8);
+    micaela = makeCharacterFallback(FILES.micaelaImage, 1.0, 9);
+    scene.add(mike, micaela);
+    ready = true;
+    phaseTime = 0;
+    setHud("EGGARO", "Mike y Micaela entran en la granja...");
   }
+}
+
+function makeCharacterFallback(file, x, z) {
+  const tex = new THREE.TextureLoader().load(file);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const group = new THREE.Group();
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.2, 3.6),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false })
+  );
+  group.add(mesh);
+  group.position.set(x, 1.8, z);
+  group.userData.fallback = true;
+  return group;
 }
 
 function prepare(obj, x, z) {
