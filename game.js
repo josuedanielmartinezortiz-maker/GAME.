@@ -1,7 +1,7 @@
 import {
   iniciarCinematica,
   cinematicaTerminada
-} from "./3D/escenaCinematica.js";
+} from "./3D/escenaCinematica.js?v=2872725";
 
 const game = document.getElementById("game");
 
