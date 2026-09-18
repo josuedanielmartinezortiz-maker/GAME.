@@ -137,7 +137,14 @@ function buildScene() {
   });
 
   containerRef.appendChild(renderer.domElement);
+
+  renderer.domElement.addEventListener("webglcontextlost", event => {
+    event.preventDefault();
+    showRuntimeError("WebGL perdió el contexto. El dispositivo dejó de renderizar la escena.");
+  }, { passive: false });
+
   resize();
+  renderer.clear(true, true, true);
 }
 
 /* ============================================================
@@ -1226,20 +1233,77 @@ function changePhase(next) {
 }
 
 function frame() {
-  if (!running) return;
+  if (!running || !renderer || !scene || !camera) return;
 
-  const delta = Math.min(clock.getDelta(), 0.05);
-  elapsed += delta;
-  phaseTime += delta;
+  try {
+    const delta = Math.min(clock.getDelta(), 0.05);
+    elapsed += delta;
+    phaseTime += delta;
 
-  if (phase === "WALK") updateWalk(delta);
-  else if (phase === "ARRIVE") updateArrive(delta);
-  else if (phase === "EGG") updateEgg(delta);
-  else if (phase === "SELECT") updateSelect(delta);
-  else if (phase === "RESULT") updateResult(delta);
-  else if (phase === "BLACK") updateBlack();
+    if (phase === "WALK") updateWalk(delta);
+    else if (phase === "ARRIVE") updateArrive(delta);
+    else if (phase === "EGG") updateEgg(delta);
+    else if (phase === "SELECT") updateSelect(delta);
+    else if (phase === "RESULT") updateResult(delta);
+    else if (phase === "BLACK") updateBlack();
 
-  renderer.render(scene, camera);
+    renderer.render(scene, camera);
+  } catch (error) {
+    console.error("[EGGARO] Error durante el frame:", error);
+    showRuntimeError(error);
+    running = false;
+    renderer.setAnimationLoop(null);
+  }
+}
+
+function showRuntimeError(error) {
+  const old = document.getElementById("eggaroRuntimeError");
+  if (old) old.remove();
+
+  const panel = document.createElement("div");
+  panel.id = "eggaroRuntimeError";
+  Object.assign(panel.style, {
+    position: "fixed",
+    inset: "0",
+    zIndex: "100000",
+    background: "#080909",
+    color: "#fff",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "24px",
+    textAlign: "center",
+    fontFamily: "Arial,sans-serif"
+  });
+
+  const title = document.createElement("h2");
+  title.textContent = "EGGARO";
+  const message = document.createElement("p");
+  message.textContent = "La cinemática encontró un error al renderizar.";
+  const detail = document.createElement("p");
+  detail.textContent = String(error?.stack || error);
+  Object.assign(detail.style, {
+    opacity: ".72",
+    fontSize: "12px",
+    maxWidth: "92%",
+    wordBreak: "break-word",
+    whiteSpace: "pre-wrap"
+  });
+
+  const retry = document.createElement("button");
+  retry.textContent = "RECARGAR";
+  Object.assign(retry.style, {
+    marginTop: "20px",
+    padding: "14px 26px",
+    borderRadius: "12px",
+    border: "0",
+    fontSize: "17px"
+  });
+  retry.addEventListener("click", () => location.reload());
+
+  panel.append(title, message, detail, retry);
+  document.body.appendChild(panel);
 }
 
 function finish() {
