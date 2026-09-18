@@ -55,7 +55,7 @@ export function iniciarCinematica(container) {
 
   clock = new THREE.Clock();
   renderer.render(scene, camera);
-  raf = requestAnimationFrame(loop);
+  renderer.setAnimationLoop(loop);
 }
 
 function createScene(container) {
@@ -65,7 +65,7 @@ function createScene(container) {
 
   camera = new THREE.PerspectiveCamera(
     45,
-    innerWidth / innerHeight,
+    Math.max(1, innerWidth) / Math.max(1, innerHeight),
     0.05,
     160
   );
@@ -77,8 +77,8 @@ function createScene(container) {
     powerPreference: "high-performance"
   });
 
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.7));
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setSize(Math.max(1, innerWidth), Math.max(1, innerHeight), false);
   Object.assign(renderer.domElement.style, {
     position: "fixed",
     inset: "0",
@@ -280,6 +280,43 @@ function createAtmosphere() {
   }
 }
 
+function createDrawnFallbackCharacter(textureFile, x, z, scale = 1) {
+  const group = new THREE.Group();
+  const tex = new THREE.TextureLoader().load(textureFile);
+  tex.colorSpace = THREE.SRGBColorSpace;
+
+  const shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(0.7 * scale, 24),
+    new THREE.MeshBasicMaterial({ color: 0x172018, transparent: true, opacity: 0.45 })
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.02;
+  group.add(shadow);
+
+  const card = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.55 * scale, 2.65 * scale),
+    new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    })
+  );
+  card.position.y = 1.32 * scale;
+  group.add(card);
+
+  group.position.set(x, 0, z);
+  group.userData.drawnFallback = true;
+  group.userData.card = card;
+  scene.add(group);
+  return group;
+}
+
+function faceDrawnFallback(obj) {
+  if (!obj?.userData?.drawnFallback) return;
+  obj.userData.card.lookAt(camera.position);
+}
+
 async function loadCharacters() {
   try {
     const [a, b] = await Promise.all([
@@ -296,6 +333,15 @@ async function loadCharacters() {
     scene.add(mike, micaela);
   } catch (error) {
     console.error("[EGGARO] Error cargando personajes:", error);
+    mike = createDrawnFallbackCharacter("./3D/personajes/mike/mike.png", -1.0, 8, 1.0);
+    micaela = createDrawnFallbackCharacter("./3D/personajes/mikaela/micaela.png", 1.0, 9, 1.0);
+  }
+
+  if (!mike) {
+    mike = createDrawnFallbackCharacter("./3D/personajes/mike/mike.png", -1.0, 8, 1.0);
+  }
+  if (!micaela) {
+    micaela = createDrawnFallbackCharacter("./3D/personajes/mikaela/micaela.png", 1.0, 9, 1.0);
   }
 }
 
@@ -347,6 +393,12 @@ function walkCharacter(obj, bones, t, stride = 1) {
   if (bones.spine) bones.spine.rotation.z = Math.sin(t * 3.6) * 0.035;
   if (bones.head) bones.head.rotation.z = Math.sin(t * 2.0) * 0.025;
 
+  if (obj.userData?.drawnFallback) {
+    faceDrawnFallback(obj);
+    obj.userData.card.position.y = 1.32 + Math.abs(Math.sin(t * 7.2)) * 0.035;
+    obj.userData.card.rotation.z = Math.sin(t * 7.2) * 0.018;
+  }
+
   obj.position.y = Math.abs(Math.sin(t * 7.2)) * 0.025;
 }
 
@@ -355,6 +407,7 @@ function idleCharacter(obj, bones, t) {
 
   if (bones.spine) bones.spine.rotation.z = Math.sin(t * 1.7) * 0.025;
   if (bones.head) bones.head.rotation.y = Math.sin(t * 1.4) * 0.045;
+  if (obj.userData?.drawnFallback) faceDrawnFallback(obj);
 }
 
 function createEgg() {
@@ -728,11 +781,11 @@ function loop() {
   if (phase === PHASES.BLACK) updateBlack();
 
   renderer.render(scene, camera);
-  raf = requestAnimationFrame(loop);
 }
 
 function finish() {
   running = false;
+  renderer?.setAnimationLoop(null);
   finished = true;
   if (hud) hud.remove();
 }
@@ -761,10 +814,20 @@ function detener() {
   window.__gairoResult = null;
 }
 
-window.addEventListener("resize", () => {
+function resizeCinematic() {
   if (!camera || !renderer) return;
 
-  camera.aspect = innerWidth / innerHeight;
+  const width = Math.max(1, window.visualViewport?.width || window.innerWidth);
+  const height = Math.max(1, window.visualViewport?.height || window.innerHeight);
+
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setSize(width, height, false);
+}
+
+window.addEventListener("resize", resizeCinematic, { passive: true });
+window.addEventListener("orientationchange", () => {
+  setTimeout(resizeCinematic, 80);
+}, { passive: true });
+window.visualViewport?.addEventListener("resize", resizeCinematic, { passive: true });
