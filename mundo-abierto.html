@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>EGGARO — Mundo Abierto</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101a12;font-family:system-ui,Arial;color:#fff}#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
+#hud{position:fixed;inset:0;pointer-events:none}.panel{background:#07110bcc;border:1px solid #ffffff24;border-radius:14px;padding:10px 12px;backdrop-filter:blur(8px);box-shadow:0 8px 25px #0004}
+#stats{position:absolute;top:max(12px,env(safe-area-inset-top));left:12px;display:flex;gap:8px;flex-wrap:wrap}.stat{font-weight:800;font-size:13px}
+#zone{position:absolute;top:max(12px,env(safe-area-inset-top));right:12px;font-weight:900}
+#hint{position:absolute;left:50%;bottom:112px;transform:translateX(-50%);max-width:88vw;text-align:center;font-size:14px;opacity:0;transition:opacity .2s}
+#hint.show{opacity:1}
+#inventory{position:absolute;right:12px;bottom:12px;pointer-events:auto}.inv-title{font-weight:900}.slot{display:flex;gap:12px;align-items:center;margin-top:6px;font-size:13px}
+#touch{position:absolute;inset:0;pointer-events:none}.pad{position:absolute;left:18px;bottom:18px;width:132px;height:132px;border-radius:50%;pointer-events:auto;background:#ffffff12;border:1px solid #ffffff22}.stick{position:absolute;left:41px;top:41px;width:50px;height:50px;border-radius:50%;background:#ffffff35;border:1px solid #ffffff44}
+.action{position:absolute;right:24px;bottom:28px;width:72px;height:72px;border-radius:50%;border:1px solid #ffffff44;background:#e8c36add;color:#111;font-weight:900;pointer-events:auto}
+@media(min-width:800px){#touch{display:none}#hint{bottom:24px}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud">
+<div id="stats"><div class="panel stat">❤️ <span id="hp">100</span></div><div class="panel stat">🌾 <span id="xp">0</span> XP</div><div class="panel stat">🥚 <span id="eggs">0</span></div></div>
+<div id="zone" class="panel">🌾 GRANJA</div>
+<div id="hint" class="panel"></div>
+<div id="inventory" class="panel"><div class="inv-title">🎒 Inventario</div><div class="slot">🥚 Huevos: <b id="invEggs">0</b></div><div class="slot">🌾 Semillas: <b id="seeds">3</b></div></div>
+<div id="touch"><div class="pad" id="pad"><div class="stick" id="stick"></div></div><button class="action" id="action">E</button></div>
+</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from "three";
+const root=document.querySelector("#game"),hint=document.querySelector("#hint"),hpEl=document.querySelector("#hp"),xpEl=document.querySelector("#xp"),eggsEl=document.querySelector("#eggs"),invEggs=document.querySelector("#invEggs"),seedsEl=document.querySelector("#seeds");
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8eb6a0);scene.fog=new THREE.Fog(0x8eb6a0,28,72);
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,100);const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;root.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe9f2df,0x35513b,2));const sun=new THREE.DirectionalLight(0xffe6ad,2.8);sun.position.set(-20,30,15);scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(120,120),new THREE.MeshStandardMaterial({color:0x527b4b,roughness:1}));ground.rotation.x=-Math.PI/2;scene.add(ground);
+const path=new THREE.Mesh(new THREE.PlaneGeometry(8,120),new THREE.MeshStandardMaterial({color:0xa4825c,roughness:1}));path.rotation.x=-Math.PI/2;path.position.y=.01;scene.add(path);
+const trunkMat=new THREE.MeshStandardMaterial({color:0x5a3e27}),leafMat=new THREE.MeshStandardMaterial({color:0x2f5d38});
+const trees=[];function tree(x,z,s=1){let g=new THREE.Group();let t=new THREE.Mesh(new THREE.CylinderGeometry(.22*s,.3*s,1.8*s,7),trunkMat);t.position.y=.9*s;g.add(t);let c=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15*s,1),leafMat);c.position.y=2.05*s;g.add(c);g.position.set(x,0,z);scene.add(g);trees.push(g)}
+for(let x=-18;x<=18;x+=6){if(Math.abs(x)>8)for(let z=-50;z<=50;z+=9)tree(x+(Math.random()-.5)*2,z+(Math.random()-.5)*3,.8+Math.random()*.45)}
+const house=new THREE.Group();const h=new THREE.Mesh(new THREE.BoxGeometry(6,3.5,5),new THREE.MeshStandardMaterial({color:0xc8a878}));h.position.y=1.75;house.add(h);const roof=new THREE.Mesh(new THREE.ConeGeometry(4.5,2,4),new THREE.MeshStandardMaterial({color:0x7a4d38}));roof.position.y=4.5;roof.rotation.y=Math.PI/4;house.add(roof);house.position.set(13,0,-10);scene.add(house);
+const player=new THREE.Group();const body=new THREE.Mesh(new THREE.BoxGeometry(.8,1.1,.55),new THREE.MeshStandardMaterial({color:0x5e8c6a}));body.position.y=1.05;player.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.55,20,14),new THREE.MeshStandardMaterial({color:0xf5d5b8}));head.position.y=1.85;player.add(head);const hair=new THREE.Mesh(new THREE.SphereGeometry(.57,20,12),new THREE.MeshStandardMaterial({color:0x7a5a3a}));hair.scale.y=.55;hair.position.y=2.2;player.add(hair);scene.add(player);player.position.set(0,0,8);
+const interactables=[];function egg(x,z){const e=new THREE.Mesh(new THREE.SphereGeometry(.34,18,12),new THREE.MeshStandardMaterial({color:0xe8c36a}));e.scale.set(.82,1.2,.82);e.position.set(x,.38,z);e.userData.kind="egg";e.userData.active=true;scene.add(e);interactables.push(e)}for(const p of [[-2,1],[3,-5],[-5,-12],[7,-18],[-2,-25],[4,-34],[-7,-43]])egg(...p);
+const seedPatch=new THREE.Mesh(new THREE.BoxGeometry(5,.12,4),new THREE.MeshStandardMaterial({color:0x755433}));seedPatch.position.set(-10,.06,10);scene.add(seedPatch);seedPatch.userData.kind="farm";
+let hp=100,xp=0,eggCount=0,seeds=3;const keys={};addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+const joy={x:0,y:0};let dragging=false;const pad=document.querySelector("#pad"),stick=document.querySelector("#stick");function joyMove(e){const r=pad.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy),m=44;if(d>m){dx*=m/d;dy*=m/d}stick.style.transform=`translate(${dx}px,${dy}px)`;joy.x=dx/m;joy.y=dy/m}pad.addEventListener("pointerdown",e=>{dragging=true;pad.setPointerCapture(e.pointerId);joyMove(e)});pad.addEventListener("pointermove",e=>{if(dragging)joyMove(e)});pad.addEventListener("pointerup",()=>{dragging=false;joy.x=joy.y=0;stick.style.transform=""});
+function action(){let best=null,bd=2;for(const o of interactables){if(!o.userData.active)continue;const d=player.position.distanceTo(o.position);if(d<bd){bd=d;best=o}}if(best){best.userData.active=false;scene.remove(best);eggCount++;xp+=100;eggsEl.textContent=eggCount;invEggs.textContent=eggCount;xpEl.textContent=xp;showHint("🥚 ¡Huevo recogido! +100 XP");return}if(player.position.distanceTo(seedPatch.position)<3&&seeds>0){seeds--;seedsEl.textContent=seeds;showHint("🌱 Semilla plantada. Pronto habrá una cosecha.");return}showHint("Acércate a un objeto para interactuar.");}
+document.querySelector("#action").addEventListener("click",action);addEventListener("keydown",e=>{if(e.key.toLowerCase()==="e")action()});
+let hintTimer=0;function showHint(t){hint.textContent=t;hint.classList.add("show");clearTimeout(hintTimer);hintTimer=setTimeout(()=>hint.classList.remove("show"),1800)}
+function move(dt){let x=(keys.d?1:0)-(keys.a?1:0)+joy.x,z=(keys.s?1:0)-(keys.w?1:0)+joy.y;const v=new THREE.Vector2(x,z);if(v.length()>1)v.normalize();const speed=5.5;player.position.x+=v.x*speed*dt;player.position.z+=v.y*speed*dt;player.position.x=THREE.MathUtils.clamp(player.position.x,-28,28);player.position.z=THREE.MathUtils.clamp(player.position.z,-55,25);if(v.lengthSq()>.01)player.rotation.y=Math.atan2(v.x,v.y)}
+const camTarget=new THREE.Vector3();function loop(t){requestAnimationFrame(loop);const dt=Math.min(.04,(t-last)/1000);last=t;move(dt);camTarget.set(player.position.x,1.1,player.position.z);const desired=new THREE.Vector3(player.position.x,4.2,player.position.z+7);camera.position.lerp(desired,.08);camera.lookAt(camTarget);for(const o of interactables)if(o.userData.active)o.rotation.y+=dt;renderer.render(scene,camera)}let last=performance.now();loop(last);
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+showHint("Explora la granja. WASD / joystick para moverte. E para interactuar.");
+</script></body></html>
