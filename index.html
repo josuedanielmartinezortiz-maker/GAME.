@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="EGGARO — experiencia 3D de GAMERPRO">
+  <title>EGGARO</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050505;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+
+    #game {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050505;
+    }
+
+    #boot {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 42%, #263b32 0%, #101713 42%, #050505 100%);
+    }
+
+    #boot-content {
+      text-align: center;
+      padding: 24px;
+    }
+
+    #boot-title {
+      font-size: clamp(42px, 12vw, 86px);
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+
+    #boot-subtitle {
+      margin-top: 10px;
+      opacity: .65;
+      font-size: 14px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <main id="game">
+    <section id="boot" aria-label="EGGARO">
+      <div id="boot-content">
+        <div id="boot-title">EGGARO</div>
+        <div id="boot-subtitle">GAMERPRO • 3D</div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import * as THREE from "three";
+
+    const game = document.getElementById("game");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050505);
+
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(0, 1.5, 5);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: false,
+      powerPreference: "low-power"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    game.appendChild(renderer.domElement);
+
+    const geometry = new THREE.IcosahedronGeometry(1, 2);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xe8c36a,
+      wireframe: true
+    });
+
+    const testObject = new THREE.Mesh(geometry, material);
+    scene.add(testObject);
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener("resize", resize);
+
+    renderer.setAnimationLoop((time) => {
+      testObject.rotation.y = time * 0.0005;
+      testObject.rotation.x = time * 0.00025;
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>
